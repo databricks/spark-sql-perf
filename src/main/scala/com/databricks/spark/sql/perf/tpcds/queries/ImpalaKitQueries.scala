@@ -14,132 +14,11 @@
  * limitations under the License.
  */
 
-package com.databricks.spark.sql.perf.tpcds
+package com.databricks.spark.sql.perf.tpcds.queries
 
 import com.databricks.spark.sql.perf.Query
 
-object Queries {
-  val q7Derived = Seq(
-    ("q7-simpleScan",
-      """
-        |select
-        |  ss_quantity,
-        |  ss_list_price,
-        |  ss_coupon_amt,
-        |  ss_coupon_amt,
-        |  ss_cdemo_sk,
-        |  ss_item_sk,
-        |  ss_promo_sk,
-        |  ss_sold_date_sk
-        |from store_sales
-        |where
-        |  ss_sold_date_sk between 2450815 and 2451179
-      """.stripMargin),
-
-    ("q7-twoMapJoins", """
-                         |select
-                         |  i_item_id,
-                         |  ss_quantity,
-                         |  ss_list_price,
-                         |  ss_coupon_amt,
-                         |  ss_sales_price,
-                         |  ss_promo_sk,
-                         |  ss_sold_date_sk
-                         |from
-                         |  store_sales
-                         |  join customer_demographics on (store_sales.ss_cdemo_sk = customer_demographics.cd_demo_sk)
-                         |  join item on (store_sales.ss_item_sk = item.i_item_sk)
-                         |where
-                         |  cd_gender = 'F'
-                         |  and cd_marital_status = 'W'
-                         |  and cd_education_status = 'Primary'
-                         |  and ss_sold_date_sk between 2450815 and 2451179 -- partition key filter
-                       """.stripMargin),
-
-    ("q7-fourMapJoins", """
-                          |select
-                          |  i_item_id,
-                          |  ss_quantity,
-                          |  ss_list_price,
-                          |  ss_coupon_amt,
-                          |  ss_sales_price
-                          |from
-                          |  store_sales
-                          |  join customer_demographics on (store_sales.ss_cdemo_sk = customer_demographics.cd_demo_sk)
-                          |  join item on (store_sales.ss_item_sk = item.i_item_sk)
-                          |  join promotion on (store_sales.ss_promo_sk = promotion.p_promo_sk)
-                          |  join date_dim on (ss_sold_date_sk = d_date_sk)
-                          |where
-                          |  cd_gender = 'F'
-                          |  and cd_marital_status = 'W'
-                          |  and cd_education_status = 'Primary'
-                          |  and (p_channel_email = 'N'
-                          |    or p_channel_event = 'N')
-                          |  and d_year = 1998
-                          |  -- and ss_date between '1998-01-01' and '1998-12-31'
-                          |  and ss_sold_date_sk between 2450815 and 2451179 -- partition key filter
-                        """.stripMargin),
-
-    ("q7-noOrderBy", """
-                       |select
-                       |  i_item_id,
-                       |  avg(ss_quantity) agg1,
-                       |  avg(ss_list_price) agg2,
-                       |  avg(ss_coupon_amt) agg3,
-                       |  avg(ss_sales_price) agg4
-                       |from
-                       |  store_sales
-                       |  join customer_demographics on (store_sales.ss_cdemo_sk = customer_demographics.cd_demo_sk)
-                       |  join item on (store_sales.ss_item_sk = item.i_item_sk)
-                       |  join promotion on (store_sales.ss_promo_sk = promotion.p_promo_sk)
-                       |  join date_dim on (ss_sold_date_sk = d_date_sk)
-                       |where
-                       |  cd_gender = 'F'
-                       |  and cd_marital_status = 'W'
-                       |  and cd_education_status = 'Primary'
-                       |  and (p_channel_email = 'N'
-                       |    or p_channel_event = 'N')
-                       |  and d_year = 1998
-                       |  -- and ss_date between '1998-01-01' and '1998-12-31'
-                       |  and ss_sold_date_sk between 2450815 and 2451179 -- partition key filter
-                       |group by
-                       |  i_item_id
-                     """.stripMargin),
-
-    ("q7", """
-             |-- start query 1 in stream 0 using template query7.tpl
-             |select
-             |  i_item_id,
-             |  avg(ss_quantity) agg1,
-             |  avg(ss_list_price) agg2,
-             |  avg(ss_coupon_amt) agg3,
-             |  avg(ss_sales_price) agg4
-             |from
-             |  store_sales
-             |  join customer_demographics on (store_sales.ss_cdemo_sk = customer_demographics.cd_demo_sk)
-             |  join item on (store_sales.ss_item_sk = item.i_item_sk)
-             |  join promotion on (store_sales.ss_promo_sk = promotion.p_promo_sk)
-             |  join date_dim on (ss_sold_date_sk = d_date_sk)
-             |where
-             |  cd_gender = 'F'
-             |  and cd_marital_status = 'W'
-             |  and cd_education_status = 'Primary'
-             |  and (p_channel_email = 'N'
-             |    or p_channel_event = 'N')
-             |  and d_year = 1998
-             |  -- and ss_date between '1998-01-01' and '1998-12-31'
-             |  and ss_sold_date_sk between 2450815 and 2451179 -- partition key filter
-             |group by
-             |  i_item_id
-             |order by
-             |  i_item_id
-             |limit 100
-             |-- end query 1 in stream 0 using template query7.tpl
-           """.stripMargin)
-  ).map {
-    case (name, sqlText) => Query(name, sqlText)
-  }
-
+object ImpalaKitQueries {
   // Queries are from
   // https://github.com/cloudera/impala-tpcds-kit/tree/master/queries-sql92-modified/queries
   val queries = Seq(
@@ -1145,7 +1024,7 @@ object Queries {
                  |from store_sales
                """.stripMargin)
   ).map {
-    case (name, sqlText) => Query(name, sqlText)
+    case (name, sqlText) => Query(name, sqlText, description = "", collectResults = true)
   }
   val queriesMap = queries.map(q => q.name -> q).toMap
 
@@ -1214,31 +1093,6 @@ object Queries {
       ,i_manufact_id
       ,i_manufact
         limit 100"""),
-
-    /*  WHERE IS ss_sold_date?
-      ("q27partitioned", """
-        select  i_item_id,
-        s_state,
-        avg(ss_quantity) agg1,
-        avg(ss_list_price) agg2,
-        avg(ss_coupon_amt) agg3,
-        avg(ss_sales_price) agg4
-          from store_sales
-          JOIN customer_demographics ON store_sales.ss_cdemo_sk = customer_demographics.cd_demo_sk
-      JOIN date_dim ON store_sales.ss_sold_date_sk = date_dim.d_date_sk
-      JOIN store ON store_sales.ss_store_sk = store.s_store_sk
-      JOIN item ON store_sales.ss_item_sk = item.i_item_sk
-      where
-      cd_gender = 'F' and
-        cd_marital_status = 'W' and
-        cd_education_status = 'Primary' and
-      d_year = 1998 and
-        s_state = 'TN' and
-      ss_sold_date between '1998-01-01' and '1998-12-31'
-      group by i_item_id, s_state
-      order by i_item_id
-      ,s_state
-      limit 100"""),    */
 
     ("q27", """
       select  i_item_id,
@@ -1609,12 +1463,12 @@ object Queries {
         |from store_sales
       """.stripMargin)
   ).map {
-    case (name, sqlText) => Query(name, sqlText)
+    case (name, sqlText) => Query(name, sqlText, description = "original query", collectResults = true)
   }
 
   val interactiveQueries =
     Seq("q19", "q42", "q52", "q55", "q63", "q68", "q73", "q98").map(queriesMap)
   val reportingQueries = Seq("q3","q7","q27","q43", "q53", "q89").map(queriesMap)
   val deepAnalyticQueries = Seq("q34", "q46", "q59", "q65",  "q79", "ss_max").map(queriesMap)
-  val allClouderaQueries = interactiveQueries ++ reportingQueries ++ deepAnalyticQueries
+  val impalaKitQueries = interactiveQueries ++ reportingQueries ++ deepAnalyticQueries
 }

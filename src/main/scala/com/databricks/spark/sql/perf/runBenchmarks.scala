@@ -23,15 +23,49 @@ import org.apache.spark.sql.SQLContext
 import scala.concurrent._
 import scala.concurrent.ExecutionContext.Implicits.global
 
+/**
+ * The configuration used for an iteration of an experiment.
+ * @param sparkVersion The version of Spark.
+ * @param scaleFactor The scale factor of the dataset.
+ * @param sqlConf All configuration properties related to Spark SQL.
+ * @param sparkConf All configuration properties of Spark.
+ * @param defaultParallelism The default parallelism of the cluster.
+ *                           Usually, it is the number of cores of the cluster.
+ */
 case class BenchmarkConfiguration(
     sparkVersion: String,
     scaleFactor: String,
-    useDecimal: Boolean,
     sqlConf: Map[String, String],
     sparkConf: Map[String,String],
-    cores: Int,
-    collectResults: Boolean)
+    defaultParallelism: Int)
 
+/**
+ * The execution time of a subtree of the query plan tree of a specific query.
+ * @param nodeName The name of the top physical operator of the subtree.
+ * @param nodeNameWithArgs The name and arguments of the top physical operator of the subtree.
+ * @param index The index of the top physical operator of the subtree
+ *              in the original query plan tree. The index starts from 0
+ *              (0 represents the top physical operator of the original query plan tree).
+ * @param executionTime The execution time of the subtree.
+ */
+case class BreakdownResult(
+    nodeName: String,
+    nodeNameWithArgs: String,
+    index: Int,
+    executionTime: Double)
+
+/**
+ * The result of a query.
+ * @param name The name of the query.
+ * @param joinTypes The type of join operations in the query.
+ * @param tables The tables involved in the query.
+ * @param parsingTime The time used to parse the query.
+ * @param analysisTime The time used to analyze the query.
+ * @param optimizationTime The time used to optimize the query.
+ * @param planningTime The time used to plan the query.
+ * @param executionTime The time used to execute the query.
+ * @param breakDown The breakdown results of the query plan tree.
+ */
 case class BenchmarkResult(
     name: String,
     joinTypes: Seq[String],
@@ -40,30 +74,65 @@ case class BenchmarkResult(
     analysisTime: Double,
     optimizationTime: Double,
     planningTime: Double,
-    executionTime: Double)
+    executionTime: Double,
+    breakDown: Seq[BreakdownResult])
 
+/**
+ * A Variation represents a setting (e.g. the number of shuffle partitions and if tables
+ * are cached in memory) that we want to change in a experiment run.
+ * A Variation has three parts, `name`, `options`, and `setup`.
+ * The `name` is the identifier of a Variation. `options` is a Seq of options that
+ * will be used for a query. Basically, a query will be executed with every option
+ * defined in the list of `options`. `setup` defines the needed action for every
+ * option. For example, the following Variation is used to change the number of shuffle
+ * partitions of a query. The name of the Variation is "shufflePartitions". There are
+ * two options, 200 and 2000. The setup is used to set the value of property
+ * "spark.sql.shuffle.partitions".
+ *
+ * {{{
+ *   Variation("shufflePartitions", Seq("200", "2000")) {
+ *     case num => sqlContext.setConf("spark.sql.shuffle.partitions", num)
+ *   }
+ * }}}
+ */
 case class Variation[T](name: String, options: Seq[T])(val setup: T => Unit)
 
+/**
+ * The performance results of all given queries for a single iteration.
+ * @param timestamp The timestamp indicates when the entire experiment is started.
+ * @param datasetName The name of dataset.
+ * @param iteration The index number of the current iteration.
+ * @param tags Tags of this iteration (variations are stored at here).
+ * @param configuration Configuration properties of this iteration.
+ * @param results The performance results of queries for this iteration.
+ */
 case class ExperimentRun(
     timestamp: Long,
-    experiment: String,
+    datasetName: String,
     iteration: Int,
     tags: Map[String, String],
     configuration: BenchmarkConfiguration,
     results: Seq[BenchmarkResult])
 
-case class Benchmark(tables: Seq[Table])
-
-abstract class Experiment(
+/**
+ * The dataset of a benchmark.
+ * @param sqlContext An existing SQLContext.
+ * @param sparkVersion The version of Spark.
+ * @param dataLocation The location of the dataset used by this experiment.
+ * @param tables Tables that will be used in this experiment.
+ * @param scaleFactor The scale factor of the dataset. For some benchmarks like TPC-H
+ *                    and TPC-DS, the scale factor is a number roughly representing the
+ *                    size of raw data files. For some other benchmarks, the scale factor
+ *                    is a short string describing the scale of the dataset.
+ */
+abstract class Dataset(
     @transient sqlContext: SQLContext,
     sparkVersion: String,
     dataLocation: String,
-    resultsLocation: String,
     tables: Seq[Table],
-    scaleFactor: String,
-    collectResults: Boolean) extends Serializable {
+    scaleFactor: String) extends Serializable {
 
-  val experiment: String
+  val datasetName: String
 
   @transient val sparkContext = sqlContext.sparkContext
 
@@ -93,7 +162,11 @@ abstract class Experiment(
 
   def allStats = tablesForTest.map(_.stats).reduceLeft(_.unionAll(_))
 
-  def setupExperiment(): Unit = {
+  /**
+   * Does necessary setup work such as data generation and transformation. It needs to be
+   * called before running any query.
+   */
+  def setup(): Unit = {
     checkData()
     tablesForTest.foreach(_.createTempTable())
   }
@@ -101,19 +174,32 @@ abstract class Experiment(
   def currentConfiguration = BenchmarkConfiguration(
     sparkVersion = sparkVersion,
     scaleFactor = scaleFactor,
-    useDecimal = true,
     sqlConf = sqlContext.getAllConfs,
     sparkConf = sparkContext.getConf.getAll.toMap,
-    cores = sparkContext.defaultMinPartitions,
-    collectResults = collectResults)
+    defaultParallelism = sparkContext.defaultParallelism)
 
+  /**
+   * Starts an experiment run with a given set of queries.
+   * @param queries Queries to be executed.
+   * @param resultsLocation The location of performance results.
+   * @param includeBreakdown If it is true, breakdown results of a query will be recorded.
+   *                         Setting it to true may significantly increase the time used to
+   *                         execute a query.
+   * @param iterations The number of iterations.
+   * @param variations [[Variation]]s used in this run.
+   * @param tags Tags of this run.
+   * @return It returns a ExperimentStatus object that can be used to
+   *         track the progress of this experiment run.
+   */
   def runExperiment(
       queries: Seq[Query],
+      resultsLocation: String,
+      includeBreakdown: Boolean = false,
       iterations: Int = 3,
       variations: Seq[Variation[_]] = Seq(Variation("StandardRun", Seq("")) { _ => {} }),
       tags: Map[String, String] = Map.empty) = {
 
-    val queriesToRun = queries.map(query => QueryForTest(query, collectResults, sqlContext))
+    val queriesToRun = queries.map(query => QueryForTest(query, includeBreakdown, sqlContext))
 
     class ExperimentStatus {
       val currentResults = new collection.mutable.ArrayBuffer[BenchmarkResult]()
@@ -141,7 +227,7 @@ abstract class Experiment(
 
             val result = ExperimentRun(
               timestamp = timestamp,
-              experiment = experiment,
+              datasetName = datasetName,
               iteration = i,
               tags = currentOptions.toMap ++ tags,
               configuration = currentConfiguration,

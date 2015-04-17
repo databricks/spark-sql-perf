@@ -21,27 +21,36 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.parquet.TPCDSTableForTest
 import org.apache.spark.sql.{Column, SQLContext}
 
+/**
+ * TPC-DS benchmark's dataset.
+ * @param sqlContext An existing SQLContext.
+ * @param sparkVersion The version of Spark.
+ * @param dataLocation The location of the dataset used by this experiment.
+ * @param dsdgenDir The location of dsdgen in every worker machine.
+ * @param resultsLocation The location of performance results.
+ * @param tables Tables that will be used in this experiment.
+ * @param scaleFactor The scale factor of the dataset. For some benchmarks like TPC-H
+ *                    and TPC-DS, the scale factor is a number roughly representing the
+ *                    size of raw data files. For some other benchmarks, the scale factor
+ *                    is a short string describing the scale of the dataset.
+ */
 class TPCDS (
     @transient sqlContext: SQLContext,
     sparkVersion: String,
     dataLocation: String,
     dsdgenDir: String,
-    resultsLocation: String,
     tables: Seq[Table],
-    scaleFactor: String,
-    collectResults: Boolean)
-  extends Experiment(
+    scaleFactor: String)
+  extends Dataset(
     sqlContext,
     sparkVersion,
     dataLocation,
-    resultsLocation,
     tables,
-    scaleFactor,
-    collectResults) with Serializable {
+    scaleFactor) with Serializable {
   import sqlContext._
   import sqlContext.implicits._
 
-  override val experiment = "tpcds"
+  override val datasetName = "tpcds"
 
   def baseDir = s"$dataLocation/scaleFactor=$scaleFactor/useDecimal=true"
 
@@ -50,8 +59,8 @@ class TPCDS (
       TPCDSTableForTest(table, baseDir, scaleFactor.toInt, dsdgenDir, sqlContext))
   }
 
-  override def setupExperiment(): Unit = {
-    super.setupExperiment()
+  override def setup(): Unit = {
+    super.setup()
     setupBroadcast()
   }
 

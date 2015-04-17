@@ -45,7 +45,9 @@ case class BigDataTableForTest(
 
   @transient val sparkContext = sqlContext.sparkContext
 
-  override def generate(): Unit = ???
+  override def generate(): Unit =
+    throw new UnsupportedOperationException(
+      "Generate data for BigDataBenchmark has not been implemented")
 }
 
 case class Tables(sqlContext: SQLContext) {

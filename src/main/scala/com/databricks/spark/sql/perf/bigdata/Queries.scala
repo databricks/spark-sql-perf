@@ -20,68 +20,94 @@ import com.databricks.spark.sql.perf.Query
 
 object Queries {
   val queries1to3 = Seq(
-    Query("q1A",
-      """
+    Query(
+      name = "q1A",
+      sqlText =
+        """
         |SELECT
         |  pageURL,
         |  pageRank
         |FROM rankings
         |WHERE
         |  pageRank > 1000
-      """.stripMargin),
+        """.stripMargin,
+      description = "",
+      collectResults = false),
 
-    Query("q1B",
-      """
+    Query(
+      name = "q1B",
+      sqlText =
+        """
         |SELECT
         |  pageURL,
         |  pageRank
         |FROM rankings
         |WHERE
         |  pageRank > 100
-      """.stripMargin),
+        """.stripMargin,
+      description = "",
+      collectResults = false),
 
-    Query("q1C",
-      """
+    Query(
+      name = "q1C",
+      sqlText =
+        """
         |SELECT
         |  pageURL,
         |  pageRank
         |FROM rankings
         |WHERE
         |  pageRank > 10
-      """.stripMargin),
+        """.stripMargin,
+      description = "",
+      collectResults = false),
 
-    Query("q2A",
-      """
+    Query(
+      name = "q2A",
+      sqlText =
+        """
         |SELECT
         |  SUBSTR(sourceIP, 1, 8),
         |  SUM(adRevenue)
         |FROM uservisits
         |GROUP BY
         |  SUBSTR(sourceIP, 1, 8)
-      """.stripMargin),
+        """.stripMargin,
+      description = "",
+      collectResults = false),
 
-    Query("q2B",
-      """
+    Query(
+      name = "q2B",
+      sqlText =
+        """
         |SELECT
         |  SUBSTR(sourceIP, 1, 10),
         |  SUM(adRevenue)
         |FROM uservisits
         |GROUP BY
         |  SUBSTR(sourceIP, 1, 10)
-      """.stripMargin),
+        """.stripMargin,
+      description = "",
+      collectResults = false),
 
-    Query("q2C",
-      """
+    Query(
+      name = "q2C",
+      sqlText =
+        """
         |SELECT
         |  SUBSTR(sourceIP, 1, 12),
         |  SUM(adRevenue)
         |FROM uservisits
         |GROUP BY
         |  SUBSTR(sourceIP, 1, 12)
-      """.stripMargin),
+        """.stripMargin,
+      description = "",
+      collectResults = false),
 
-    Query("q3A",
-      """
+    Query(
+      name = "q3A",
+      sqlText =
+        """
         |SELECT sourceIP, totalRevenue, avgPageRank
         |FROM
         |  (SELECT sourceIP,
@@ -93,10 +119,14 @@ object Queries {
         |      AND UV.visitDate < "1980-04-01"
         |    GROUP BY UV.sourceIP) tmp
         |ORDER BY totalRevenue DESC LIMIT 1
-      """.stripMargin),
+        """.stripMargin,
+      description = "",
+      collectResults = false),
 
-    Query("q3B",
-      """
+    Query(
+      name = "q3B",
+      sqlText =
+        """
         |SELECT sourceIP, totalRevenue, avgPageRank
         |FROM
         |  (SELECT sourceIP,
@@ -108,10 +138,13 @@ object Queries {
         |      AND UV.visitDate < "1983-01-01"
         |    GROUP BY UV.sourceIP) tmp
         |ORDER BY totalRevenue DESC LIMIT 1
-      """.stripMargin),
+        """.stripMargin,
+      description = "",
+      collectResults = false),
 
-    Query("q3C",
-      """
+    Query(
+      name = "q3C",
+      sqlText = """
         |SELECT sourceIP, totalRevenue, avgPageRank
         |FROM
         |  (SELECT sourceIP,
@@ -123,6 +156,8 @@ object Queries {
         |      AND UV.visitDate < "2010-01-01"
         |    GROUP BY UV.sourceIP) tmp
         |ORDER BY totalRevenue DESC LIMIT 1
-      """.stripMargin)
+        """.stripMargin,
+      description = "",
+      collectResults = false)
   )
 }

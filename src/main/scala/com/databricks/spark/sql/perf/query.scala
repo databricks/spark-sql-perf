@@ -19,11 +19,11 @@ package com.databricks.spark.sql.perf
 import org.apache.spark.sql.SQLContext
 import org.apache.spark.sql.catalyst.analysis.UnresolvedRelation
 
-case class Query(name: String, sqlText: String)
+case class Query(name: String, sqlText: String, description: String, collectResults: Boolean)
 
 case class QueryForTest(
     query: Query,
-    collectResults: Boolean,
+    includeBreakdown: Boolean,
     @transient sqlContext: SQLContext) {
   @transient val sparkContext = sqlContext.sparkContext
 
@@ -54,21 +54,40 @@ case class QueryForTest(
       sparkContext.setJobDescription(s"Query: ${query.name}, $description")
       val queryExecution = dataFrame.queryExecution
       // We are not counting the time of ScalaReflection.convertRowToScala.
-      val execution = if (collectResults) {
-        benchmarkMs { queryExecution.toRdd.map(_.copy()).collect() }
+      val parsingTime = benchmarkMs { queryExecution.logical }
+      val analysisTime = benchmarkMs { queryExecution.analyzed }
+      val optimizationTime = benchmarkMs { queryExecution.optimizedPlan }
+      val planningTime = benchmarkMs { queryExecution.executedPlan }
+
+      val breakdownResults = if (includeBreakdown) {
+        val depth = queryExecution.executedPlan.treeString.split("\n").size
+        val physicalOperators = (0 until depth).map(i => (i, queryExecution.executedPlan(i)))
+        physicalOperators.map {
+          case (index, node) =>
+            val executionTime = benchmarkMs { node.execute().map(_.copy()).foreach(row => Unit) }
+            BreakdownResult(node.nodeName, node.simpleString, index, executionTime)
+        }
       } else {
-        benchmarkMs { queryExecution.toRdd.map(_.copy()).foreach {row => Unit } }
+        Seq.empty[BreakdownResult]
+      }
+
+      // The executionTime for the entire query includes the time of type conversion from catalyst to scala.
+      val executionTime = if (query.collectResults) {
+        benchmarkMs { dataFrame.rdd.collect() }
+      } else {
+        benchmarkMs { dataFrame.rdd.foreach {row => Unit } }
       }
 
       BenchmarkResult(
         name = query.name,
         joinTypes = joinTypes,
         tables = tablesInvolved,
-        parsingTime = benchmarkMs { queryExecution.logical },
-        analysisTime = benchmarkMs { queryExecution.analyzed },
-        optimizationTime = benchmarkMs { queryExecution.optimizedPlan },
-        planningTime = benchmarkMs { queryExecution.executedPlan },
-        executionTime = execution)
+        parsingTime = parsingTime,
+        analysisTime = analysisTime,
+        optimizationTime = optimizationTime,
+        planningTime = planningTime,
+        executionTime = executionTime,
+        breakdownResults)
     } catch {
       case e: Exception =>
         throw new RuntimeException(

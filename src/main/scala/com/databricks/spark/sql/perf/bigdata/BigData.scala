@@ -25,22 +25,18 @@ class BigData (
     @transient sqlContext: SQLContext,
     sparkVersion: String,
     dataLocation: String,
-    resultsLocation: String,
     tables: Seq[Table],
-    scaleFactor: String,
-    collectResults: Boolean)
-  extends Experiment(
+    scaleFactor: String)
+  extends Dataset(
     sqlContext,
     sparkVersion,
     dataLocation,
-    resultsLocation,
     tables,
-    scaleFactor,
-    collectResults) with Serializable {
+    scaleFactor) with Serializable {
   import sqlContext._
   import sqlContext.implicits._
 
-  override val experiment = "bigDataBenchmark"
+  override val datasetName = "bigDataBenchmark"
 
   override def createTablesForTest(tables: Seq[Table]): Seq[TableForTest] = {
     tables.map(table =>
