@@ -22,8 +22,7 @@ val tpcds =
     dataLocation = <the location of data>,
     dsdgenDir = <the location of dsdgen in every worker>,
     tables = tables.tables,
-    scaleFactor = <scale factor>,
-    includeBreakdown = false)
+    scaleFactor = <scale factor>)
 ```
 
 After a `TPCDS` object is created, tables of it can be setup by calling
