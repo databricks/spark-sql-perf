@@ -40,7 +40,8 @@ class TPCDS (
     dataLocation: String,
     dsdgenDir: String,
     tables: Seq[Table],
-    scaleFactor: String)
+    scaleFactor: String,
+    userSpecifiedBaseDir: Option[String] = None)
   extends Dataset(
     sqlContext,
     sparkVersion,
@@ -52,7 +53,8 @@ class TPCDS (
 
   override val datasetName = "tpcds"
 
-  def baseDir = s"$dataLocation/scaleFactor=$scaleFactor/useDecimal=true"
+  lazy val baseDir =
+    userSpecifiedBaseDir.getOrElse(s"$dataLocation/scaleFactor=$scaleFactor/useDecimal=true")
 
   override def createTablesForTest(tables: Seq[Table]): Seq[TableForTest] = {
     tables.map(table =>
