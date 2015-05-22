@@ -16,12 +16,13 @@
 
 package com.databricks.spark.sql.perf
 
+import scala.concurrent._
+import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
+
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{Path, FileSystem}
 import org.apache.spark.sql.SQLContext
-
-import scala.concurrent._
-import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
  * The configuration used for an iteration of an experiment.
@@ -254,6 +255,11 @@ abstract class Dataset(
         currentMessages +=  s"Results stored to: $resultsLocation/$timestamp"
         resultsTable.toJSON.coalesce(1).saveAsTextFile(s"$resultsLocation/$timestamp")
         resultsTable
+      }
+
+      /** Waits for the finish of the experiment. */
+      def waitForFinish(timeoutInSeconds: Int) = {
+        Await.result(resultsFuture, timeoutInSeconds.seconds)
       }
 
       /** Returns results from an actively running experiment. */
