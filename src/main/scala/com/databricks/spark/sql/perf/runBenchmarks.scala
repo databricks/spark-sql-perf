@@ -143,7 +143,7 @@ abstract class Dataset(
 
   def checkData(): Unit = {
     tablesForTest.foreach { table =>
-      val fs = FileSystem.get(new java.net.URI(table.outputDir), new Configuration())
+      val fs = FileSystem.get(new java.net.URI(table.outputDir), sparkContext.hadoopConfiguration)
       val exists = fs.exists(new Path(table.outputDir))
       val wasSuccessful = fs.exists(new Path(s"${table.outputDir}/_SUCCESS"))
 
