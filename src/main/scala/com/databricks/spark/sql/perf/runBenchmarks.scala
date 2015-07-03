@@ -127,15 +127,13 @@ case class ExperimentRun(
  *                    is a short string describing the scale of the dataset.
  */
 abstract class Dataset(
-    @transient sqlContext: SQLContext,
+    @transient val sqlContext: SQLContext,
     sparkVersion: String,
     dataLocation: String,
     tables: Seq[Table],
-    scaleFactor: String) extends Serializable {
+    scaleFactor: String) extends Serializable with QuerySet {
 
   val datasetName: String
-
-  @transient val sparkContext = sqlContext.sparkContext
 
   def createTablesForTest(tables: Seq[Table]): Seq[TableForTest]
 
@@ -181,7 +179,7 @@ abstract class Dataset(
 
   /**
    * Starts an experiment run with a given set of queries.
-   * @param queries Queries to be executed.
+   * @param queriesToRun Queries to be executed.
    * @param resultsLocation The location of performance results.
    * @param includeBreakdown If it is true, breakdown results of a query will be recorded.
    *                         Setting it to true may significantly increase the time used to
@@ -193,14 +191,12 @@ abstract class Dataset(
    *         track the progress of this experiment run.
    */
   def runExperiment(
-      queries: Seq[Query],
+      queriesToRun: Seq[Query],
       resultsLocation: String,
       includeBreakdown: Boolean = false,
       iterations: Int = 3,
       variations: Seq[Variation[_]] = Seq(Variation("StandardRun", Seq("")) { _ => {} }),
       tags: Map[String, String] = Map.empty) = {
-
-    val queriesToRun = queries.map(query => QueryForTest(query, includeBreakdown, sqlContext))
 
     class ExperimentStatus {
       val currentResults = new collection.mutable.ArrayBuffer[BenchmarkResult]()
@@ -237,7 +233,7 @@ abstract class Dataset(
                 currentMessages += s"Running query ${q.name} $setup"
 
                 currentQuery = q.name
-                val singleResult = try q.benchmark(setup) :: Nil catch {
+                val singleResult = try q.benchmark(includeBreakdown, setup) :: Nil catch {
                   case e: Exception =>
                     currentMessages += s"Failed to run query ${q.name}: $e"
                     Nil
@@ -286,6 +282,7 @@ abstract class Dataset(
         } else {
           "Running"
         }
+
 
       override def toString =
         s"""

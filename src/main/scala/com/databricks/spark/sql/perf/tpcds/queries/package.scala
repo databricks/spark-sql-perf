@@ -15,8 +15,3 @@
  */
 
 package com.databricks.spark.sql.perf.tpcds
-
-package object queries {
-  val impalaKitQueries = ImpalaKitQueries.impalaKitQueries
-  val q7DerivedQueries = SimpleQueries.q7Derived
-}

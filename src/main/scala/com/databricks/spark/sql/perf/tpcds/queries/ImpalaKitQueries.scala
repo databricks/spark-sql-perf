@@ -16,9 +16,9 @@
 
 package com.databricks.spark.sql.perf.tpcds.queries
 
-import com.databricks.spark.sql.perf.Query
+import com.databricks.spark.sql.perf.QuerySet
 
-object ImpalaKitQueries {
+trait ImpalaKitQueries extends QuerySet {
   // Queries are from
   // https://github.com/cloudera/impala-tpcds-kit/tree/master/queries-sql92-modified/queries
   val queries = Seq(

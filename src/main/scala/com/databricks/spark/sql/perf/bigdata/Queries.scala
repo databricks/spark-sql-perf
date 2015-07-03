@@ -16,9 +16,9 @@
 
 package com.databricks.spark.sql.perf.bigdata
 
-import com.databricks.spark.sql.perf.Query
+import com.databricks.spark.sql.perf.QuerySet
 
-object Queries {
+trait Queries extends QuerySet {
   val queries1to3 = Seq(
     Query(
       name = "q1A",
