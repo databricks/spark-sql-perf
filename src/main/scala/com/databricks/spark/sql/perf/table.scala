@@ -32,6 +32,35 @@ import org.apache.spark.sql.types._
 import parquet.hadoop.ParquetOutputFormat
 import parquet.hadoop.util.ContextUtil
 
+trait TableCreator {
+
+  def tables: Seq[Table]
+
+  def createTablesForTest(tables: Seq[Table]): Seq[TableForTest]
+
+  val tablesForTest: Seq[TableForTest] = createTablesForTest(tables)
+
+  def checkData(): Unit = {
+    tablesForTest.foreach { table =>
+      val fs = FileSystem.get(new java.net.URI(table.outputDir), new Configuration())
+      val exists = fs.exists(new Path(table.outputDir))
+      val wasSuccessful = fs.exists(new Path(s"${table.outputDir}/_SUCCESS"))
+
+      if (!wasSuccessful) {
+        if (exists) {
+          println(s"Table '${table.name}' not generated successfully, regenerating.")
+        } else {
+          println(s"Table '${table.name}' does not exist, generating.")
+        }
+        fs.delete(new Path(table.outputDir), true)
+        table.generate()
+      } else {
+        println(s"Table ${table.name} already exists.")
+      }
+    }
+  }
+}
+
 abstract class TableType
 case object UnpartitionedTable extends TableType
 case class PartitionedTable(partitionColumn: String) extends TableType
@@ -47,7 +76,7 @@ abstract class TableForTest(
 
   val name = table.name
 
-  val outputDir = s"$baseDir/parquet/${name}"
+  val outputDir = s"$baseDir/parquet/$name"
 
   def fromCatalog = sqlContext.table(name)
 
@@ -57,16 +86,5 @@ abstract class TableForTest(
       count("*") as "numRows",
       lit(fromCatalog.queryExecution.optimizedPlan.statistics.sizeInBytes.toLong) as "sizeInBytes")
 
-  def createTempTable(): Unit = {
-    sqlContext.sql(
-      s"""
-          |CREATE TEMPORARY TABLE ${name}
-          |USING org.apache.spark.sql.parquet
-          |OPTIONS (
-          |  path '${outputDir}'
-          |)
-        """.stripMargin)
-  }
-
-  def generate(): Unit
+  def generate()
 }

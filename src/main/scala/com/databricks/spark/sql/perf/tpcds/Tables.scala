@@ -107,12 +107,14 @@ case class TPCDSTableForTest(
         val output = convertedData.queryExecution.analyzed.output
         val job = new Job(sqlContext.sparkContext.hadoopConfiguration)
 
+
+        //HAX
         val writeSupport =
-          if (schema.fields.map(_.dataType).forall(_.isPrimitive)) {
-            classOf[org.apache.spark.sql.parquet.MutableRowWriteSupport]
-          } else {
+        //  if (schema.fields.map(_.dataType).forall(_.isPrimitive)) {
+        //    classOf[org.apache.spark.sql.parquet.MutableRowWriteSupport]
+        //  } else {
             classOf[org.apache.spark.sql.parquet.RowWriteSupport]
-          }
+       //   }
 
         ParquetOutputFormat.setWriteSupportClass(job, writeSupport)
 

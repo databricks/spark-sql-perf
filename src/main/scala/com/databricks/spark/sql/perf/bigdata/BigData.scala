@@ -21,22 +21,14 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.parquet.TPCDSTableForTest
 import org.apache.spark.sql.{Column, SQLContext}
 
-class BigData (
+class BigDataBenchmark (
     @transient sqlContext: SQLContext,
-    sparkVersion: String,
     dataLocation: String,
-    tables: Seq[Table],
+    val tables: Seq[Table],
     scaleFactor: String)
-  extends Dataset(
-    sqlContext,
-    sparkVersion,
-    dataLocation,
-    tables,
-    scaleFactor) with Serializable {
+  extends Benchmark(sqlContext) with Serializable with TableCreator {
   import sqlContext._
   import sqlContext.implicits._
-
-  override val datasetName = "bigDataBenchmark"
 
   override def createTablesForTest(tables: Seq[Table]): Seq[TableForTest] = {
     tables.map(table =>

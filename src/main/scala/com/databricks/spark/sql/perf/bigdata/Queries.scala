@@ -16,9 +16,11 @@
 
 package com.databricks.spark.sql.perf.bigdata
 
-import com.databricks.spark.sql.perf.QuerySet
+import com.databricks.spark.sql.perf.Benchmark
 
-trait Queries extends QuerySet {
+trait Queries {
+  self: Benchmark =>
+
   val queries1to3 = Seq(
     Query(
       name = "q1A",

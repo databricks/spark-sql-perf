@@ -16,9 +16,11 @@
 
 package com.databricks.spark.sql.perf.tpcds.queries
 
-import com.databricks.spark.sql.perf.QuerySet
+import com.databricks.spark.sql.perf.Benchmark
 
-trait SimpleQueries extends QuerySet{
+trait SimpleQueries {
+  self: Benchmark =>
+
    val q7Derived = Seq(
      ("q7-simpleScan",
        """

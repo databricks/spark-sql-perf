@@ -39,19 +39,12 @@ class TPCDS (
     sparkVersion: String,
     dataLocation: String,
     dsdgenDir: String,
-    tables: Seq[Table],
+    val tables: Seq[Table],
     scaleFactor: String,
     userSpecifiedBaseDir: Option[String] = None)
-  extends Dataset(
-    sqlContext,
-    sparkVersion,
-    dataLocation,
-    tables,
-    scaleFactor) with Serializable {
+  extends Benchmark(sqlContext) with TableCreator with Serializable {
   import sqlContext._
   import sqlContext.implicits._
-
-  override val datasetName = "tpcds"
 
   lazy val baseDir =
     userSpecifiedBaseDir.getOrElse(s"$dataLocation/scaleFactor=$scaleFactor/useDecimal=true")
@@ -61,6 +54,7 @@ class TPCDS (
       TPCDSTableForTest(table, baseDir, scaleFactor.toInt, dsdgenDir, sqlContext))
   }
 
+  /*
   override def setup(): Unit = {
     super.setup()
     setupBroadcast()
@@ -79,5 +73,6 @@ class TPCDS (
     println(setQuery)
     sql(setQuery)
   }
+  */
 }
 
