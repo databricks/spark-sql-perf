@@ -90,7 +90,7 @@ case class QueryForTest(
           tableIdentifier.last
         }
       }
-      
+
       BenchmarkResult(
         name = query.name,
         joinTypes = joinTypes,

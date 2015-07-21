@@ -183,7 +183,6 @@ abstract class Dataset(
    * Starts an experiment run with a given set of queries.
    * @param queries Queries to be executed.
    * @param resultsLocation The location of performance results.
-   * @param queryOutputLocation If defined, location where queries results should be saved as parquet files
    * @param includeBreakdown If it is true, breakdown results of a query will be recorded.
    *                         Setting it to true may significantly increase the time used to
    *                         execute a query.
