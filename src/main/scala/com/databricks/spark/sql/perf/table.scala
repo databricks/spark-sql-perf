@@ -16,21 +16,9 @@
 
 package com.databricks.spark.sql.perf
 
-import java.text.SimpleDateFormat
-import java.util.Date
-
-import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.{Path, FileSystem}
-import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat
-import org.apache.hadoop.mapreduce.{OutputCommitter, TaskAttemptContext, RecordWriter, Job}
-import org.apache.spark.SerializableWritable
-import org.apache.spark.sql.{SQLContext, Column}
-import org.apache.spark.sql.catalyst.expressions._
+import org.apache.spark.sql.SQLContext
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.hive.HiveMetastoreTypes
 import org.apache.spark.sql.types._
-import parquet.hadoop.ParquetOutputFormat
-import parquet.hadoop.util.ContextUtil
 
 abstract class TableType
 case object UnpartitionedTable extends TableType
@@ -47,7 +35,7 @@ abstract class TableForTest(
 
   val name = table.name
 
-  val outputDir = s"$baseDir/parquet/${name}"
+  val outputDir = s"$baseDir/${name}"
 
   def fromCatalog = sqlContext.table(name)
 

@@ -36,7 +36,7 @@ case class QueryForTest(
     (endTime - startTime).toDouble / 1000000
   }
 
-  def benchmark(description: String = "") = {
+  def benchmark(description: String = "", queryOutputLocation: Option[String]) = {
     try {
       sparkContext.setJobDescription(s"Query: ${query.name}, $description")
       val dataFrame = sqlContext.sql(query.sqlText)
@@ -76,6 +76,8 @@ case class QueryForTest(
           tableIdentifier.last
         }
       }
+
+      queryOutputLocation.foreach(dir => dataFrame.saveAsParquetFile(s"$dir/$name.parquet"))
 
       BenchmarkResult(
         name = query.name,

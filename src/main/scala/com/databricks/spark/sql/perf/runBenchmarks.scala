@@ -183,6 +183,7 @@ abstract class Dataset(
    * Starts an experiment run with a given set of queries.
    * @param queries Queries to be executed.
    * @param resultsLocation The location of performance results.
+   * @param queryOutputLocation If defined, location where queries results should be saved as parquet files
    * @param includeBreakdown If it is true, breakdown results of a query will be recorded.
    *                         Setting it to true may significantly increase the time used to
    *                         execute a query.
@@ -195,6 +196,7 @@ abstract class Dataset(
   def runExperiment(
       queries: Seq[Query],
       resultsLocation: String,
+      queryOutputLocation: Option[String] = None,
       includeBreakdown: Boolean = false,
       iterations: Int = 3,
       variations: Seq[Variation[_]] = Seq(Variation("StandardRun", Seq("")) { _ => {} }),
@@ -237,7 +239,7 @@ abstract class Dataset(
                 currentMessages += s"Running query ${q.name} $setup"
 
                 currentQuery = q.name
-                val singleResult = try q.benchmark(setup) :: Nil catch {
+                val singleResult = try q.benchmark(setup, queryOutputLocation) :: Nil catch {
                   case e: Exception =>
                     currentMessages += s"Failed to run query ${q.name}: $e"
                     Nil
