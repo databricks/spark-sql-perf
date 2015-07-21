@@ -16,7 +16,7 @@
 
 package com.databricks.spark.sql.perf.tpcds.queries
 
-import com.databricks.spark.sql.perf.Query
+import com.databricks.spark.sql.perf.{ForeachResults, Query}
 
 object SimpleQueries {
    val q7Derived = Seq(
@@ -137,6 +137,6 @@ object SimpleQueries {
               |-- end query 1 in stream 0 using template query7.tpl
             """.stripMargin)
    ).map {
-     case (name, sqlText) => Query(name = name, sqlText = sqlText, description = "", collectResults = false)
+     case (name, sqlText) => Query(name = name, sqlText = sqlText, description = "", executionMode = ForeachResults)
    }
 }

@@ -19,7 +19,21 @@ package com.databricks.spark.sql.perf
 import org.apache.spark.sql.SQLContext
 import org.apache.spark.sql.catalyst.analysis.UnresolvedRelation
 
-case class Query(name: String, sqlText: String, description: String, collectResults: Boolean)
+/**
+ * The execution mode of a benchmark:
+ * - CollectResults: Benchmark run by collecting queries results
+ *   (e.g. rdd.collect())
+ * - ForeachResults: Benchmark run by iterating through the queries results rows
+ *   (e.g. rdd.foreach(row => Unit))
+ * - WriteParquet(location): Benchmark run by saving the output of each query as a
+ *   parquet file at the specified location
+ */
+abstract class ExecutionMode
+case object CollectResults extends ExecutionMode
+case object ForeachResults extends ExecutionMode
+case class WriteParquet(location: String) extends ExecutionMode
+
+case class Query(name: String, sqlText: String, description: String, executionMode: ExecutionMode)
 
 case class QueryForTest(
     query: Query,
@@ -60,10 +74,10 @@ case class QueryForTest(
       }
 
       // The executionTime for the entire query includes the time of type conversion from catalyst to scala.
-      val executionTime = if (query.collectResults) {
-        benchmarkMs { dataFrame.rdd.collect() }
-      } else {
-        benchmarkMs { dataFrame.rdd.foreach {row => Unit } }
+      val executionTime = query.executionMode match {
+        case CollectResults => benchmarkMs { dataFrame.rdd.collect() }
+        case ForeachResults => benchmarkMs { dataFrame.rdd.foreach { row => Unit } }
+        case WriteParquet(location) => benchmarkMs { dataFrame.saveAsParquetFile(s"$location/${query.name}.parquet") }
       }
 
       val joinTypes = dataFrame.queryExecution.executedPlan.collect {

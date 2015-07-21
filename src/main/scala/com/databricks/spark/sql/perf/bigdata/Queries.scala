@@ -16,7 +16,7 @@
 
 package com.databricks.spark.sql.perf.bigdata
 
-import com.databricks.spark.sql.perf.Query
+import com.databricks.spark.sql.perf.{ForeachResults, Query}
 
 object Queries {
   val queries1to3 = Seq(
@@ -32,7 +32,7 @@ object Queries {
         |  pageRank > 1000
         """.stripMargin,
       description = "",
-      collectResults = false),
+      executionMode = ForeachResults),
 
     Query(
       name = "q1B",
@@ -46,7 +46,7 @@ object Queries {
         |  pageRank > 100
         """.stripMargin,
       description = "",
-      collectResults = false),
+      executionMode = ForeachResults),
 
     Query(
       name = "q1C",
@@ -60,7 +60,7 @@ object Queries {
         |  pageRank > 10
         """.stripMargin,
       description = "",
-      collectResults = false),
+      executionMode = ForeachResults),
 
     Query(
       name = "q2A",
@@ -74,7 +74,7 @@ object Queries {
         |  SUBSTR(sourceIP, 1, 8)
         """.stripMargin,
       description = "",
-      collectResults = false),
+      executionMode = ForeachResults),
 
     Query(
       name = "q2B",
@@ -88,7 +88,7 @@ object Queries {
         |  SUBSTR(sourceIP, 1, 10)
         """.stripMargin,
       description = "",
-      collectResults = false),
+      executionMode = ForeachResults),
 
     Query(
       name = "q2C",
@@ -102,7 +102,7 @@ object Queries {
         |  SUBSTR(sourceIP, 1, 12)
         """.stripMargin,
       description = "",
-      collectResults = false),
+      executionMode = ForeachResults),
 
     Query(
       name = "q3A",
@@ -121,7 +121,7 @@ object Queries {
         |ORDER BY totalRevenue DESC LIMIT 1
         """.stripMargin,
       description = "",
-      collectResults = false),
+      executionMode = ForeachResults),
 
     Query(
       name = "q3B",
@@ -140,7 +140,7 @@ object Queries {
         |ORDER BY totalRevenue DESC LIMIT 1
         """.stripMargin,
       description = "",
-      collectResults = false),
+      executionMode = ForeachResults),
 
     Query(
       name = "q3C",
@@ -158,6 +158,6 @@ object Queries {
         |ORDER BY totalRevenue DESC LIMIT 1
         """.stripMargin,
       description = "",
-      collectResults = false)
+      executionMode = ForeachResults)
   )
 }

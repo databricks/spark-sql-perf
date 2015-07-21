@@ -16,7 +16,7 @@
 
 package com.databricks.spark.sql.perf.tpcds.queries
 
-import com.databricks.spark.sql.perf.Query
+import com.databricks.spark.sql.perf.{CollectResults, Query}
 
 object ImpalaKitQueries {
   // Queries are from
@@ -1024,7 +1024,7 @@ object ImpalaKitQueries {
                  |from store_sales
                """.stripMargin)
   ).map {
-    case (name, sqlText) => Query(name, sqlText, description = "", collectResults = true)
+    case (name, sqlText) => Query(name, sqlText, description = "", executionMode = CollectResults)
   }
   val queriesMap = queries.map(q => q.name -> q).toMap
 
@@ -1463,7 +1463,7 @@ object ImpalaKitQueries {
         |from store_sales
       """.stripMargin)
   ).map {
-    case (name, sqlText) => Query(name, sqlText, description = "original query", collectResults = true)
+    case (name, sqlText) => Query(name, sqlText, description = "original query", executionMode = CollectResults)
   }
 
   val interactiveQueries =
