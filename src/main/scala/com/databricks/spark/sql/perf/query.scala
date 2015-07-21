@@ -50,7 +50,7 @@ case class QueryForTest(
     (endTime - startTime).toDouble / 1000000
   }
 
-  def benchmark(description: String = "", queryOutputLocation: Option[String]) = {
+  def benchmark(description: String = "") = {
     try {
       sparkContext.setJobDescription(s"Query: ${query.name}, $description")
       val dataFrame = sqlContext.sql(query.sqlText)
@@ -77,7 +77,7 @@ case class QueryForTest(
       val executionTime = query.executionMode match {
         case CollectResults => benchmarkMs { dataFrame.rdd.collect() }
         case ForeachResults => benchmarkMs { dataFrame.rdd.foreach { row => Unit } }
-        case WriteParquet(location) => benchmarkMs { dataFrame.saveAsParquetFile(s"$location/${query.name}.parquet") }
+        case WriteParquet(location) => benchmarkMs { dataFrame.saveAsParquetFile(s"$location/$name.parquet") }
       }
 
       val joinTypes = dataFrame.queryExecution.executedPlan.collect {
@@ -90,9 +90,7 @@ case class QueryForTest(
           tableIdentifier.last
         }
       }
-
-      queryOutputLocation.foreach(dir => dataFrame.saveAsParquetFile(s"$dir/$name.parquet"))
-
+      
       BenchmarkResult(
         name = query.name,
         joinTypes = joinTypes,

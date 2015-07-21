@@ -196,7 +196,6 @@ abstract class Dataset(
   def runExperiment(
       queries: Seq[Query],
       resultsLocation: String,
-      queryOutputLocation: Option[String] = None,
       includeBreakdown: Boolean = false,
       iterations: Int = 3,
       variations: Seq[Variation[_]] = Seq(Variation("StandardRun", Seq("")) { _ => {} }),
@@ -239,7 +238,7 @@ abstract class Dataset(
                 currentMessages += s"Running query ${q.name} $setup"
 
                 currentQuery = q.name
-                val singleResult = try q.benchmark(setup, queryOutputLocation) :: Nil catch {
+                val singleResult = try q.benchmark(setup) :: Nil catch {
                   case e: Exception =>
                     currentMessages += s"Failed to run query ${q.name}: $e"
                     Nil
