@@ -16,6 +16,7 @@
 
 package com.databricks.spark.sql.perf.tpcds.queries
 
+import com.databricks.spark.sql.perf.ExecutionMode.CollectResults
 import com.databricks.spark.sql.perf.Query
 
 object ImpalaKitQueries {
@@ -1024,7 +1025,7 @@ object ImpalaKitQueries {
                  |from store_sales
                """.stripMargin)
   ).map {
-    case (name, sqlText) => Query(name, sqlText, description = "", collectResults = true)
+    case (name, sqlText) => Query(name, sqlText, description = "", executionMode = CollectResults)
   }
   val queriesMap = queries.map(q => q.name -> q).toMap
 
@@ -1462,8 +1463,8 @@ object ImpalaKitQueries {
         |  max(ss_promo_sk) as max_ss_promo_sk
         |from store_sales
       """.stripMargin)
-  ).map {
-    case (name, sqlText) => Query(name, sqlText, description = "original query", collectResults = true)
+  ).map { case (name, sqlText) =>
+    Query(name, sqlText, description = "original query", executionMode = CollectResults)
   }
 
   val interactiveQueries =

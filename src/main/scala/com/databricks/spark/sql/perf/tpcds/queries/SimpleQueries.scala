@@ -16,6 +16,7 @@
 
 package com.databricks.spark.sql.perf.tpcds.queries
 
+import com.databricks.spark.sql.perf.ExecutionMode.ForeachResults
 import com.databricks.spark.sql.perf.Query
 
 object SimpleQueries {
@@ -136,7 +137,7 @@ object SimpleQueries {
               |limit 100
               |-- end query 1 in stream 0 using template query7.tpl
             """.stripMargin)
-   ).map {
-     case (name, sqlText) => Query(name = name, sqlText = sqlText, description = "", collectResults = false)
+   ).map { case (name, sqlText) =>
+     Query(name = name, sqlText = sqlText, description = "", executionMode = ForeachResults)
    }
 }
