@@ -16,7 +16,8 @@
 
 package com.databricks.spark.sql.perf.bigdata
 
-import com.databricks.spark.sql.perf.{ForeachResults, Query}
+import com.databricks.spark.sql.perf.ExecutionMode.ForeachResults
+import com.databricks.spark.sql.perf.Query
 
 object Queries {
   val queries1to3 = Seq(
