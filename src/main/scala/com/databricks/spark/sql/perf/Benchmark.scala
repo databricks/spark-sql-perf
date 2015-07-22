@@ -24,7 +24,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{Path, FileSystem}
-import org.apache.spark.sql.{DataFrame, SQLContext}
+import org.apache.spark.sql.{AnalysisException, DataFrame, SQLContext}
 
 import org.apache.spark.sql.catalyst.plans.logical.Subquery
 
@@ -49,7 +49,7 @@ abstract class Benchmark(@transient protected val sqlContext: SQLContext)
 
   protected def sparkContext = sqlContext.sparkContext
 
-  implicit def toOption[A](a: A) = Option(a)
+  protected implicit def toOption[A](a: A) = Option(a)
 
   def currentConfiguration = BenchmarkConfiguration(
     sqlConf = sqlContext.getAllConfs,
@@ -76,14 +76,25 @@ abstract class Benchmark(@transient protected val sqlContext: SQLContext)
    */
   case class Variation[T](name: String, options: Seq[T])(val setup: T => Unit)
 
+  val codegen = Variation("codegen", Seq("on", "off")) {
+    case "off" => sqlContext.setConf("spark.sql.codegen", "false")
+    case "on" => sqlContext.setConf("spark.sql.codegen", "true")
+  }
+
+  val unsafe = Variation("unsafe", Seq("on", "off")) {
+    case "off" => sqlContext.setConf("spark.sql.unsafe.enabled", "false")
+    case "on" => sqlContext.setConf("spark.sql.unsafe.enabled", "true")
+  }
+
   /**
    * Starts an experiment run with a given set of queries.
-   * @param queriesToRun Queries to be executed.
+   * @param queriesToRun a list of queries to be executed.
    * @param includeBreakdown If it is true, breakdown results of a query will be recorded.
    *                         Setting it to true may significantly increase the time used to
    *                         execute a query.
-   * @param iterations The number of iterations.
-   * @param variations [[Variation]]s used in this run.
+   * @param iterations The number of iterations to run of each query.
+   * @param variations [[Variation]]s used in this run.  The cross product of all variations will be
+   *                   run for each query * iteration.
    * @param tags Tags of this run.
    * @return It returns a ExperimentStatus object that can be used to
    *         track the progress of this experiment run.
@@ -115,6 +126,29 @@ abstract class Benchmark(@transient protected val sqlContext: SQLContext)
       val timestamp = System.currentTimeMillis()
       val combinations = cartesianProduct(variations.map(l => (0 until l.options.size).toList).toList)
       val resultsFuture = Future {
+        queriesToRun.flatMap { query =>
+          query.newDataFrame().queryExecution.logical.collect {
+            case UnresolvedRelation(Seq(name), _) => name
+          }
+        }.distinct.foreach { name =>
+          try {
+            sqlContext.table(name)
+            currentMessages += s"Table $name exists."
+          } catch {
+            case ae: AnalysisException =>
+              val table = allTables
+                .find(_.name == name)
+                .getOrElse(sys.error(s"Couldn't read table $name and its not defined as a Benchmark.Table."))
+
+              currentMessages += s"Creating table: $name"
+              table.data
+                .write
+                .mode("overwrite")
+                .saveAsTable(name)
+          }
+        }
+
+
         val results = (1 to iterations).flatMap { i =>
           combinations.map { setup =>
             val currentOptions = variations.asInstanceOf[Seq[Variation[Any]]].zip(setup).map {
@@ -142,7 +176,8 @@ abstract class Benchmark(@transient protected val sqlContext: SQLContext)
                   failures += 1
                   currentMessages += s"Query '${q.name}' failed: ${f.message}"
                 }
-                singleResult.executionTime.foreach(time => currentMessages += s"Exec time: $time")
+                singleResult.executionTime.foreach(time =>
+                  currentMessages += s"Exec time: ${time / 1000}s")
                 currentResults += singleResult
                 singleResult :: Nil
               })
@@ -184,7 +219,7 @@ abstract class Benchmark(@transient protected val sqlContext: SQLContext)
         tbl
       }
 
-      def tail(n: Int = 5) = {
+      def tail(n: Int = 20) = {
         currentMessages.takeRight(n).mkString("\n")
       }
 
@@ -209,7 +244,7 @@ abstract class Benchmark(@transient protected val sqlContext: SQLContext)
            |<b>Run time:</b> ${(System.currentTimeMillis() - timestamp) / 1000}s<br/>
            |
            |<h2>Current Query: $currentQuery</h2>
-           |Runtime: ${(System.currentTimeMillis() - startTime) / 1000}s
+           |Runtime: ${(System.currentTimeMillis() - startTime) / 1000}s<br/>
            |$currentConfig<br/>
            |<h3>QueryPlan</h3>
            |<pre>
@@ -223,6 +258,79 @@ abstract class Benchmark(@transient protected val sqlContext: SQLContext)
          """.stripMargin
     }
     new ExperimentStatus
+  }
+
+  case class Table(
+      name: String,
+      data: DataFrame)
+
+  import reflect.runtime._, universe._
+  import reflect.runtime._
+  import universe._
+
+  private val runtimeMirror = universe.runtimeMirror(getClass.getClassLoader)
+  val myType = runtimeMirror.classSymbol(getClass).toType
+
+  def singleTables =
+    myType.declarations
+      .filter(m => m.isMethod)
+      .map(_.asMethod)
+      .filter(_.asMethod.returnType =:= typeOf[Table])
+      .map(method => runtimeMirror.reflect(this).reflectMethod(method).apply().asInstanceOf[Table])
+
+  def groupedTables =
+    myType.declarations
+      .filter(m => m.isMethod)
+      .map(_.asMethod)
+      .filter(_.asMethod.returnType =:= typeOf[Seq[Table]])
+      .flatMap(method => runtimeMirror.reflect(this).reflectMethod(method).apply().asInstanceOf[Seq[Table]])
+
+  lazy val allTables: Seq[Table] = (singleTables ++ groupedTables).toSeq
+
+  def singleQueries =
+    myType.declarations
+      .filter(m => m.isMethod)
+      .map(_.asMethod)
+      .filter(_.asMethod.returnType =:= typeOf[Query])
+      .map(method => runtimeMirror.reflect(this).reflectMethod(method).apply().asInstanceOf[Query])
+
+  def groupedQueries =
+    myType.declarations
+      .filter(m => m.isMethod)
+      .map(_.asMethod)
+      .filter(_.asMethod.returnType =:= typeOf[Seq[Query]])
+      .flatMap(method => runtimeMirror.reflect(this).reflectMethod(method).apply().asInstanceOf[Seq[Query]])
+
+  lazy val allQueries = (singleQueries ++ groupedQueries).toSeq
+
+  def html: String = {
+    val singleQueries =
+      myType.declarations
+        .filter(m => m.isMethod)
+        .map(_.asMethod)
+        .filter(_.asMethod.returnType =:= typeOf[Query])
+        .map(method => runtimeMirror.reflect(this).reflectMethod(method).apply().asInstanceOf[Query])
+        .mkString(",")
+    val queries =
+      myType.declarations
+      .filter(m => m.isMethod)
+      .map(_.asMethod)
+      .filter(_.asMethod.returnType =:= typeOf[Seq[Query]])
+      .map { method =>
+        val queries = runtimeMirror.reflect(this).reflectMethod(method).apply().asInstanceOf[Seq[Query]]
+        val queryList = queries.map(_.name).mkString(", ")
+        s"""
+          |<h3>${method.name}</h3>
+          |<ul>$queryList</ul>
+        """.stripMargin
+    }.mkString("\n")
+
+    s"""
+       |<h1>Spark SQL Performance Benchmarking</h1>
+       |<h2>Available Queries</h2>
+       |$singleQueries
+       |$queries
+     """.stripMargin
   }
 
   /** Factory object for benchmark queries. */

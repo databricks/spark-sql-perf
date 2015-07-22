@@ -39,7 +39,7 @@ class TPCDS (
     sparkVersion: String,
     dataLocation: String,
     dsdgenDir: String,
-    val tables: Seq[Table],
+    val tables: Seq[Table2],
     scaleFactor: String,
     userSpecifiedBaseDir: Option[String] = None)
   extends Benchmark(sqlContext) with TableCreator with Serializable {
@@ -49,7 +49,7 @@ class TPCDS (
   lazy val baseDir =
     userSpecifiedBaseDir.getOrElse(s"$dataLocation/scaleFactor=$scaleFactor/useDecimal=true")
 
-  override def createTablesForTest(tables: Seq[Table]): Seq[TableForTest] = {
+  override def createTablesForTest(tables: Seq[Table2]): Seq[TableForTest] = {
     tables.map(table =>
       TPCDSTableForTest(table, baseDir, scaleFactor.toInt, dsdgenDir, sqlContext))
   }

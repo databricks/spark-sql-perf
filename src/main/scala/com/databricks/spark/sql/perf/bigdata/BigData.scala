@@ -24,13 +24,13 @@ import org.apache.spark.sql.{Column, SQLContext}
 class BigDataBenchmark (
     @transient sqlContext: SQLContext,
     dataLocation: String,
-    val tables: Seq[Table],
+    val tables: Seq[Table2],
     scaleFactor: String)
   extends Benchmark(sqlContext) with Serializable with TableCreator {
   import sqlContext._
   import sqlContext.implicits._
 
-  override def createTablesForTest(tables: Seq[Table]): Seq[TableForTest] = {
+  override def createTablesForTest(tables: Seq[Table2]): Seq[TableForTest] = {
     tables.map(table =>
       BigDataTableForTest(table, dataLocation, scaleFactor, sqlContext))
   }

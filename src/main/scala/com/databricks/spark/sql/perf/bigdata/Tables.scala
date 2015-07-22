@@ -37,7 +37,7 @@ import parquet.hadoop.util.ContextUtil
 import scala.sys.process._
 
 case class BigDataTableForTest(
-    table: Table,
+    table: Table2,
     baseDir: String,
     scaleFactor: String,
     @transient sqlContext: SQLContext)
@@ -54,13 +54,13 @@ case class Tables(sqlContext: SQLContext) {
   import sqlContext.implicits._
 
   val tables = Seq(
-    Table("rankings",
+    Table2("rankings",
       UnpartitionedTable,
       'pageURL     .string,
       'pageRank    .int,
       'avgDuration .int),
 
-    Table("uservisits",
+    Table2("uservisits",
       UnpartitionedTable,
       'sourceIP     .string,
       'destURL      .string,
@@ -72,7 +72,7 @@ case class Tables(sqlContext: SQLContext) {
       'searchWord   .string,
       'duration     .int),
 
-    Table("documents",
+    Table2("documents",
       UnpartitionedTable,
       'line     .string)
   )

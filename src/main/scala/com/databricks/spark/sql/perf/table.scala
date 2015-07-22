@@ -34,9 +34,9 @@ import parquet.hadoop.util.ContextUtil
 
 trait TableCreator {
 
-  def tables: Seq[Table]
+  def tables: Seq[Table2]
 
-  def createTablesForTest(tables: Seq[Table]): Seq[TableForTest]
+  def createTablesForTest(tables: Seq[Table2]): Seq[TableForTest]
 
   val tablesForTest: Seq[TableForTest] = createTablesForTest(tables)
 
@@ -65,10 +65,10 @@ abstract class TableType
 case object UnpartitionedTable extends TableType
 case class PartitionedTable(partitionColumn: String) extends TableType
 
-case class Table(name: String, tableType: TableType, fields: StructField*)
+case class Table2(name: String, tableType: TableType, fields: StructField*)
 
 abstract class TableForTest(
-    table: Table,
+    table: Table2,
     baseDir: String,
     @transient sqlContext: SQLContext) extends Serializable {
 

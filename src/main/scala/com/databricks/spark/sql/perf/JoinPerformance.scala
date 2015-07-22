@@ -2,25 +2,31 @@ package com.databricks.spark.sql.perf
 
 import org.apache.spark.sql.SQLContext
 
-class JoinPerformance(sqlContext: SQLContext) extends Benchmark(sqlContext) {
-  def buildTables() = {
-    // 1.5 mb, 1 file
-    sqlContext.range(0, 1000000)
-      .repartition(1)
-      .write.mode("ignore")
-      .saveAsTable("1milints")
+trait JoinPerformance extends Benchmark {
+  // 1.5 mb, 1 file
 
+  val x = Table(
+    "1milints",
+    sqlContext.range(0, 1000000)
+      .repartition(1))
+
+  val joinTables = Seq(
     // 143.542mb, 10 files
-    sqlContext.range(0, 100000000)
-      .repartition(10)
-      .write.mode("ignore")
-      .saveAsTable("100milints")
+    Table(
+      "1bilints",
+      sqlContext.range(0, 100000000)
+        .repartition(10)),
 
     // 1.4348gb, 10 files
-    sqlContext.range(0, 1000000000)
-      .repartition(10)
-      .write.mode("ignore")
-      .saveAsTable("1bilints")
+    Table(
+      "1bilints",
+      sqlContext.range(0, 1000000000)
+      .repartition(10))
+  )
+
+  val sortMergeJoin = Variation("sortMergeJoin", Seq("on", "off")) {
+    case "off" => sqlContext.setConf("spark.sql.planner.sortMergeJoin", "false")
+    case "on" => sqlContext.setConf("spark.sql.planner.sortMergeJoin", "true")
   }
 
   val singleKeyJoins = Seq("1milints", "100milints", "1bilints").flatMap { table1 =>
@@ -33,25 +39,5 @@ class JoinPerformance(sqlContext: SQLContext) extends Benchmark(sqlContext) {
           collectResults = true)
       }
     }
-  }.filterNot(_.name contains "FULL OUTER JOIN-1milints-1bilints")
-
-  val complexInput =
-    Seq("1milints", "100milints", "1bilints").map { table =>
-      Query(
-        "aggregation-complex-input",
-        s"SELECT SUM(id + id + id + id + id + id + id + id + id + id) FROM $table",
-        "Sum of 9 columns added together",
-        collectResults = true)
-    }
-
-  val aggregates =
-    Seq("1milints", "100milints", "1bilints").flatMap { table =>
-      Seq("SUM", "AVG", "COUNT", "STDDEV").map { agg =>
-        Query(
-          s"single-aggregate-$agg",
-          s"SELECT $agg(id) FROM $table",
-          "aggregation of a single column",
-          collectResults = true)
-      }
-    }
+  }
 }
