@@ -135,6 +135,11 @@ case class TPCDSTableForTest(
           var hadoopContext: TaskAttemptContext = null
           var committer: OutputCommitter = null
 
+          val job = new Job(conf.value)
+          val keyType = classOf[Void]
+          job.setOutputKeyClass(keyType)
+          job.setOutputValueClass(classOf[Row])
+
           var rowCount = 0
           var partition = 0
 
@@ -149,6 +154,7 @@ case class TPCDSTableForTest(
               if (writer != null) {
                 writer.close(hadoopContext)
                 committer.commitTask(hadoopContext)
+                committer.commitJob(job)
               }
               writer = null
             }
@@ -160,12 +166,9 @@ case class TPCDSTableForTest(
               if (writer != null) {
                 writer.close(hadoopContext)
                 committer.commitTask(hadoopContext)
+                committer.commitJob(job)
               }
 
-              val job = new Job(conf.value)
-              val keyType = classOf[Void]
-              job.setOutputKeyClass(keyType)
-              job.setOutputValueClass(classOf[Row])
               NewFileOutputFormat.setOutputPath(
                 job,
                 new Path(s"$outputDir/$partitioningColumn=${currentPartition(0)}"))
@@ -191,6 +194,7 @@ case class TPCDSTableForTest(
           if (writer != null) {
             writer.close(hadoopContext)
             committer.commitTask(hadoopContext)
+            committer.commitJob(job)
           }
         }
         val fs = FileSystem.get(new java.net.URI(outputDir), new Configuration())
