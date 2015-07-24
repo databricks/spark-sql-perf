@@ -108,7 +108,7 @@ case class TPCDSTableForTest(
         val job = new Job(sqlContext.sparkContext.hadoopConfiguration)
 
         val writeSupport =
-          if (schema.fields.map(_.dataType).forall(_.isPrimitive)) {
+          if (schema.fields.map(_.dataType).forall(ParquetTypesConverter.isPrimitiveType)) {
             classOf[org.apache.spark.sql.parquet.MutableRowWriteSupport]
           } else {
             classOf[org.apache.spark.sql.parquet.RowWriteSupport]
