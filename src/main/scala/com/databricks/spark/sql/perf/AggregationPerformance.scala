@@ -5,6 +5,8 @@ import org.apache.spark.sql.{Row, SQLContext}
 trait AggregationPerformance extends Benchmark {
 
   import sqlContext.implicits._
+  import ExecutionMode._
+
 
   val sizes = (1 to 6).map(math.pow(10, _).toInt).toSeq
 
@@ -32,7 +34,7 @@ trait AggregationPerformance extends Benchmark {
       s"avg-$table",
       s"SELECT AVG(b) FROM $table GROUP BY a",
       "an average with a varying number of groups",
-      collectResults = false)
+      executionMode = ForeachResults)
   }
 
   val twoGroupsAvg: Seq[Query] = lowCardinality.map(_.name).map { table =>
@@ -40,7 +42,7 @@ trait AggregationPerformance extends Benchmark {
       s"avg-$table",
       s"SELECT AVG(b) FROM $table GROUP BY a",
       "an average on an int column with only two groups",
-      collectResults = false)
+      executionMode = ForeachResults)
   }
 
   val complexInput =
@@ -49,7 +51,7 @@ trait AggregationPerformance extends Benchmark {
         s"aggregation-complex-input-$table",
         s"SELECT SUM(id + id + id + id + id + id + id + id + id + id) FROM $table",
         "Sum of 9 columns added together",
-        collectResults = true)
+        executionMode = CollectResults)
     }
 
   val aggregates =
@@ -59,7 +61,7 @@ trait AggregationPerformance extends Benchmark {
           s"single-aggregate-$agg-$table",
           s"SELECT $agg(id) FROM $table",
           "aggregation of a single column",
-          collectResults = true)
+          executionMode = CollectResults)
       }
     }
 }

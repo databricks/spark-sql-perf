@@ -18,8 +18,9 @@ package com.databricks.spark.sql.perf.bigdata
 
 import com.databricks.spark.sql.perf.Benchmark
 
-trait Queries {
-  self: Benchmark =>
+trait Queries extends Benchmark {
+
+  import ExecutionMode._
 
   val queries1to3 = Seq(
     Query(
@@ -34,7 +35,7 @@ trait Queries {
         |  pageRank > 1000
         """.stripMargin,
       description = "",
-      collectResults = false),
+      executionMode = ForeachResults),
 
     Query(
       name = "q1B",
@@ -48,7 +49,7 @@ trait Queries {
         |  pageRank > 100
         """.stripMargin,
       description = "",
-      collectResults = false),
+      executionMode = ForeachResults),
 
     Query(
       name = "q1C",
@@ -62,7 +63,7 @@ trait Queries {
         |  pageRank > 10
         """.stripMargin,
       description = "",
-      collectResults = false),
+      executionMode = ForeachResults),
 
     Query(
       name = "q2A",
@@ -76,7 +77,7 @@ trait Queries {
         |  SUBSTR(sourceIP, 1, 8)
         """.stripMargin,
       description = "",
-      collectResults = false),
+      executionMode = ForeachResults),
 
     Query(
       name = "q2B",
@@ -90,7 +91,7 @@ trait Queries {
         |  SUBSTR(sourceIP, 1, 10)
         """.stripMargin,
       description = "",
-      collectResults = false),
+      executionMode = ForeachResults),
 
     Query(
       name = "q2C",
@@ -104,7 +105,7 @@ trait Queries {
         |  SUBSTR(sourceIP, 1, 12)
         """.stripMargin,
       description = "",
-      collectResults = false),
+      executionMode = ForeachResults),
 
     Query(
       name = "q3A",
@@ -123,7 +124,7 @@ trait Queries {
         |ORDER BY totalRevenue DESC LIMIT 1
         """.stripMargin,
       description = "",
-      collectResults = false),
+      executionMode = ForeachResults),
 
     Query(
       name = "q3B",
@@ -142,7 +143,7 @@ trait Queries {
         |ORDER BY totalRevenue DESC LIMIT 1
         """.stripMargin,
       description = "",
-      collectResults = false),
+      executionMode = ForeachResults),
 
     Query(
       name = "q3C",
@@ -160,6 +161,6 @@ trait Queries {
         |ORDER BY totalRevenue DESC LIMIT 1
         """.stripMargin,
       description = "",
-      collectResults = false)
+      executionMode = ForeachResults)
   )
 }

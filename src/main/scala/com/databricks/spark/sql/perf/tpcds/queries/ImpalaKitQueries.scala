@@ -18,8 +18,9 @@ package com.databricks.spark.sql.perf.tpcds.queries
 
 import com.databricks.spark.sql.perf.Benchmark
 
-trait ImpalaKitQueries {
-  self: Benchmark =>
+trait ImpalaKitQueries extends Benchmark {
+
+  import ExecutionMode._
 
   // Queries are from
   // https://github.com/cloudera/impala-tpcds-kit/tree/master/queries-sql92-modified/queries
@@ -1026,7 +1027,7 @@ trait ImpalaKitQueries {
                  |from store_sales
                """.stripMargin)
   ).map {
-    case (name, sqlText) => Query(name, sqlText, description = "", collectResults = true)
+    case (name, sqlText) => Query(name, sqlText, description = "", executionMode = CollectResults)
   }
   val queriesMap = queries.map(q => q.name -> q).toMap
 
@@ -1464,8 +1465,8 @@ trait ImpalaKitQueries {
         |  max(ss_promo_sk) as max_ss_promo_sk
         |from store_sales
       """.stripMargin)
-  ).map {
-    case (name, sqlText) => Query(name, sqlText, description = "original query", collectResults = true)
+  ).map { case (name, sqlText) =>
+    Query(name, sqlText, description = "original query", executionMode = CollectResults)
   }
 
   val interactiveQueries =

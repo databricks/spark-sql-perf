@@ -333,21 +333,33 @@ abstract class Benchmark(@transient protected val sqlContext: SQLContext)
      """.stripMargin
   }
 
+  trait ExecutionMode
+  object ExecutionMode {
+    // Benchmark run by collecting queries results  (e.g. rdd.collect())
+    case object CollectResults extends ExecutionMode
+
+    // Benchmark run by iterating through the queries results rows (e.g. rdd.foreach(row => Unit))
+    case object ForeachResults extends ExecutionMode
+
+    // Benchmark run by saving the output of each query as a parquet file at the specified location
+    case class WriteParquet(location: String) extends ExecutionMode
+  }
+
   /** Factory object for benchmark queries. */
   object Query {
     def apply(
         name: String,
         sqlText: String,
         description: String,
-        collectResults: Boolean = true): Query = {
-      new Query(name, sqlContext.sql(sqlText), description, collectResults, Some(sqlText))
+        executionMode: ExecutionMode = ExecutionMode.ForeachResults): Query = {
+      new Query(name, sqlContext.sql(sqlText), description, Some(sqlText), executionMode)
     }
 
     def apply(
         name: String,
         dataFrameBuilder: => DataFrame,
         description: String): Query = {
-      new Query(name, dataFrameBuilder, description, true, None)
+      new Query(name, dataFrameBuilder, description, None, ExecutionMode.CollectResults)
     }
   }
 
@@ -356,8 +368,8 @@ abstract class Benchmark(@transient protected val sqlContext: SQLContext)
       val name: String,
       buildDataFrame: => DataFrame,
       val description: String,
-      val collectResults: Boolean,
-      val sqlText: Option[String]) {
+      val sqlText: Option[String],
+      val executionMode: ExecutionMode) {
 
     override def toString =
       s"""
@@ -415,13 +427,13 @@ abstract class Benchmark(@transient protected val sqlContext: SQLContext)
         }
 
         // The executionTime for the entire query includes the time of type conversion from catalyst to scala.
-        val executionTime = if (collectResults) {
-          benchmarkMs {
-            dataFrame.rdd.collect()
-          }
-        } else {
-          benchmarkMs {
-            dataFrame.rdd.foreach { row => Unit }
+        // The executionTime for the entire query includes the time of type conversion
+        // from catalyst to scala.
+        val executionTime = benchmarkMs {
+          executionMode match {
+            case ExecutionMode.CollectResults => dataFrame.rdd.collect()
+            case ExecutionMode.ForeachResults => dataFrame.rdd.foreach { row => Unit }
+            case ExecutionMode.WriteParquet(location) => dataFrame.saveAsParquetFile(s"$location/$name.parquet")
           }
         }
 

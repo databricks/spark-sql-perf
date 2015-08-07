@@ -5,6 +5,8 @@ import org.apache.spark.sql.SQLContext
 trait JoinPerformance extends Benchmark {
   // 1.5 mb, 1 file
 
+  import ExecutionMode._
+
   val x = Table(
     "1milints",
     sqlContext.range(0, 1000000)
@@ -36,7 +38,7 @@ trait JoinPerformance extends Benchmark {
           s"singleKey-$join-$table1-$table2",
           s"SELECT COUNT(*) FROM $table1 a $join $table2 b ON a.id = b.id",
           "equi-inner join a small table with a big table using a single key.",
-          collectResults = true)
+          executionMode = CollectResults)
       }
     }
   }
