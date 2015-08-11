@@ -22,27 +22,9 @@ import org.apache.spark.sql.SQLContext
 /**
  * TPC-DS benchmark's dataset.
  * @param sqlContext An existing SQLContext.
- * @param sparkVersion The version of Spark.
- * @param dataLocation The location of the dataset used by this experiment.
- * @param dsdgenDir The location of dsdgen in every worker machine.
- * @param scaleFactor The scale factor of the dataset. For some benchmarks like TPC-H
- *                    and TPC-DS, the scale factor is a number roughly representing the
- *                    size of raw data files. For some other benchmarks, the scale factor
- *                    is a short string describing the scale of the dataset.
  */
-class TPCDS (
-    @transient sqlContext: SQLContext,
-    sparkVersion: String,
-    dataLocation: String,
-    dsdgenDir: String,
-    scaleFactor: String,
-    userSpecifiedBaseDir: Option[String] = None)
-  extends Benchmark(sqlContext) with Serializable {
-  import sqlContext._
-  import sqlContext.implicits._
-
-  lazy val baseDir =
-    userSpecifiedBaseDir.getOrElse(s"$dataLocation/scaleFactor=$scaleFactor/useDecimal=true")
+class TPCDS (@transient sqlContext: SQLContext)
+  extends Benchmark(sqlContext) with ImpalaKitQueries with SimpleQueries with Serializable {
 
   /*
   def setupBroadcast(skipTables: Seq[String] = Seq("store_sales", "customer")) = {

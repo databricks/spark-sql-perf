@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.databricks.spark.sql.perf.tpcds.queries
+package com.databricks.spark.sql.perf.tpcds
 
 import com.databricks.spark.sql.perf.Benchmark
 

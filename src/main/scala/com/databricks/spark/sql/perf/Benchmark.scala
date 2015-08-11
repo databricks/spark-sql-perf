@@ -377,7 +377,7 @@ abstract class Benchmark(@transient protected val sqlContext: SQLContext)
          |${buildDataFrame.queryExecution.analyzed}
        """.stripMargin
 
-    val tablesInvolved = buildDataFrame.queryExecution.logical collect {
+    lazy val tablesInvolved = buildDataFrame.queryExecution.logical collect {
       case UnresolvedRelation(tableIdentifier, _) => {
         // We are ignoring the database name.
         tableIdentifier.last
