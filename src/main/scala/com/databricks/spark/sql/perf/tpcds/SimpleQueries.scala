@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-package com.databricks.spark.sql.perf.tpcds.queries
+package com.databricks.spark.sql.perf.tpcds
 
-import com.databricks.spark.sql.perf.ExecutionMode.ForeachResults
-import com.databricks.spark.sql.perf.Query
+import com.databricks.spark.sql.perf.Benchmark
 
-object SimpleQueries {
+trait SimpleQueries extends Benchmark {
+
+  import ExecutionMode._
+
    val q7Derived = Seq(
      ("q7-simpleScan",
        """

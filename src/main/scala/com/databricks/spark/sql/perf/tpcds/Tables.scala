@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.apache.spark.sql.parquet // This is a hack until parquet has better support for partitioning.
+package com.databricks.spark.sql.perf.tpcds
 
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -37,171 +37,63 @@ import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import parquet.hadoop.ParquetOutputFormat
 import parquet.hadoop.util.ContextUtil
 
+class Tables(sqlContext: SQLContext, dsdgenDir: String, scaleFactor: Int) {
+  import sqlContext.implicits._
 
-case class TPCDSTableForTest(
-    table: Table,
-    baseDir: String,
-    scaleFactor: Int,
-    dsdgenDir: String,
-    @transient sqlContext: SQLContext,
-    maxRowsPerPartitions: Int = 20 * 1000 * 1000)
-  extends TableForTest(table, baseDir, sqlContext) with Serializable with SparkHadoopMapReduceUtil {
-
-  @transient val sparkContext = sqlContext.sparkContext
-
+  def sparkContext = sqlContext.sparkContext
   val dsdgen = s"$dsdgenDir/dsdgen"
 
-  override def generate(): Unit = {
-    val partitions = table.tableType match {
-      case PartitionedTable(_) => scaleFactor
-      case _ => 1
-    }
+  case class Table(name: String, partitionColumns: Seq[String], fields: StructField*) {
+    val schema = StructType(fields)
+    val partitions = if (partitionColumns.isEmpty) 1 else 100
 
-    val generatedData = {
-      sparkContext.parallelize(1 to partitions, partitions).flatMap { i =>
-        val localToolsDir = if (new java.io.File(dsdgen).exists) {
-          dsdgenDir
-        } else if (new java.io.File(s"/$dsdgen").exists) {
-          s"/$dsdgenDir"
-        } else {
-          sys.error(s"Could not find dsdgen at $dsdgen or /$dsdgen. Run install")
-        }
-
-        val parallel = if (partitions > 1) s"-parallel $partitions -child $i" else ""
-        val commands = Seq(
-          "bash", "-c",
-          s"cd $localToolsDir && ./dsdgen -table ${table.name} -filter Y -scale $scaleFactor $parallel")
-        println(commands)
-        commands.lines
-      }
-    }
-
-    generatedData.setName(s"${table.name}, sf=$scaleFactor, strings")
-
-    val rows = generatedData.mapPartitions { iter =>
-      val currentRow = new GenericMutableRow(schema.fields.size)
-      iter.map { l =>
-        (0 until schema.fields.length).foreach(currentRow.setNullAt)
-        l.split("\\|", -1).zipWithIndex.dropRight(1).foreach { case (f, i) => currentRow(i) = f}
-        currentRow: Row
-      }
-    }
-
-    val stringData =
-      sqlContext.createDataFrame(
-        rows,
-        StructType(schema.fields.map(f => StructField(f.name, StringType))))
-
-    val convertedData = {
-      val columns = schema.fields.map { f =>
-        val columnName = new ColumnName(f.name)
-        columnName.cast(f.dataType).as(f.name)
-      }
-      stringData.select(columns: _*)
-    }
-
-    table.tableType match {
-      // This is an awful hack... spark sql parquet should support this natively.
-      case PartitionedTable(partitioningColumn) =>
-        sqlContext.setConf("spark.sql.planner.externalSort", "true")
-        val output = convertedData.queryExecution.analyzed.output
-        val job = new Job(sqlContext.sparkContext.hadoopConfiguration)
-
-        val writeSupport =
-          if (schema.fields.map(_.dataType).forall(_.isPrimitive)) {
-            classOf[org.apache.spark.sql.parquet.MutableRowWriteSupport]
+    def df = {
+      val generatedData = {
+        sparkContext.parallelize(1 to partitions, partitions).flatMap { i =>
+          val localToolsDir = if (new java.io.File(dsdgen).exists) {
+            dsdgenDir
+          } else if (new java.io.File(s"/$dsdgen").exists) {
+            s"/$dsdgenDir"
           } else {
-            classOf[org.apache.spark.sql.parquet.RowWriteSupport]
+            sys.error(s"Could not find dsdgen at $dsdgen or /$dsdgen. Run install")
           }
 
-        ParquetOutputFormat.setWriteSupportClass(job, writeSupport)
-
-        val conf = new SerializableWritable(ContextUtil.getConfiguration(job))
-        org.apache.spark.sql.parquet.RowWriteSupport.setSchema(schema.toAttributes, conf.value)
-
-        val partColumnAttr =
-          BindReferences.bindReference[Expression](
-            output.find(_.name == partitioningColumn).get,
-            output)
-
-
-        // TODO: clusterBy would be faster than orderBy
-        val orderedConvertedData =
-          convertedData.filter(new Column(partitioningColumn) isNotNull).orderBy(Column(partitioningColumn) asc)
-        orderedConvertedData.queryExecution.toRdd.foreachPartition { iter =>
-          var writer: RecordWriter[Void, Row] = null
-          val getPartition = new InterpretedMutableProjection(Seq(partColumnAttr))
-          var currentPartition: Row = null
-          var hadoopContext: TaskAttemptContext = null
-          var committer: OutputCommitter = null
-
-          var rowCount = 0
-          var partition = 0
-
-          while (iter.hasNext) {
-            val currentRow = iter.next()
-
-            rowCount += 1
-            if (rowCount >= maxRowsPerPartitions) {
-              rowCount = 0
-              partition += 1
-              println(s"Starting partition $partition")
-              if (writer != null) {
-                writer.close(hadoopContext)
-                committer.commitTask(hadoopContext)
-              }
-              writer = null
-            }
-
-            if ((getPartition(currentRow) != currentPartition || writer == null) &&
-              !getPartition.currentValue.isNullAt(0)) {
-              rowCount = 0
-              currentPartition = getPartition.currentValue.copy()
-              if (writer != null) {
-                writer.close(hadoopContext)
-                committer.commitTask(hadoopContext)
-              }
-
-              val job = new Job(conf.value)
-              val keyType = classOf[Void]
-              job.setOutputKeyClass(keyType)
-              job.setOutputValueClass(classOf[Row])
-              NewFileOutputFormat.setOutputPath(
-                job,
-                new Path(s"$outputDir/$partitioningColumn=${currentPartition(0)}"))
-              val wrappedConf = new SerializableWritable(job.getConfiguration)
-              val formatter = new SimpleDateFormat("yyyyMMddHHmm")
-              val jobtrackerID = formatter.format(new Date())
-              val stageId = partition
-
-              val attemptNumber = 1
-              /* "reduce task" <split #> <attempt # = spark task #> */
-              val attemptId = newTaskAttemptID(jobtrackerID, partition, isMap = false, partition, attemptNumber)
-              hadoopContext = newTaskAttemptContext(wrappedConf.value, attemptId)
-              val format = new ParquetOutputFormat[Row]
-              committer = format.getOutputCommitter(hadoopContext)
-              committer.setupTask(hadoopContext)
-              writer = format.getRecordWriter(hadoopContext)
-
-            }
-            if (!getPartition.currentValue.isNullAt(0)) {
-              writer.write(null, currentRow)
-            }
-          }
-          if (writer != null) {
-            writer.close(hadoopContext)
-            committer.commitTask(hadoopContext)
-          }
+          val parallel = if (partitions > 1) s"-parallel $partitions -child $i" else ""
+          val commands = Seq(
+            "bash", "-c",
+            s"cd $localToolsDir && ./dsdgen -table $name -filter Y -scale $scaleFactor $parallel")
+          println(commands)
+          commands.lines
         }
-        val fs = FileSystem.get(new java.net.URI(outputDir), new Configuration())
-        fs.create(new Path(s"$outputDir/_SUCCESS")).close()
-      case _ => convertedData.saveAsParquetFile(outputDir)
+      }
+
+      generatedData.setName(s"$name, sf=$scaleFactor, strings")
+
+      val rows = generatedData.mapPartitions { iter =>
+        val currentRow = new GenericMutableRow(schema.fields.size)
+        iter.map { l =>
+          (0 until schema.fields.length).foreach(currentRow.setNullAt)
+          l.split("\\|", -1).zipWithIndex.dropRight(1).foreach { case (f, i) => currentRow(i) = f}
+          currentRow: Row
+        }
+      }
+
+      val stringData =
+        sqlContext.createDataFrame(
+          rows,
+          StructType(schema.fields.map(f => StructField(f.name, StringType))))
+
+      val convertedData = {
+        val columns = schema.fields.map { f =>
+          val columnName = new ColumnName(f.name)
+          columnName.cast(f.dataType).as(f.name)
+        }
+        stringData.select(columns: _*)
+      }
+
+      convertedData
     }
   }
-}
-
-case class Tables(sqlContext: SQLContext) {
-  import sqlContext.implicits._
 
   val tables = Seq(
     /* This is another large table that we don't build yet.
@@ -212,7 +104,7 @@ case class Tables(sqlContext: SQLContext) {
       'inv_warehouse_sk     .int,
       'inv_quantity_on_hand .int),*/
     Table("store_sales",
-      PartitionedTable("ss_sold_date_sk"),
+      partitionColumns = "ss_sold_date_sk" :: Nil,
       'ss_sold_date_sk      .int,
       'ss_sold_time_sk      .int,
       'ss_item_sk           .int,
@@ -237,7 +129,7 @@ case class Tables(sqlContext: SQLContext) {
       'ss_net_paid_inc_tax  .decimal(7,2),
       'ss_net_profit        .decimal(7,2)),
     Table("customer",
-      UnpartitionedTable,
+      partitionColumns = Nil,
       'c_customer_sk             .int,
       'c_customer_id             .string,
       'c_current_cdemo_sk        .int,
@@ -257,7 +149,7 @@ case class Tables(sqlContext: SQLContext) {
       'c_email_address           .string,
       'c_last_review_date        .string),
     Table("customer_address",
-      UnpartitionedTable,
+      partitionColumns = Nil,
       'ca_address_sk             .int,
       'ca_address_id             .string,
       'ca_street_number          .string,
@@ -272,7 +164,7 @@ case class Tables(sqlContext: SQLContext) {
       'ca_gmt_offset             .decimal(5,2),
       'ca_location_type          .string),
     Table("customer_demographics",
-      UnpartitionedTable,
+      partitionColumns = Nil,
       'cd_demo_sk                .int,
       'cd_gender                 .string,
       'cd_marital_status         .string,
@@ -283,7 +175,7 @@ case class Tables(sqlContext: SQLContext) {
       'cd_dep_employed_count     .int,
       'cd_dep_college_count      .int),
     Table("date_dim",
-      UnpartitionedTable,
+      partitionColumns = Nil,
       'd_date_sk                 .int,
       'd_date_id                 .string,
       'd_date                    .string,
@@ -313,14 +205,14 @@ case class Tables(sqlContext: SQLContext) {
       'd_current_quarter         .string,
       'd_current_year            .string),
     Table("household_demographics",
-      UnpartitionedTable,
+      partitionColumns = Nil,
       'hd_demo_sk                .int,
       'hd_income_band_sk         .int,
       'hd_buy_potential          .string,
       'hd_dep_count              .int,
       'hd_vehicle_count          .int),
     Table("item",
-      UnpartitionedTable,
+      partitionColumns = Nil,
       'i_item_sk                 .int,
       'i_item_id                 .string,
       'i_rec_start_date          .string,
@@ -344,7 +236,7 @@ case class Tables(sqlContext: SQLContext) {
       'i_manager_id              .int,
       'i_product_name            .string),
     Table("promotion",
-      UnpartitionedTable,
+      partitionColumns = Nil,
       'p_promo_sk                .int,
       'p_promo_id                .string,
       'p_start_date_sk           .int,
@@ -365,7 +257,7 @@ case class Tables(sqlContext: SQLContext) {
       'p_purpose                 .string,
       'p_discount_active         .string),
     Table("store",
-      UnpartitionedTable,
+      partitionColumns = Nil,
       's_store_sk                .int,
       's_store_id                .string,
       's_rec_start_date          .string,
@@ -396,7 +288,7 @@ case class Tables(sqlContext: SQLContext) {
       's_gmt_offset              .decimal(5,2),
       's_tax_precentage          .decimal(5,2)),
     Table("time_dim",
-      UnpartitionedTable,
+      partitionColumns = Nil,
       't_time_sk                 .int,
       't_time_id                 .string,
       't_time                    .int,

@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-package com.databricks.spark.sql.perf.tpcds.queries
+package com.databricks.spark.sql.perf.tpcds
 
-import com.databricks.spark.sql.perf.ExecutionMode.CollectResults
-import com.databricks.spark.sql.perf.Query
+import com.databricks.spark.sql.perf.Benchmark
 
-object ImpalaKitQueries {
+trait ImpalaKitQueries extends Benchmark {
+
+  import ExecutionMode._
+
   // Queries are from
   // https://github.com/cloudera/impala-tpcds-kit/tree/master/queries-sql92-modified/queries
   val queries = Seq(

@@ -16,10 +16,12 @@
 
 package com.databricks.spark.sql.perf.bigdata
 
-import com.databricks.spark.sql.perf.ExecutionMode.ForeachResults
-import com.databricks.spark.sql.perf.Query
+import com.databricks.spark.sql.perf.Benchmark
 
-object Queries {
+trait Queries extends Benchmark {
+
+  import ExecutionMode._
+
   val queries1to3 = Seq(
     Query(
       name = "q1A",

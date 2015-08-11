@@ -17,55 +17,16 @@
 package com.databricks.spark.sql.perf.tpcds
 
 import com.databricks.spark.sql.perf._
-import org.apache.spark.sql.functions._
-import org.apache.spark.sql.parquet.TPCDSTableForTest
-import org.apache.spark.sql.{Column, SQLContext}
+import org.apache.spark.sql.SQLContext
 
 /**
  * TPC-DS benchmark's dataset.
  * @param sqlContext An existing SQLContext.
- * @param sparkVersion The version of Spark.
- * @param dataLocation The location of the dataset used by this experiment.
- * @param dsdgenDir The location of dsdgen in every worker machine.
- * @param resultsLocation The location of performance results.
- * @param tables Tables that will be used in this experiment.
- * @param scaleFactor The scale factor of the dataset. For some benchmarks like TPC-H
- *                    and TPC-DS, the scale factor is a number roughly representing the
- *                    size of raw data files. For some other benchmarks, the scale factor
- *                    is a short string describing the scale of the dataset.
  */
-class TPCDS (
-    @transient sqlContext: SQLContext,
-    sparkVersion: String,
-    dataLocation: String,
-    dsdgenDir: String,
-    tables: Seq[Table],
-    scaleFactor: String,
-    userSpecifiedBaseDir: Option[String] = None)
-  extends Dataset(
-    sqlContext,
-    sparkVersion,
-    dataLocation,
-    tables,
-    scaleFactor) with Serializable {
-  import sqlContext._
-  import sqlContext.implicits._
+class TPCDS (@transient sqlContext: SQLContext)
+  extends Benchmark(sqlContext) with ImpalaKitQueries with SimpleQueries with Serializable {
 
-  override val datasetName = "tpcds"
-
-  lazy val baseDir =
-    userSpecifiedBaseDir.getOrElse(s"$dataLocation/scaleFactor=$scaleFactor/useDecimal=true")
-
-  override def createTablesForTest(tables: Seq[Table]): Seq[TableForTest] = {
-    tables.map(table =>
-      TPCDSTableForTest(table, baseDir, scaleFactor.toInt, dsdgenDir, sqlContext))
-  }
-
-  override def setup(): Unit = {
-    super.setup()
-    setupBroadcast()
-  }
-
+  /*
   def setupBroadcast(skipTables: Seq[String] = Seq("store_sales", "customer")) = {
     val skipExpr = skipTables.map(t => !('tableName === t)).reduceLeft[Column](_ && _)
     val threshold =
@@ -79,5 +40,6 @@ class TPCDS (
     println(setQuery)
     sql(setQuery)
   }
+  */
 }
 
