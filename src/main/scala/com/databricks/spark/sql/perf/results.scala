@@ -55,6 +55,7 @@ case class BenchmarkConfiguration(
  * @param optimizationTime The time used to optimize the query.
  * @param planningTime The time used to plan the query.
  * @param executionTime The time used to execute the query.
+ * @param hashSum sum of hash values calculated from result rows of the query.
  * @param breakDown The breakdown results of the query plan tree.
  */
 case class BenchmarkResult(
@@ -66,6 +67,7 @@ case class BenchmarkResult(
     optimizationTime: Option[Double] = None,
     planningTime: Option[Double] = None,
     executionTime: Option[Double] = None,
+    hashSum: Option[Long] = None,
     breakDown: Seq[BreakdownResult] = Nil,
     queryExecution: Option[String] = None,
     failure: Option[Failure] = None)
