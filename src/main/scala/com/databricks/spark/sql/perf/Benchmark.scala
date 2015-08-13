@@ -32,13 +32,13 @@ import org.apache.spark.sql.functions._
  *
  * @param sqlContext An existing SQLContext.
  */
-abstract class Benchmark(@transient protected val sqlContext: SQLContext)
+abstract class Benchmark(
+    @transient protected val sqlContext: SQLContext,
+    val resultsLocation: String = "/spark/sql/performance",
+    val resultsTableName: String = "sqlPerformance")
   extends Serializable {
 
   import sqlContext.implicits._
-
-  val resultsLocation = "/spark/sql/performance"
-  val resultsTableName = "sqlPerformance"
 
   def createResultsTable() = {
     sqlContext.sql(s"DROP TABLE $resultsTableName")
