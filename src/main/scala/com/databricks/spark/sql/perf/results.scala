@@ -83,6 +83,8 @@ case class BreakdownResult(
     nodeName: String,
     nodeNameWithArgs: String,
     index: Int,
-    executionTime: Double)
+    children: Seq[Int],
+    executionTime: Double,
+    delta: Double)
 
 case class Failure(className: String, message: String)
