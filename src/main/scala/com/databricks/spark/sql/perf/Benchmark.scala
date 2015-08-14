@@ -429,7 +429,7 @@ abstract class Benchmark(@transient protected val sqlContext: SQLContext)
               messages += s"Breakdown: ${node.simpleString}"
               val newNode = buildDataFrame.queryExecution.executedPlan(index)
               val executionTime = benchmarkMs {
-                node.execute().foreach((row: Any) => Unit)
+                newNode.execute().foreach((row: Any) => Unit)
               }
               timeMap += ((index, executionTime))
 
