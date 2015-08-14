@@ -37,7 +37,7 @@ import org.apache.spark.sql.types.{StringType, StructField, StructType}
 import parquet.hadoop.ParquetOutputFormat
 import parquet.hadoop.util.ContextUtil
 
-class Tables(sqlContext: SQLContext, dsdgenDir: String, scaleFactor: Int) {
+class Tables(sqlContext: SQLContext, dsdgenDir: String, scaleFactor: Int) extends Serializable {
   import sqlContext.implicits._
 
   def sparkContext = sqlContext.sparkContext
