@@ -23,8 +23,12 @@ import org.apache.spark.sql.SQLContext
  * TPC-DS benchmark's dataset.
  * @param sqlContext An existing SQLContext.
  */
-class TPCDS (@transient sqlContext: SQLContext)
-  extends Benchmark(sqlContext) with ImpalaKitQueries with SimpleQueries with Serializable {
+class TPCDS (
+    @transient sqlContext: SQLContext,
+    resultsLocation: String = "/spark/sql/performance",
+    resultsTableName: String = "sqlPerformance")
+  extends Benchmark(sqlContext, resultsLocation, resultsTableName)
+  with ImpalaKitQueries with SimpleQueries with Serializable {
 
   /*
   def setupBroadcast(skipTables: Seq[String] = Seq("store_sales", "customer")) = {

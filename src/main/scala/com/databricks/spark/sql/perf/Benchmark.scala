@@ -16,33 +16,29 @@
 
 package com.databricks.spark.sql.perf
 
-import org.apache.spark.sql.catalyst.analysis.UnresolvedRelation
-import org.apache.spark.sql.execution.SparkPlan
-
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent._
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 
-import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.{Path, FileSystem}
 import org.apache.spark.sql.{AnalysisException, DataFrame, SQLContext}
-
-import org.apache.spark.sql.catalyst.plans.logical.Subquery
+import org.apache.spark.sql.catalyst.analysis.UnresolvedRelation
+import org.apache.spark.sql.execution.SparkPlan
+import org.apache.spark.sql.functions._
 
 /**
  * A collection of queries that test a particular aspect of Spark SQL.
  *
  * @param sqlContext An existing SQLContext.
  */
-abstract class Benchmark(@transient protected val sqlContext: SQLContext)
+abstract class Benchmark(
+    @transient protected val sqlContext: SQLContext,
+    val resultsLocation: String = "/spark/sql/performance",
+    val resultsTableName: String = "sqlPerformance")
   extends Serializable {
 
   import sqlContext.implicits._
-
-  val resultsLocation = "/spark/sql/performance"
-  val resultsTableName = "sqlPerformance"
 
   def createResultsTable() = {
     sqlContext.sql(s"DROP TABLE $resultsTableName")
@@ -87,6 +83,11 @@ abstract class Benchmark(@transient protected val sqlContext: SQLContext)
   val unsafe = Variation("unsafe", Seq("on", "off")) {
     case "off" => sqlContext.setConf("spark.sql.unsafe.enabled", "false")
     case "on" => sqlContext.setConf("spark.sql.unsafe.enabled", "true")
+  }
+
+  val tungsten = Variation("unsafe", Seq("on", "off")) {
+    case "off" => sqlContext.setConf("spark.sql.tungsten.enabled", "false")
+    case "on" => sqlContext.setConf("spark.sql.tungsten.enabled", "true")
   }
 
   /**
@@ -339,13 +340,25 @@ abstract class Benchmark(@transient protected val sqlContext: SQLContext)
   trait ExecutionMode
   object ExecutionMode {
     // Benchmark run by collecting queries results  (e.g. rdd.collect())
-    case object CollectResults extends ExecutionMode
+    case object CollectResults extends ExecutionMode {
+      override def toString: String = "collect"
+    }
 
     // Benchmark run by iterating through the queries results rows (e.g. rdd.foreach(row => Unit))
-    case object ForeachResults extends ExecutionMode
+    case object ForeachResults extends ExecutionMode {
+      override def toString: String = "foreach"
+    }
 
     // Benchmark run by saving the output of each query as a parquet file at the specified location
-    case class WriteParquet(location: String) extends ExecutionMode
+    case class WriteParquet(location: String) extends ExecutionMode {
+      override def toString: String = "saveToParquet"
+    }
+
+    // Benchmark run by calculating the sum of the hash value of all rows. This is used to check
+    // query results.
+    case object HashResults extends ExecutionMode  {
+      override def toString: String = "hash"
+    }
   }
 
   /** Factory object for benchmark queries. */
@@ -454,12 +467,24 @@ abstract class Benchmark(@transient protected val sqlContext: SQLContext)
         // to scala.
         // The executionTime for the entire query includes the time of type conversion
         // from catalyst to scala.
+        var result: Option[Long] = None
         val executionTime = benchmarkMs {
           executionMode match {
             case ExecutionMode.CollectResults => dataFrame.rdd.collect()
             case ExecutionMode.ForeachResults => dataFrame.rdd.foreach { row => Unit }
             case ExecutionMode.WriteParquet(location) =>
               dataFrame.saveAsParquetFile(s"$location/$name.parquet")
+            case ExecutionMode.HashResults =>
+              val columnStr = dataFrame.schema.map(_.name).mkString(",")
+              // SELECT SUM(HASH(col1, col2, ...)) FROM (benchmark query)
+              val ret =
+                dataFrame
+                  .selectExpr(s"hash($columnStr) as hashValue")
+                  .groupBy()
+                  .sum("hashValue")
+                  .head()
+                  .getLong(0)
+              result = Some(ret)
           }
         }
 
@@ -469,6 +494,7 @@ abstract class Benchmark(@transient protected val sqlContext: SQLContext)
 
         BenchmarkResult(
           name = name,
+          mode = executionMode.toString,
           joinTypes = joinTypes,
           tables = tablesInvolved,
           parsingTime = parsingTime,
@@ -476,14 +502,21 @@ abstract class Benchmark(@transient protected val sqlContext: SQLContext)
           optimizationTime = optimizationTime,
           planningTime = planningTime,
           executionTime = executionTime,
+          result = result,
           queryExecution = dataFrame.queryExecution.toString,
           breakDown = breakdownResults)
       } catch {
         case e: Exception =>
            BenchmarkResult(
              name = name,
+             mode = executionMode.toString,
              failure = Failure(e.getClass.getName, e.getMessage))
       }
+    }
+
+    /** Change the ExecutionMode of this Query to HashResults, which is used to check the query result. */
+    def checkResult: Query = {
+      new Query(name, buildDataFrame, description, sqlText, ExecutionMode.HashResults)
     }
   }
 }
