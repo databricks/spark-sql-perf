@@ -85,7 +85,7 @@ abstract class Benchmark(
     case "on" => sqlContext.setConf("spark.sql.unsafe.enabled", "true")
   }
 
-  val tungsten = Variation("unsafe", Seq("on", "off")) {
+  val tungsten = Variation("tungsten", Seq("on", "off")) {
     case "off" => sqlContext.setConf("spark.sql.tungsten.enabled", "false")
     case "on" => sqlContext.setConf("spark.sql.tungsten.enabled", "true")
   }
