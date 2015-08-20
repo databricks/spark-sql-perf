@@ -1,34 +1,51 @@
 #!/usr/bin/env bash
 
+#
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
 # When creating new tests for Spark SQL Hive, the HADOOP_CLASSPATH must contain the hive jars so
 # that we can run Hive to generate the golden answer.  This is not required for normal development
 # or testing.
-for i in $HIVE_HOME/lib/*
-do HADOOP_CLASSPATH=$HADOOP_CLASSPATH:$i
+for i in "$HIVE_HOME"/lib/*
+do HADOOP_CLASSPATH="$HADOOP_CLASSPATH:$i"
 done
 export HADOOP_CLASSPATH
 
 realpath () {
 (
-  TARGET_FILE=$1
+  TARGET_FILE="$1"
 
-  cd $(dirname $TARGET_FILE)
-  TARGET_FILE=$(basename $TARGET_FILE)
+  cd "$(dirname "$TARGET_FILE")"
+  TARGET_FILE="$(basename "$TARGET_FILE")"
 
   COUNT=0
   while [ -L "$TARGET_FILE" -a $COUNT -lt 100 ]
   do
-      TARGET_FILE=$(readlink $TARGET_FILE)
-      cd $(dirname $TARGET_FILE)
-      TARGET_FILE=$(basename $TARGET_FILE)
+      TARGET_FILE="$(readlink "$TARGET_FILE")"
+      cd $(dirname "$TARGET_FILE")
+      TARGET_FILE="$(basename $TARGET_FILE)"
       COUNT=$(($COUNT + 1))
   done
 
-  echo $(pwd -P)/$TARGET_FILE
+  echo "$(pwd -P)/"$TARGET_FILE""
 )
 }
 
-. $(dirname $(realpath $0))/sbt-launch-lib.bash
+. "$(dirname "$(realpath "$0")")"/sbt-launch-lib.bash
 
 
 declare -r noshare_opts="-Dsbt.global.base=project/.sbtboot -Dsbt.boot.directory=project/.boot -Dsbt.ivy.home=project/.ivy"
@@ -38,6 +55,7 @@ declare -r etc_sbt_opts_file="/etc/sbt/sbtopts"
 usage() {
  cat <<EOM
 Usage: $script_name [options]
+
   -h | -help         print this message
   -v | -verbose      this runner is chattier
   -d | -debug        set sbt log level to debug
@@ -51,13 +69,16 @@ Usage: $script_name [options]
   -no-global         uses global caches, but does not use global ~/.sbt directory.
   -jvm-debug <port>  Turn on JVM debugging, open at the given port.
   -batch             Disable interactive mode
+
   # sbt version (default: from project/build.properties if present, else latest release)
   -sbt-version  <version>   use the specified version of sbt
   -sbt-jar      <path>      use the specified jar as the sbt launcher
   -sbt-rc                   use an RC version of sbt
   -sbt-snapshot             use a snapshot version of sbt
+
   # java version (default: java from PATH, currently $(java -version 2>&1 | grep version))
   -java-home <path>         alternate JAVA_HOME
+
   # jvm options and output control
   JAVA_OPTS          environment variable, if unset uses "$java_opts"
   SBT_OPTS           environment variable, if unset uses "$default_sbt_opts"
@@ -67,8 +88,9 @@ Usage: $script_name [options]
   -Dkey=val          pass -Dkey=val directly to the java runtime
   -J-X               pass option -X directly to the java runtime
                      (-J is stripped)
-  -S-X               add -X to sbt's scalacOptions (-J is stripped)
-  -PmavenProfiles     Enable a maven profile for the build.
+  -S-X               add -X to sbt's scalacOptions (-S is stripped)
+  -PmavenProfiles    Enable a maven profile for the build.
+
 In the case of duplicated or conflicting options, the order above
 shows precedence: JAVA_OPTS lowest, command line options highest.
 EOM
@@ -103,4 +125,32 @@ loadConfigFile() {
 [[ -f "$etc_sbt_opts_file" ]] && set -- $(loadConfigFile "$etc_sbt_opts_file") "$@"
 [[ -f "$sbt_opts_file" ]] && set -- $(loadConfigFile "$sbt_opts_file") "$@"
 
+exit_status=127
+saved_stty=""
+
+restoreSttySettings() {
+  stty $saved_stty
+  saved_stty=""
+}
+
+onExit() {
+  if [[ "$saved_stty" != "" ]]; then
+    restoreSttySettings
+  fi
+  exit $exit_status
+}
+
+saveSttySettings() {
+  saved_stty=$(stty -g 2>/dev/null)
+  if [[ ! $? ]]; then
+    saved_stty=""
+  fi
+}
+
+saveSttySettings
+trap onExit INT
+
 run "$@"
+
+exit_status=$?
+onExit
