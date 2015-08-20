@@ -100,16 +100,21 @@ class Tables(sqlContext: SQLContext, dsdgenDir: String, scaleFactor: Int) extend
       withPartitionColumns.save(location)
     }
 
-    def createExternalTables(location: String, format: String, databaseName: String, overwrite: Boolean): Unit = {
+    def createExternalTable(location: String, format: String, databaseName: String, overwrite: Boolean): Unit = {
       val qualifiedTableName = databaseName + "." + name
       val tableExists = sqlContext.tableNames(databaseName).contains(name)
       if (overwrite) {
         sqlContext.sql(s"DROP TABLE IF EXISTS $databaseName.$name")
       }
       if (!tableExists || overwrite) {
-        logInfo(s"Creating external table $name in database $databaseName.")
+        logInfo(s"Creating external table $name in database $databaseName using data stored in $location.")
         sqlContext.createExternalTable(qualifiedTableName, location, format)
       }
+    }
+
+    def createTemporaryTable(location: String, format: String): Unit = {
+      logInfo(s"Creating temporary table $name using data stored in $location.")
+      sqlContext.read.format(format).load(location).registerTempTable(name)
     }
   }
 
@@ -126,7 +131,17 @@ class Tables(sqlContext: SQLContext, dsdgenDir: String, scaleFactor: Int) extend
     tables.foreach { table =>
       val tableLocation =
         location + File.separator + format + File.separator + "sf" + scaleFactor + File.separator + table.name
-      table.createExternalTables(tableLocation, format, databaseName, overwrite)
+      table.createExternalTable(tableLocation, format, databaseName, overwrite)
+    }
+    sqlContext.sql(s"USE $databaseName")
+    logInfo(s"The current database has been set to $databaseName.")
+  }
+
+  def createTemporaryTables(location: String, format: String): Unit = {
+    tables.foreach { table =>
+      val tableLocation =
+        location + File.separator + format + File.separator + "sf" + scaleFactor + File.separator + table.name
+      table.createTemporaryTable(tableLocation, format)
     }
   }
 
