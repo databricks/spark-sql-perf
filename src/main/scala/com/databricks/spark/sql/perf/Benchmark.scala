@@ -25,7 +25,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import org.apache.spark.sql.{AnalysisException, DataFrame, SQLContext}
 import org.apache.spark.sql.catalyst.analysis.UnresolvedRelation
 import org.apache.spark.sql.execution.SparkPlan
-import org.apache.spark.sql.functions._
+
+import com.databricks.spark.sql.perf.cpu._
 
 /**
  * A collection of queries that test a particular aspect of Spark SQL.
@@ -202,6 +203,28 @@ abstract class Benchmark(
         } catch {
           case e: Throwable => currentMessages += s"Failed to write data: $e"
         }
+      }
+
+      def scheduleCpuCollection(fs: FS) = resultsFuture.onComplete { _ =>
+        currentMessages += s"Begining CPU log collection"
+        try {
+          val location = cpu.collectLogs(sqlContext, fs, timestamp)
+          currentMessages += s"cpu results recorded to $location"
+        } catch {
+          case e: Throwable =>
+            currentMessages += s"Error collecting logs: $e"
+            throw e
+        }
+      }
+
+      def cpuProfile = new Profile(sqlContext, sqlContext.read.json(getCpuLocation(timestamp)))
+
+      def cpuProfileHtml(fs: FS) = {
+        s"""
+           |<h1>CPU Profile</h1>
+           |<b>Permalink:</b> <tt>sqlContext.read.json("${getCpuLocation(timestamp)}")</tt></br>
+           |${cpuProfile.buildGraph(fs)}
+         """.stripMargin
       }
 
       /** Waits for the finish of the experiment. */
