@@ -5,7 +5,7 @@ scalaVersion := "2.10.4"
 
 sparkPackageName := "databricks/spark-sql-perf"
 
-version := "0.1.0"
+version := "0.1.1-SNAPSHOT"
 
 // All Spark Packages need a license
 licenses := Seq("Apache-2.0" -> url("http://opensource.org/licenses/Apache-2.0"))
