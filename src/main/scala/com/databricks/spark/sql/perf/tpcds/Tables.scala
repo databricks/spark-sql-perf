@@ -24,7 +24,7 @@ import org.apache.spark.Logging
 import org.apache.spark.sql.{SaveMode, SQLContext}
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.types.{StringType, StructField, StructType}
+import org.apache.spark.sql.types._
 
 class Tables(sqlContext: SQLContext, dsdgenDir: String, scaleFactor: Int) extends Serializable with Logging {
   import sqlContext.implicits._
@@ -91,6 +91,18 @@ class Tables(sqlContext: SQLContext, dsdgenDir: String, scaleFactor: Int) extend
       convertedData
     }
 
+    def useDoubleForDecimal(): Table = {
+      val newFields = fields.map { field =>
+        val newDataType = field.dataType match {
+          case decimal: DecimalType => DoubleType
+          case other => other
+        }
+        field.copy(dataType = newDataType)
+      }
+
+      Table(name, partitionColumns, newFields:_*)
+    }
+
     def genData(location: String, format: String, overwrite: Boolean): Unit = {
       val mode = if (overwrite) SaveMode.Overwrite else SaveMode.Ignore
 
@@ -129,13 +141,25 @@ class Tables(sqlContext: SQLContext, dsdgenDir: String, scaleFactor: Int) extend
     }
   }
 
-  def genData(location: String, format: String, overwrite: Boolean, partitionTables: Boolean): Unit = {
+  def genData(
+      location: String,
+      format: String,
+      overwrite: Boolean,
+      partitionTables: Boolean,
+      useDoubleForDecimal: Boolean): Unit = {
     val tablesToBeGenerated = if (partitionTables) {
       tables
     } else {
       tables.map(_.nonPartitioned)
     }
-    tablesToBeGenerated.foreach { table =>
+
+    val withSpecifiedDataType = if (useDoubleForDecimal) {
+      tablesToBeGenerated.map(_.useDoubleForDecimal())
+    } else {
+      tablesToBeGenerated
+    }
+
+    withSpecifiedDataType.foreach { table =>
       val tableLocation = s"$location/${table.name}"
       table.genData(tableLocation, format, overwrite)
     }
