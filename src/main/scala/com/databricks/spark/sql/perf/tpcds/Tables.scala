@@ -124,7 +124,7 @@ class Tables(sqlContext: SQLContext, dsdgenDir: String, scaleFactor: Int) extend
               |  $columnString
               |FROM
               |  $tempTableName
-              |DISTRIBUTED BY
+              |DISTRIBUTE BY
               |  $partitionColumnString
             """.stripMargin
           val grouped = sqlContext.sql(query)
