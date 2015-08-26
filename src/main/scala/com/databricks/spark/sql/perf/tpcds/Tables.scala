@@ -104,7 +104,12 @@ class Tables(sqlContext: SQLContext, dsdgenDir: String, scaleFactor: Int) extend
       Table(name, partitionColumns, newFields:_*)
     }
 
-    def genData(location: String, format: String, overwrite: Boolean, clusterByPartitionColumns: Boolean): Unit = {
+    def genData(
+        location: String,
+        format: String,
+        overwrite: Boolean,
+        clusterByPartitionColumns: Boolean,
+        filterOutNullPartitionValues: Boolean): Unit = {
       val mode = if (overwrite) SaveMode.Overwrite else SaveMode.Ignore
 
       val data = df
@@ -117,6 +122,11 @@ class Tables(sqlContext: SQLContext, dsdgenDir: String, scaleFactor: Int) extend
             field.name
           }.mkString(",")
           val partitionColumnString = partitionColumns.mkString(",")
+          val predicates = if (filterOutNullPartitionValues) {
+            partitionColumns.map(col => s"$col IS NOT NULL").mkString("WHERE ", " AND ", "")
+          } else {
+            ""
+          }
 
           val query =
             s"""
@@ -124,6 +134,7 @@ class Tables(sqlContext: SQLContext, dsdgenDir: String, scaleFactor: Int) extend
               |  $columnString
               |FROM
               |  $tempTableName
+              |$predicates
               |DISTRIBUTE BY
               |  $partitionColumnString
             """.stripMargin
@@ -174,7 +185,8 @@ class Tables(sqlContext: SQLContext, dsdgenDir: String, scaleFactor: Int) extend
       overwrite: Boolean,
       partitionTables: Boolean,
       useDoubleForDecimal: Boolean,
-      clusterByPartitionColumns: Boolean): Unit = {
+      clusterByPartitionColumns: Boolean,
+      filterOutNullPartitionValues: Boolean): Unit = {
     val tablesToBeGenerated = if (partitionTables) {
       tables
     } else {
@@ -189,7 +201,7 @@ class Tables(sqlContext: SQLContext, dsdgenDir: String, scaleFactor: Int) extend
 
     withSpecifiedDataType.foreach { table =>
       val tableLocation = s"$location/${table.name}"
-      table.genData(tableLocation, format, overwrite, clusterByPartitionColumns)
+      table.genData(tableLocation, format, overwrite, clusterByPartitionColumns, filterOutNullPartitionValues)
     }
   }
 
