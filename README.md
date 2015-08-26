@@ -16,7 +16,7 @@ import com.databricks.spark.sql.perf.tpcds.Tables
 // dsdgenDir is the location of dsdgen tool installed in your machines.
 val tables = new Tables(sqlContext, dsdgenDir, scaleFactor)
 // Generate data.
-tables.genData(location, format, overwrite, partitionTables, useDoubleForDecimal, orderByPartitionColumns)
+tables.genData(location, format, overwrite, partitionTables, useDoubleForDecimal, clusterByPartitionColumns)
 // Create metastore tables in a specified database for your data.
 // Once tables are created, the current database will be switched to the specified database.
 tables.createExternalTables(location, format, databaseName, overwrite)
