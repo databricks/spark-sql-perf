@@ -4,6 +4,4 @@ cache:
   directories:
     - $HOME/.ivy2
 env:
-  - DBC_USERNAME=""
-  - DBC_PASSWORD=""
-  - DBC_URL=""
+  - DBC_USERNAME="" DBC_PASSWORD="" DBC_URL=""
