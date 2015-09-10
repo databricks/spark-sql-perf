@@ -38,7 +38,7 @@ except ImportError:
     JIRA_IMPORTED = False
 
 # Location of your Spark git development area
-SPARK_HOME = os.environ.get("SPARK_REDSHIFT_HOME", os.getcwd())
+SPARK_HOME = os.environ.get("SPARK_SQL_PERF_HOME", os.getcwd())
 # Remote name which points to the Gihub site
 PR_REMOTE_NAME = os.environ.get("PR_REMOTE_NAME", "origin")
 # Remote name which points to Apache git
@@ -54,8 +54,8 @@ JIRA_PASSWORD = os.environ.get("JIRA_PASSWORD", "")
 GITHUB_OAUTH_KEY = os.environ.get("GITHUB_OAUTH_KEY")
 
 
-GITHUB_BASE = "https://github.com/databricks/spark-redshift/pull"
-GITHUB_API_BASE = "https://api.github.com/repos/databricks/spark-redshift"
+GITHUB_BASE = "https://github.com/databricks/spark-sql-perf/pull"
+GITHUB_API_BASE = "https://api.github.com/repos/databricks/spark-sql-perf"
 JIRA_BASE = "https://issues.apache.org/jira/browse"
 JIRA_API_BASE = "https://issues.apache.org/jira"
 # Prefix added to temporary branches
