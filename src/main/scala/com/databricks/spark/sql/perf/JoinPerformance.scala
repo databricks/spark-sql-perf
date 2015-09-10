@@ -68,5 +68,4 @@ trait JoinPerformance extends Benchmark {
       s"join - numMatches: $numCopies",
       copiedInts.as("a").join(ints.as("b"), $"a.id" === $"b.id"))
   }
-
 }
