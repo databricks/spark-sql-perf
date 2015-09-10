@@ -1,0 +1,5 @@
+language: scala
+sudo: false
+cache:
+  directories:
+    - $HOME/.ivy2
