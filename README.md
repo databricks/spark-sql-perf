@@ -1,5 +1,7 @@
 # Spark SQL Performance Tests
 
+[![Build Status](https://travis-ci.org/databricks/spark-sql-perf.svg)](https://travis-ci.org/databricks/spark-sql-perf)
+
 This is a performance testing framework for [Spark SQL](https://spark.apache.org/sql/) in [Apache Spark](https://spark.apache.org/) 1.4+.
 
 **Note: This README is still under development. Please also check our source code for more information.**
