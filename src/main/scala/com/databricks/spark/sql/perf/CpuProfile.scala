@@ -35,6 +35,7 @@ import com.twitter.jvm.CpuProfile
  */
 package object cpu {
 
+  // Placeholder for DBFS.
   type FS = {
     def cp(from: String, to: String, recurse: Boolean): Boolean
     def rm(dir: String, recurse: Boolean): Boolean
