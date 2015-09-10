@@ -35,6 +35,7 @@ import com.twitter.jvm.CpuProfile
  */
 package object cpu {
 
+  // Placeholder for DBFS.
   type FS = {
     def cp(from: String, to: String, recurse: Boolean): Boolean
     def rm(dir: String, recurse: Boolean): Boolean
@@ -102,8 +103,9 @@ package object cpu {
         case stackLine(cls, method, file, line) => new StackTraceElement(cls, method, file, line.stripPrefix(":").toInt)
       }
 
-      val counts = cpuLogs.groupBy($"stack").agg(count($"*")).collect().map {
-        case Row(stackLines: Seq[String], count: Long) => stackLines.map(toStackElement) -> count
+      val counts = cpuLogs.groupBy($"stack").agg(count($"*")).collect().flatMap {
+        case Row(stackLines: Seq[String], count: Long) => stackLines.map(toStackElement) -> count :: Nil
+        case other => println(s"Failed to parse $other"); Nil
       }.toMap
       val profile = new com.twitter.jvm.CpuProfile(counts, com.twitter.util.Duration.fromSeconds(10), cpuLogs.count().toInt, 0)
 
