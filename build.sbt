@@ -61,7 +61,7 @@ releaseProcess := Seq[ReleaseStep](
   commitReleaseVersion,
   tagRelease,
   setupDbcRelease,
-  releaseStepTask(dbcDeploy),
+  releaseStepTask(dbcUpload),
   setNextVersion,
   commitNextVersion,
   pushChanges
