@@ -138,7 +138,38 @@ trait SimpleQueries extends Benchmark {
               |  i_item_id
               |limit 100
               |-- end query 1 in stream 0 using template query7.tpl
-            """.stripMargin)
+            """.stripMargin),
+            
+      ("store_sales-selfjoin-1",   """
+                                   |-- The join condition will yield many matches.
+                                   |select
+                                   |  t1.ss_quantity,
+                                   |  t1.ss_list_price,
+                                   |  t1.ss_coupon_amt,
+                                   |  t1.ss_cdemo_sk,
+                                   |  t1.ss_item_sk,
+                                   |  t1.ss_promo_sk,
+                                   |  t1.ss_sold_date_sk
+                                   |from store_sales t1 join store_sales t2 on t1.ss_item_sk = t2.ss_item_sk
+                                   |where
+                                   |  t1.ss_sold_date_sk between 2450815 and 2451179
+                                   """.stripMargin),
+
+	   
+      ("store_sales-selfjoin-2",   """
+                                   |-- We ust comound primary key as the join condition. The size of output is comparable with the input table.
+                                   |select
+                                   |  t1.ss_quantity,
+                                   |  t1.ss_list_price,
+                                   |  t1.ss_coupon_amt,
+                                   |  t1.ss_cdemo_sk,
+                                   |  t1.ss_item_sk,
+                                   |  t1.ss_promo_sk,
+                                   |  t1.ss_sold_date_sk
+                                   |from store_sales t1 join store_sales t2 on t1.ss_item_sk = t2.ss_item_sk and t1.ss_ticket_number = t2.ss_ticket_number
+                                   |where
+                                   |  t1.ss_sold_date_sk between 2450815 and 2451179
+                                   """.stripMargin)
    ).map { case (name, sqlText) =>
      Query(name = name, sqlText = sqlText, description = "", executionMode = ForeachResults)
    }
