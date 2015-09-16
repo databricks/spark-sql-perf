@@ -138,7 +138,38 @@ trait SimpleQueries extends Benchmark {
               |  i_item_id
               |limit 100
               |-- end query 1 in stream 0 using template query7.tpl
-            """.stripMargin)
+            """.stripMargin),
+            
+      ("q7-bigtable-selfjoin-1",   """
+                                   |-- 1.5 is slower than 1.4.1 
+                                   |select
+                                   |  t1.ss_quantity,
+                                   |  t1.ss_list_price,
+                                   |  t1.ss_coupon_amt,
+                                   |  t1.ss_cdemo_sk,
+                                   |  t1.ss_item_sk,
+                                   |  t1.ss_promo_sk,
+                                   |  t1.ss_sold_date_sk
+                                   |from store_sales t1 join store_sales t2 on t1.ss_item_sk = t2.ss_item_sk
+                                   |where
+                                   |  t1.ss_sold_date_sk between 2450815 and 2451179
+                                   """.stripMargin),
+
+	   
+      ("q7-bigtable-selfjoin-2",   """
+                                   |-- The performance between 1.5 and 1.4.1 is similar 
+                                   |select
+                                   |  t1.ss_quantity,
+                                   |  t1.ss_list_price,
+                                   |  t1.ss_coupon_amt,
+                                   |  t1.ss_cdemo_sk,
+                                   |  t1.ss_item_sk,
+                                   |  t1.ss_promo_sk,
+                                   |  t1.ss_sold_date_sk
+                                   |from store_sales t1 join store_sales t2 on t1.ss_item_sk = t2.ss_item_sk and t1.ss_ticket_number = t2.ss_ticket_number
+                                   |where
+                                   |  t1.ss_sold_date_sk between 2450815 and 2451179
+                                   """.stripMargin)
    ).map { case (name, sqlText) =>
      Query(name = name, sqlText = sqlText, description = "", executionMode = ForeachResults)
    }
