@@ -9,6 +9,13 @@ This is a performance testing framework for [Spark SQL](https://spark.apache.org
 ## How to use it
 The rest of document will use TPC-DS benchmark as an example. We will add contents to explain how to use other benchmarks add the support of a new benchmark dataset in future.
 
+### Prereqs
+This project uses the dsdgen tool to generate the tables. There is a
+[fork](https://github.com/nongli/tpcds-kit) of this tool to support
+streaming table generation. i.e. having the tool support writing to stdout for all tables.
+
+This needs to be built and installed on all the workers.
+
 ### Setup a benchmark
 Before running any query, a dataset needs to be setup by creating a `Benchmark` object.   
 

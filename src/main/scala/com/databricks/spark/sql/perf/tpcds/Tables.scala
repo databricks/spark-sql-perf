@@ -16,15 +16,12 @@
 
 package com.databricks.spark.sql.perf.tpcds
 
-import java.io.File
-
-import scala.sys.process._
-
 import org.apache.spark.Logging
-import org.apache.spark.sql.{SaveMode, SQLContext}
-import org.apache.spark.sql.Row
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
+import org.apache.spark.sql.{DataFrame, Row, SQLContext, SaveMode}
+
+import scala.sys.process._
 
 class Tables(sqlContext: SQLContext, dsdgenDir: String, scaleFactor: Int) extends Serializable with Logging {
   import sqlContext.implicits._
@@ -32,19 +29,30 @@ class Tables(sqlContext: SQLContext, dsdgenDir: String, scaleFactor: Int) extend
   def sparkContext = sqlContext.sparkContext
   val dsdgen = s"$dsdgenDir/dsdgen"
 
+  /**
+    * For some tables, it is not generated on its own but instead when the parent table is
+    * generated. Returns the parent table for these kind of tables.
+    */
+  def getParentTable(tbl: String): Option[String] = {
+    if (tbl == "store_returns") {
+      Some("store_sales")
+    } else {
+      None
+    }
+  }
+
   case class Table(name: String, partitionColumns: Seq[String], fields: StructField*) {
     val schema = StructType(fields)
     val partitions = if (partitionColumns.isEmpty) 1 else 100
+
 
     def nonPartitioned: Table = {
       Table(name, Nil, fields : _*)
     }
 
-    /** 
-     *  If convertToSchema is true, the data from generator will be parsed into columns and
-     *  converted to `schema`. Otherwise, it just outputs the raw data (as a single STRING column).
-     */
-    def df(convertToSchema: Boolean) = {
+    def rawData() = {
+      val parentTable = getParentTable(name)
+
       val generatedData = {
         sparkContext.parallelize(1 to partitions, partitions).flatMap { i =>
           val localToolsDir = if (new java.io.File(dsdgen).exists) {
@@ -57,14 +65,34 @@ class Tables(sqlContext: SQLContext, dsdgenDir: String, scaleFactor: Int) extend
 
           // Note: RNGSEED is the RNG seed used by the data generator. Right now, it is fixed to 100.
           val parallel = if (partitions > 1) s"-parallel $partitions -child $i" else ""
+          val prefix = if (parentTable.isDefined) "-WRITE_PREFIX Y" else ""
+          val table = if (parentTable.isDefined) parentTable.get else name
           val commands = Seq(
             "bash", "-c",
-            s"cd $localToolsDir && ./dsdgen -table $name -filter Y -scale $scaleFactor -RNGSEED 100 $parallel")
+            s"cd $localToolsDir && ./dsdgen -table $table -filter Y -scale $scaleFactor -RNGSEED 100 $parallel $prefix")
           println(commands)
           commands.lines
         }
       }
 
+      if (parentTable.isDefined) {
+        generatedData.mapPartitions { iter =>
+          iter.filter(_.startsWith(name)).map { l =>
+            val index = l.indexOf("|")
+            l.substring(index + 1)
+          }
+        }
+      } else {
+        generatedData
+      }
+    }
+
+    /** 
+     *  If convertToSchema is true, the data from generator will be parsed into columns and
+     *  converted to `schema`. Otherwise, it just outputs the raw data (as a single STRING column).
+     */
+    def df(convertToSchema: Boolean): DataFrame = {
+      val generatedData = rawData()
       generatedData.setName(s"$name, sf=$scaleFactor, strings")
 
       val rows = generatedData.mapPartitions { iter =>
@@ -235,6 +263,7 @@ class Tables(sqlContext: SQLContext, dsdgenDir: String, scaleFactor: Int) extend
     }
   }
 
+  // TODO: some of the ints need to be changed to long. These are the PK of big tables.
   val tables = Seq(
     /* This is another large table that we don't build yet.
     Table("inventory",
@@ -268,6 +297,29 @@ class Tables(sqlContext: SQLContext, dsdgenDir: String, scaleFactor: Int) extend
       'ss_net_paid          .decimal(7,2),
       'ss_net_paid_inc_tax  .decimal(7,2),
       'ss_net_profit        .decimal(7,2)),
+
+    Table("store_returns",
+      partitionColumns = "sr_returned_date_sk" ::Nil,
+      'sr_returned_date_sk  .long,
+      'sr_return_time_sk    .long,
+      'sr_item_sk           .long,
+      'sr_customer_sk       .long,
+      'sr_cdemo_sk          .long,
+      'sr_hdemo_sk          .long,
+      'sr_addr_sk           .long,
+      'sr_store_sk          .long,
+      'sr_reason_sk         .long,
+      'sr_ticket_number     .long,
+      'sr_return_quantity   .long,
+      'sr_return_amt        .decimal(7,2),
+      'sr_return_tax        .decimal(7,2),
+      'sr_return_amt_inc_tax.decimal(7,2),
+      'sr_fee               .decimal(7,2),
+      'sr_return_ship_cost  .decimal(7,2),
+      'sr_refunded_cash     .decimal(7,2),
+      'sr_reversed_charge   .decimal(7,2),
+      'sr_store_credit      .decimal(7,2),
+      'sr_net_loss          .decimal(7,2)),
     Table("customer",
       partitionColumns = Nil,
       'c_customer_sk             .int,
