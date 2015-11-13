@@ -137,7 +137,7 @@ abstract class Benchmark(
       val resultsFuture = Future {
         queriesToRun.flatMap { query =>
           query.newDataFrame().queryExecution.logical.collect {
-            case UnresolvedRelation(Seq(name), _) => name
+            case UnresolvedRelation(t, _) => t.table
           }
         }.distinct.foreach { name =>
           try {
@@ -432,7 +432,7 @@ abstract class Benchmark(
     lazy val tablesInvolved = buildDataFrame.queryExecution.logical collect {
       case UnresolvedRelation(tableIdentifier, _) => {
         // We are ignoring the database name.
-        tableIdentifier.last
+        tableIdentifier.table
       }
     }
 
