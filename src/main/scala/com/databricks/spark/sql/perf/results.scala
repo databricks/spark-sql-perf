@@ -42,7 +42,7 @@ case class ExperimentRun(
 case class BenchmarkConfiguration(
     sparkVersion: String = org.apache.spark.SPARK_VERSION,
     sqlConf: Map[String, String],
-    sparkConf: Map[String,String],
+    sparkConf: Map[String, String],
     defaultParallelism: Int)
 
 /**

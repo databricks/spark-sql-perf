@@ -392,8 +392,13 @@ abstract class Benchmark(
 
     // Benchmark run by calculating the sum of the hash value of all rows. This is used to check
     // query results.
-    case object HashResults extends ExecutionMode  {
+    case object HashResults extends ExecutionMode {
       override def toString: String = "hash"
+    }
+
+    // Results from Spark perf
+    case object SparkPerfResults extends ExecutionMode {
+      override def toString: String = "sparkPerf"
     }
   }
 
