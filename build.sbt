@@ -8,7 +8,9 @@ sparkPackageName := "databricks/spark-sql-perf"
 // All Spark Packages need a license
 licenses := Seq("Apache-2.0" -> url("http://opensource.org/licenses/Apache-2.0"))
 
-sparkVersion := "1.6.0-SNAPSHOT"
+sparkVersion := "v1.6.0-preview"
+
+resolvers += "Apache Preview Repo" at "https://repository.apache.org/content/repositories/orgapachespark-1156/"
 
 sparkComponents ++= Seq("sql", "hive")
 
