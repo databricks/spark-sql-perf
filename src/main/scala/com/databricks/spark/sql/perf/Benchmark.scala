@@ -298,7 +298,8 @@ abstract class Benchmark(
            |<b>Permalink:</b> <tt>table("$resultsTableName").where('timestamp === ${timestamp}L)</tt><br/>
            |<b>Iterations complete:</b> ${currentRuns.size / combinations.size} / $iterations<br/>
            |<b>Failures:</b> $failures<br/>
-           |<b>Queries run:</b> ${currentResults.size} / ${iterations * combinations.size * executionsToRun.size}<br/>
+           |<b>Executions run:</b> ${currentResults.size} / ${iterations * combinations.size * executionsToRun.size}
+           |<br/>
            |<b>Run time:</b> ${(System.currentTimeMillis() - timestamp) / 1000}s<br/>
            |
            |<h2>Current Execution: $currentExecution</h2>
@@ -445,7 +446,15 @@ abstract class Benchmark(
     val name: String
     protected val executionMode: ExecutionMode
 
-    def benchmark(
+    final def benchmark(
+        includeBreakdown: Boolean,
+        description: String = "",
+        messages: ArrayBuffer[String]): BenchmarkResult = {
+      sparkContext.setJobDescription(s"Execution: $name, $description")
+      doBenchmark(includeBreakdown, description, messages)
+    }
+
+    protected def doBenchmark(
         includeBreakdown: Boolean,
         description: String = "",
         messages: ArrayBuffer[String]): BenchmarkResult
@@ -467,7 +476,7 @@ abstract class Benchmark(
 
     protected override val executionMode: ExecutionMode = ExecutionMode.SparkPerfResults
 
-    override def benchmark(
+    protected override def doBenchmark(
         includeBreakdown: Boolean,
         description: String = "",
         messages: ArrayBuffer[String]): BenchmarkResult = {
@@ -513,13 +522,12 @@ abstract class Benchmark(
 
     def newDataFrame() = buildDataFrame
 
-    override def benchmark(
+    protected override def doBenchmark(
         includeBreakdown: Boolean,
         description: String = "",
         messages: ArrayBuffer[String]): BenchmarkResult = {
       try {
         val dataFrame = buildDataFrame
-        sparkContext.setJobDescription(s"Query: $name, $description")
         val queryExecution = dataFrame.queryExecution
         // We are not counting the time of ScalaReflection.convertRowToScala.
         val parsingTime = benchmarkMs {
