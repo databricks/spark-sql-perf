@@ -198,11 +198,19 @@ class Tables(sqlContext: SQLContext, dsdgenDir: String, scaleFactor: Int) extend
       partitionTables: Boolean,
       useDoubleForDecimal: Boolean,
       clusterByPartitionColumns: Boolean,
-      filterOutNullPartitionValues: Boolean): Unit = {
-    val tablesToBeGenerated = if (partitionTables) {
+      filterOutNullPartitionValues: Boolean,
+      tableFilter: String = ""): Unit = {
+    var tablesToBeGenerated = if (partitionTables) {
       tables
     } else {
       tables.map(_.nonPartitioned)
+    }
+
+    if (!tableFilter.isEmpty) {
+      tablesToBeGenerated = tablesToBeGenerated.filter(_.name == tableFilter)
+      if (tablesToBeGenerated.isEmpty) {
+        throw new RuntimeException("Bad table name filter: " + tableFilter)
+      }
     }
 
     val withSpecifiedDataType = if (useDoubleForDecimal) {
@@ -213,13 +221,20 @@ class Tables(sqlContext: SQLContext, dsdgenDir: String, scaleFactor: Int) extend
 
     withSpecifiedDataType.foreach { table =>
       val tableLocation = s"$location/${table.name}"
-      table.genData(tableLocation, format, overwrite, clusterByPartitionColumns, filterOutNullPartitionValues)
+      table.genData(tableLocation, format, overwrite, clusterByPartitionColumns,
+        filterOutNullPartitionValues)
     }
   }
 
-  def createExternalTables(location: String, format: String, databaseName: String, overwrite: Boolean): Unit = {
+  def createExternalTables(location: String, format: String, databaseName: String, overwrite: Boolean, tableFilter: String = ""): Unit = {
+    val filtered = if (tableFilter.isEmpty) {
+      tables
+    } else {
+      tables.filter(_.name == tableFilter)
+    }
+
     sqlContext.sql(s"CREATE DATABASE IF NOT EXISTS $databaseName")
-    tables.foreach { table =>
+    filtered.foreach { table =>
       val tableLocation = s"$location/${table.name}"
       table.createExternalTable(tableLocation, format, databaseName, overwrite)
     }
@@ -228,8 +243,13 @@ class Tables(sqlContext: SQLContext, dsdgenDir: String, scaleFactor: Int) extend
     logInfo(s"The current database has been set to $databaseName.")
   }
 
-  def createTemporaryTables(location: String, format: String): Unit = {
-    tables.foreach { table =>
+  def createTemporaryTables(location: String, format: String, tableFilter: String = ""): Unit = {
+    val filtered = if (tableFilter.isEmpty) {
+      tables
+    } else {
+      tables.filter(_.name == tableFilter)
+    }
+    filtered.foreach { table =>
       val tableLocation = s"$location/${table.name}"
       table.createTemporaryTable(tableLocation, format)
     }
@@ -268,6 +288,28 @@ class Tables(sqlContext: SQLContext, dsdgenDir: String, scaleFactor: Int) extend
       'ss_net_paid          .decimal(7,2),
       'ss_net_paid_inc_tax  .decimal(7,2),
       'ss_net_profit        .decimal(7,2)),
+    Table("store_returns",
+      partitionColumns = "sr_returned_date_sk" ::Nil,
+      'sr_returned_date_sk  .long,
+      'sr_return_time_sk    .long,
+      'sr_item_sk           .long,
+      'sr_customer_sk       .long,
+      'sr_cdemo_sk          .long,
+      'sr_hdemo_sk          .long,
+      'sr_addr_sk           .long,
+      'sr_store_sk          .long,
+      'sr_reason_sk         .long,
+      'sr_ticket_number     .long,
+      'sr_return_quantity   .long,
+      'sr_return_amt        .decimal(7,2),
+      'sr_return_tax        .decimal(7,2),
+      'sr_return_amt_inc_tax.decimal(7,2),
+      'sr_fee               .decimal(7,2),
+      'sr_return_ship_cost  .decimal(7,2),
+      'sr_refunded_cash     .decimal(7,2),
+      'sr_reversed_charge   .decimal(7,2),
+      'sr_store_credit      .decimal(7,2),
+      'sr_net_loss          .decimal(7,2)),
     Table("customer",
       partitionColumns = Nil,
       'c_customer_sk             .int,
