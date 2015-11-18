@@ -49,6 +49,7 @@ case class BenchmarkConfiguration(
  * The result of a query.
  * @param name The name of the query.
  * @param mode The ExecutionMode of this run.
+ * @param parameters Additional parameters that describe this query.
  * @param joinTypes The type of join operations in the query.
  * @param tables The tables involved in the query.
  * @param parsingTime The time used to parse the query.
@@ -64,6 +65,7 @@ case class BenchmarkConfiguration(
 case class BenchmarkResult(
     name: String,
     mode: String,
+    parameters: Map[String, String] = Map.empty[String, String],
     joinTypes: Seq[String] = Nil,
     tables: Seq[String] = Nil,
     parsingTime: Option[Double] = None,
