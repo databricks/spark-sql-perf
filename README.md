@@ -10,7 +10,9 @@ This is a performance testing framework for [Spark SQL](https://spark.apache.org
 The rest of document will use TPC-DS benchmark as an example. We will add contents to explain how to use other benchmarks add the support of a new benchmark dataset in future.
 
 ### Setup a benchmark
-Before running any query, a dataset needs to be setup by creating a `Benchmark` object.   
+Before running any query, a dataset needs to be setup by creating a `Benchmark` object. Generating
+the TPCDS data requires dsdgen built and available on the machines. We have a fork of dsdgen that
+you will need. It can be found [here](https://github.com/davies/tpcds-kit).  
 
 ```
 import com.databricks.spark.sql.perf.tpcds.Tables
