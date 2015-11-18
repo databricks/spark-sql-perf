@@ -25,6 +25,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import org.apache.spark.sql.{AnalysisException, DataFrame, SQLContext}
 import org.apache.spark.sql.catalyst.analysis.UnresolvedRelation
 import org.apache.spark.sql.execution.SparkPlan
+import org.apache.spark.{SparkContext, SparkEnv}
 
 import com.databricks.spark.sql.perf.cpu._
 
@@ -451,7 +452,21 @@ abstract class Benchmark(
         description: String = "",
         messages: ArrayBuffer[String]): BenchmarkResult = {
       sparkContext.setJobDescription(s"Execution: $name, $description")
-      doBenchmark(includeBreakdown, description, messages)
+      beforeBenchmark()
+      val result = doBenchmark(includeBreakdown, description, messages)
+      afterBenchmark(sqlContext.sparkContext)
+      result
+    }
+
+    protected def beforeBenchmark(): Unit = { }
+
+    private def afterBenchmark(sc: SparkContext): Unit = {
+      // Best-effort clean up of weakly referenced RDDs, shuffles, and broadcasts
+      System.gc()
+      // Remove any leftover blocks that still exist
+      sc.getExecutorStorageStatus
+        .flatMap { status => status.blocks.map { case (bid, _) => bid } }
+        .foreach { bid => SparkEnv.get.blockManager.master.removeBlock(bid) }
     }
 
     protected def doBenchmark(
@@ -459,7 +474,7 @@ abstract class Benchmark(
         description: String = "",
         messages: ArrayBuffer[String]): BenchmarkResult
 
-    protected def benchmarkMs[A](f: => A): Double = {
+    protected def measureTimeMs[A](f: => A): Double = {
       val startTime = System.nanoTime()
       f
       val endTime = System.nanoTime()
@@ -471,17 +486,20 @@ abstract class Benchmark(
   class SparkPerfExecution(
       override val name: String,
       parameters: Map[String, String],
+      prepare: () => Unit,
       run: () => Unit)
     extends Benchmarkable {
 
     protected override val executionMode: ExecutionMode = ExecutionMode.SparkPerfResults
+
+    protected override def beforeBenchmark(): Unit = { prepare() }
 
     protected override def doBenchmark(
         includeBreakdown: Boolean,
         description: String = "",
         messages: ArrayBuffer[String]): BenchmarkResult = {
       try {
-        val timeMs = benchmarkMs(run())
+        val timeMs = measureTimeMs(run())
         BenchmarkResult(
           name = name,
           mode = executionMode.toString,
@@ -530,16 +548,16 @@ abstract class Benchmark(
         val dataFrame = buildDataFrame
         val queryExecution = dataFrame.queryExecution
         // We are not counting the time of ScalaReflection.convertRowToScala.
-        val parsingTime = benchmarkMs {
+        val parsingTime = measureTimeMs {
           queryExecution.logical
         }
-        val analysisTime = benchmarkMs {
+        val analysisTime = measureTimeMs {
           queryExecution.analyzed
         }
-        val optimizationTime = benchmarkMs {
+        val optimizationTime = measureTimeMs {
           queryExecution.optimizedPlan
         }
-        val planningTime = benchmarkMs {
+        val planningTime = measureTimeMs {
           queryExecution.executedPlan
         }
 
@@ -553,7 +571,7 @@ abstract class Benchmark(
             case (index, node) =>
               messages += s"Breakdown: ${node.simpleString}"
               val newNode = buildDataFrame.queryExecution.executedPlan(index)
-              val executionTime = benchmarkMs {
+              val executionTime = measureTimeMs {
                 newNode.execute().foreach((row: Any) => Unit)
               }
               timeMap += ((index, executionTime))
@@ -580,7 +598,7 @@ abstract class Benchmark(
         // The executionTime for the entire query includes the time of type conversion
         // from catalyst to scala.
         var result: Option[Long] = None
-        val executionTime = benchmarkMs {
+        val executionTime = measureTimeMs {
           executionMode match {
             case ExecutionMode.CollectResults => dataFrame.rdd.collect()
             case ExecutionMode.ForeachResults => dataFrame.rdd.foreach { row => Unit }
