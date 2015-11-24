@@ -16,6 +16,8 @@
 
 package com.databricks.spark.sql.perf.tpcds
 
+import scala.collection.mutable
+
 import com.databricks.spark.sql.perf._
 import org.apache.spark.sql.SQLContext
 
@@ -28,7 +30,7 @@ class TPCDS (
     resultsLocation: String = "/spark/sql/performance",
     resultsTableName: String = "sqlPerformance")
   extends Benchmark(sqlContext, resultsLocation, resultsTableName)
-  with ImpalaKitQueries with SimpleQueries with Serializable {
+  with ImpalaKitQueries with SimpleQueries with Tpcds_1_4_Queries with Serializable {
 
   /*
   def setupBroadcast(skipTables: Seq[String] = Seq("store_sales", "customer")) = {
@@ -45,5 +47,51 @@ class TPCDS (
     sql(setQuery)
   }
   */
+
+  /**
+   * Simple utilities to run the queries without persisting the results.
+   */
+  def explain(queries: Seq[Query], showPlan: Boolean = false): Unit = {
+    val succeeded = mutable.ArrayBuffer.empty[String]
+    queries.foreach { q =>
+      println(s"Query: ${q.name}")
+      try {
+        val df = sqlContext.sql(q.sqlText.get)
+        if (showPlan) {
+          df.explain()
+        } else {
+          df.queryExecution.executedPlan
+        }
+        succeeded += q.name
+      } catch {
+        case e: Exception =>
+          println("Failed to plan: " + e)
+      }
+    }
+    println(s"Planned ${succeeded.size} out of ${queries.size}")
+    println(succeeded.map("\"" + _ + "\""))
+  }
+
+  def run(queries: Seq[Query], numRows: Int = 1): Unit = {
+    val succeeded = mutable.ArrayBuffer.empty[String]
+    queries.foreach { q =>
+      println(s"Query: ${q.name}")
+      try {
+        val start = System.currentTimeMillis()
+        val df = sqlContext.sql(q.sqlText.get)
+        df.show(numRows)
+        succeeded += q.name
+        println(s"   Took: ${System.currentTimeMillis() - start} ms")
+        println("------------------------------------------------------------------")
+      } catch {
+        case e: Exception =>
+          println("Failed to run: " + e)
+      }
+    }
+    println(s"Ran ${succeeded.size} out of ${queries.size}")
+    println(succeeded.map("\"" + _ + "\""))
+  }
 }
+
+
 
