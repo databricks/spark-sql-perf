@@ -181,7 +181,9 @@ trait ImpalaKitQueries extends Benchmark {
               |  c_last_name,
               |  c_first_name,
               |  c_salutation,
-              |  c_preferred_cust_flag desc
+              |  c_preferred_cust_flag desc,
+              |  ss_ticket_number,
+              |  cnt
               |limit 1000
               |-- end query 1 in stream 0 using template query34.tpl
             """.stripMargin),
@@ -744,7 +746,7 @@ trait ImpalaKitQueries extends Benchmark {
               |    join store on (store_sales.ss_store_sk = store.s_store_sk)
               |    -- join date_dim on (store_sales.ss_sold_date_sk = date_dim.d_date_sk)
               |  where
-              |    store.s_county in ('Saginaw County', 'Sumner County', 'Appanoose County', 'Daviess County')
+              |    store.s_county in ('Williamson County','Franklin Parish','Bronx County','Orange County')
               |    -- and date_dim.d_dom between 1 and 2
               |    -- and date_dim.d_year in(1998, 1998 + 1, 1998 + 2)
               |    -- and ss_date between '1999-01-01' and '2001-12-02'
@@ -1150,7 +1152,13 @@ trait ImpalaKitQueries extends Benchmark {
     JOIN customer ON dn.ss_customer_sk = customer.c_customer_sk
     WHERE
     cnt between 15 and 20
-    order by c_last_name,c_first_name,c_salutation,c_preferred_cust_flag desc"""),
+    order by
+      c_last_name,
+      c_first_name,
+      c_salutation,
+      c_preferred_cust_flag desc,
+      ss_ticket_number,
+      cnt"""),
 
     ("q42", """
       select  d_year
@@ -1418,7 +1426,7 @@ trait ImpalaKitQueries extends Benchmark {
     and case when household_demographics.hd_vehicle_count > 0 then
       household_demographics.hd_dep_count/ household_demographics.hd_vehicle_count else null end > 1
     and date_dim.d_year in (1998,1998+1,1998+2)
-    and store.s_county in ('Williamson County','Williamson County','Williamson County','Williamson County')
+    and store.s_county in ('Williamson County','Franklin Parish','Bronx County','Orange County')
     group by ss_ticket_number,ss_customer_sk) dj
     JOIN customer ON dj.ss_customer_sk = customer.c_customer_sk
     where
