@@ -33,6 +33,7 @@ trait SimpleQueries extends Benchmark {
          | select count(*) from store_sales
          | join store_returns
          | on store_sales.ss_item_sk = store_returns.sr_item_sk
+         | and store_sales.ss_ticket_number = store_returns.sr_ticket_number
        """.stripMargin)
    ).map { case (name, sqlText) =>
      Query(name = name, sqlText = sqlText, description = "", executionMode = ForeachResults)
