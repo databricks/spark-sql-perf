@@ -16,13 +16,15 @@
 
 package com.databricks.spark.sql.perf
 
+import org.apache.spark.rdd.RDD
+
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent._
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 
-import org.apache.spark.sql.{AnalysisException, DataFrame, SQLContext}
+import org.apache.spark.sql.{Dataset, AnalysisException, DataFrame, SQLContext}
 import org.apache.spark.sql.catalyst.analysis.UnresolvedRelation
 import org.apache.spark.sql.execution.SparkPlan
 import org.apache.spark.{SparkContext, SparkEnv}
@@ -479,6 +481,14 @@ abstract class Benchmark(
       f
       val endTime = System.nanoTime()
       (endTime - startTime).toDouble / 1000000
+    }
+  }
+
+  object RDDCount {
+    def apply(
+        name: String,
+        rdd: RDD[_]) = {
+      new SparkPerfExecution(name, Map.empty, () => Unit, () => rdd.count())
     }
   }
 
