@@ -212,7 +212,9 @@ abstract class Benchmark(
         try {
           val resultsTable = sqlContext.createDataFrame(results)
           currentMessages += s"Results written to table: 'sqlPerformance' at $resultsLocation/$timestamp"
-          results.toDF().write
+          results.toDF()
+            .coalesce(1)
+            .write
             .format("json")
             .save(s"$resultsLocation/$timestamp")
 
