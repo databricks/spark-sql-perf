@@ -607,14 +607,13 @@ abstract class Benchmark(
             case ExecutionMode.HashResults =>
               val columnStr = dataFrame.schema.map(_.name).mkString(",")
               // SELECT SUM(HASH(col1, col2, ...)) FROM (benchmark query)
-              val ret =
+              val row =
                 dataFrame
                   .selectExpr(s"hash($columnStr) as hashValue")
                   .groupBy()
                   .sum("hashValue")
                   .head()
-                  .getLong(0)
-              result = Some(ret)
+              result = if (row.isNullAt(0)) None else Some(row.getLong(0))
           }
         }
 
