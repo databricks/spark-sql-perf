@@ -73,7 +73,7 @@ case class BenchmarkResult(
     optimizationTime: Option[Double] = None,
     planningTime: Option[Double] = None,
     executionTime: Option[Double] = None,
-    result: Option[Long] = None,
+    result: Option[java.lang.Long] = None,
     breakDown: Seq[BreakdownResult] = Nil,
     queryExecution: Option[String] = None,
     failure: Option[Failure] = None)
