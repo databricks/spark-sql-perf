@@ -553,12 +553,23 @@ abstract class Benchmark(
         val timeMs = measureTimeMs {
           doubleResults = run()
         }
+        val schedulingDelayResults = doubleResults.filter(_._1.startsWith("schedulingDelay-")).map {
+          case (key, value) => (key.stripPrefix("schedulingDelay-"), value)
+        }
+        val processingDelayResults = doubleResults.filter(_._1.startsWith("processingDelay-")).map {
+          case (key, value) => (key.stripPrefix("processingDelay-"), value)
+        }
+        val totalDelayResults = doubleResults.filter(_._1.startsWith("totalDelay-")).map {
+          case (key, value) => (key.stripPrefix("totalDelay-"), value)
+        }
         BenchmarkResult(
           name = name,
           mode = executionMode.toString,
           parameters = parameters,
-          executionTime = Some(timeMs),
-          doubleResults = doubleResults)
+          streamingResults = StreamingBenchmarkResult(
+            schedulingDelay = schedulingDelayResults,
+            processingDelay = processingDelayResults,
+            totalDelay = totalDelayResults))
       } catch {
         case NonFatal(e) =>
           createFailureBenchmarkResult(e)
