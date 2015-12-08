@@ -16,11 +16,14 @@
 
 package com.databricks.spark.sql.perf
 
+import java.io.{PrintWriter, StringWriter}
+
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent._
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.util.control.NonFatal
 
 import org.apache.spark.sql.{AnalysisException, DataFrame, SQLContext}
 import org.apache.spark.sql.catalyst.analysis.UnresolvedRelation
@@ -513,6 +516,74 @@ abstract class Benchmark(
             parameters = parameters,
             failure = Some(Failure(e.getClass.getSimpleName, e.getMessage)))
       }
+    }
+  }
+
+  /** A class for benchmarking Streaming perf results. */
+  class StreamingPerfExecution(
+      override val name: String,
+      parameters: Map[String, String],
+      prepare: () => Unit,
+      run: () => Map[String, Double])
+    extends Benchmarkable {
+
+    protected override val executionMode: ExecutionMode = ExecutionMode.SparkPerfResults
+
+    private var prepareFailureBenchmarkResult: BenchmarkResult = null
+
+    protected override def beforeBenchmark(): Unit = {
+      try {
+        prepare()
+      } catch {
+        case NonFatal(e) =>
+          // TODO make `beforeBenchmark` support to report failure in Benchmarkable
+          prepareFailureBenchmarkResult = createFailureBenchmarkResult(e)
+      }
+    }
+
+    protected override def doBenchmark(
+        includeBreakdown: Boolean,
+        description: String = "",
+        messages: ArrayBuffer[String]): BenchmarkResult = {
+      if (prepareFailureBenchmarkResult != null) {
+        return prepareFailureBenchmarkResult
+      }
+      try {
+        var doubleResults: Map[String, Double] = Map.empty
+        val timeMs = measureTimeMs {
+          doubleResults = run()
+        }
+        val schedulingDelayResults = doubleResults.filter(_._1.startsWith("schedulingDelay-")).map {
+          case (key, value) => (key.stripPrefix("schedulingDelay-"), value)
+        }
+        val processingDelayResults = doubleResults.filter(_._1.startsWith("processingDelay-")).map {
+          case (key, value) => (key.stripPrefix("processingDelay-"), value)
+        }
+        val totalDelayResults = doubleResults.filter(_._1.startsWith("totalDelay-")).map {
+          case (key, value) => (key.stripPrefix("totalDelay-"), value)
+        }
+        BenchmarkResult(
+          name = name,
+          mode = executionMode.toString,
+          parameters = parameters,
+          streamingResults = StreamingBenchmarkResult(
+            schedulingDelay = schedulingDelayResults,
+            processingDelay = processingDelayResults,
+            totalDelay = totalDelayResults))
+      } catch {
+        case NonFatal(e) =>
+          createFailureBenchmarkResult(e)
+      }
+    }
+
+    private def createFailureBenchmarkResult(e: Throwable): BenchmarkResult = {
+      val stringWriter = new StringWriter()
+      e.printStackTrace(new PrintWriter(stringWriter))
+      BenchmarkResult(
+        name = name,
+        mode = executionMode.toString,
+        parameters = parameters,
+        failure = Some(Failure(e.getClass.getSimpleName, stringWriter.toString)))
     }
   }
 
