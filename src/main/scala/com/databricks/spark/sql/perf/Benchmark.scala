@@ -613,8 +613,7 @@ abstract class Benchmark(
                   .groupBy()
                   .sum("hashValue")
                   .head()
-              val sumOfHash = if (row.isNullAt(0)) 0L else row.getLong(0)
-              result = Some(sumOfHash)
+              result = if (row.isNullAt(0)) None else Some(row.getLong(0))
           }
         }
 
