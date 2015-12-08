@@ -597,7 +597,7 @@ abstract class Benchmark(
         // to scala.
         // The executionTime for the entire query includes the time of type conversion
         // from catalyst to scala.
-        var result: Option[java.lang.Long] = None
+        var result: Option[Long] = None
         val executionTime = measureTimeMs {
           executionMode match {
             case ExecutionMode.CollectResults => dataFrame.rdd.collect()
@@ -613,7 +613,7 @@ abstract class Benchmark(
                   .groupBy()
                   .sum("hashValue")
                   .head()
-              val sumOfHash = if (row.isNullAt(0)) null else new java.lang.Long(row.getLong(0))
+              val sumOfHash = if (row.isNullAt(0)) 0L else row.getLong(0)
               result = Some(sumOfHash)
           }
         }
