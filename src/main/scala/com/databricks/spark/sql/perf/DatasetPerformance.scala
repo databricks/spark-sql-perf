@@ -119,5 +119,4 @@ trait DatasetPerformance extends Benchmark {
         sumAndCount._1.toDouble / sumAndCount._2
       })
   )
-
 }
