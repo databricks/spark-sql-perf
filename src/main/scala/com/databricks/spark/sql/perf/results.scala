@@ -43,7 +43,8 @@ case class BenchmarkConfiguration(
     sparkVersion: String = org.apache.spark.SPARK_VERSION,
     sqlConf: Map[String, String],
     sparkConf: Map[String, String],
-    defaultParallelism: Int)
+    defaultParallelism: Int,
+    buildInfo: Map[String, String])
 
 /**
  * The result of a query.
