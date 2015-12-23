@@ -1,10 +1,31 @@
 package com.databricks.spark.sql.perf
 
+import org.apache.spark.sql.SQLContext
+import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.sql.expressions.Aggregator
 
 case class Data(id: Long)
 
 case class SumAndCount(var sum: Long, var count: Int)
+
+object DatasetBenchmark {
+  def main(args: Array[String]): Unit = {
+    val sc = new SparkContext("local[*]", "spark-sql-perf", new SparkConf())
+    val sqlContext = new SQLContext(sc)
+
+    val resultsDir = new java.io.File("performance").toURI.toString
+    val benchmark = new Benchmark(sqlContext, resultsLocation = resultsDir) with DatasetPerformance
+    import benchmark._
+
+    val queries = allBenchmarks
+    val experiment = runExperiment(
+      executionsToRun = queries,
+      iterations = 3,
+      tags = Map("runtype" -> "local"))
+
+    experiment.waitForFinish(1000 * 60 * 30)
+  }
+}
 
 trait DatasetPerformance extends Benchmark {
 

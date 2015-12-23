@@ -14,15 +14,21 @@ licenses := Seq("Apache-2.0" -> url("http://opensource.org/licenses/Apache-2.0")
 
 sparkVersion := "1.6.0"
 
-resolvers += "Apache Preview Repo" at "https://repository.apache.org/content/repositories/orgapachespark-1156/"
+resolvers += "Apache Preview Repo" at "https://repository.apache.org/content/repositories/orgapachespark-1175/"
 
 sparkComponents ++= Seq("sql", "hive")
 
 initialCommands in console :=
   """
+    |import org.apache.spark.sql._
+    |import org.apache.spark.sql.functions._
+    |import org.apache.spark.sql.types._
     |import org.apache.spark.sql.hive.test.TestHive
     |import TestHive.implicits
     |import TestHive.sql
+    |
+    |val sqlContext = TestHive
+    |import sqlContext.implicits._
   """.stripMargin
 
 libraryDependencies += "org.apache.spark" %% "spark-sql" % sparkVersion.value
