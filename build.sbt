@@ -1,6 +1,10 @@
 // Your sbt build file. Guides on how to write one can be found at
 // http://www.scala-sbt.org/0.13/docs/index.html
 
+name := "spark-sql-perf"
+
+organization := "com.databricks"
+
 scalaVersion := "2.10.4"
 
 sparkPackageName := "databricks/spark-sql-perf"
@@ -56,6 +60,35 @@ lazy val setupDbcRelease = ReleaseStep(
   }
 )
 
+/********************
+ * Release settings *
+ ********************/
+
+publishMavenStyle := true
+
+releaseCrossBuild := true
+
+licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0"))
+
+releasePublishArtifactsAction := PgpKeys.publishSigned.value
+
+pomExtra := (
+      <url>https://github.com/databricks/spark-sql-perf</url>
+      <scm>
+        <url>git@github.com:databricks/spark-sql-perf.git</url>
+        <connection>scm:git:git@github.com:databricks/spark-sql-perf.git</connection>
+      </scm>
+      <developers>
+        <developer>
+          <id>marmbrus</id>
+          <name>Michael Armbrust</name>
+          <url>https://github.com/marmbrus</url>
+        </developer>
+      </developers>
+    )
+
+bintrayReleaseOnPublish in ThisBuild := false
+
 // Add publishing to spark packages as another step.
 releaseProcess := Seq[ReleaseStep](
   checkSnapshotDependencies,
@@ -66,6 +99,7 @@ releaseProcess := Seq[ReleaseStep](
   tagRelease,
   setupDbcRelease,
   releaseStepTask(dbcUpload),
+  publishArtifacts,
   setNextVersion,
   commitNextVersion,
   pushChanges
