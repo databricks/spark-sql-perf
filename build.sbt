@@ -78,13 +78,6 @@ pomExtra := (
         <url>git@github.com:databricks/spark-sql-perf.git</url>
         <connection>scm:git:git@github.com:databricks/spark-sql-perf.git</connection>
       </scm>
-      <developers>
-        <developer>
-          <id>marmbrus</id>
-          <name>Michael Armbrust</name>
-          <url>https://github.com/marmbrus</url>
-        </developer>
-      </developers>
     )
 
 bintrayReleaseOnPublish in ThisBuild := false
