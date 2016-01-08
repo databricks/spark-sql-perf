@@ -16,6 +16,8 @@
 
 package com.databricks.spark.sql.perf
 
+import java.util.UUID
+
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent._
@@ -25,7 +27,7 @@ import scala.util.Try
 
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{Dataset, AnalysisException, DataFrame, SQLContext}
-import org.apache.spark.sql.catalyst.analysis.UnresolvedRelation
+import org.apache.spark.sql.catalyst.analysis.{NoSuchTableException, UnresolvedRelation}
 import org.apache.spark.sql.execution.SparkPlan
 import org.apache.spark.{SparkContext, SparkEnv}
 
@@ -113,6 +115,7 @@ abstract class Benchmark(
    * @param variations [[Variation]]s used in this run.  The cross product of all variations will be
    *                   run for each execution * iteration.
    * @param tags Tags of this run.
+   * @param timeout wait at most timeout milliseconds for each query, 0 means wait forever
    * @return It returns a ExperimentStatus object that can be used to
    *         track the progress of this experiment run.
    */
@@ -121,7 +124,8 @@ abstract class Benchmark(
       includeBreakdown: Boolean = false,
       iterations: Int = 3,
       variations: Seq[Variation[_]] = Seq(Variation("StandardRun", Seq("true")) { _ => {} }),
-      tags: Map[String, String] = Map.empty) = {
+      tags: Map[String, String] = Map.empty,
+      timeout: Long = 0L) = {
 
     class ExperimentStatus {
       val currentResults = new collection.mutable.ArrayBuffer[BenchmarkResult]()
@@ -152,8 +156,13 @@ abstract class Benchmark(
         executionsToRun
           .collect { case query: Query => query }
           .flatMap { query =>
-            query.newDataFrame().queryExecution.logical.collect {
-              case UnresolvedRelation(t, _) => t.table
+            try {
+              query.newDataFrame().queryExecution.logical.collect {
+                case UnresolvedRelation(t, _) => t.table
+              }
+            } catch {
+              // ignore the queries that can't be parsed
+              case e: Exception => Seq()
             }
           }
           .distinct
@@ -162,16 +171,19 @@ abstract class Benchmark(
               sqlContext.table(name)
               currentMessages += s"Table $name exists."
             } catch {
-              case ae: AnalysisException =>
+              case ae: Exception =>
                 val table = allTables
                   .find(_.name == name)
-                  .getOrElse(sys.error(s"Couldn't read table $name and its not defined as a Benchmark.Table."))
-
-                currentMessages += s"Creating table: $name"
-                table.data
-                  .write
-                  .mode("overwrite")
-                  .saveAsTable(name)
+                if (table.isDefined) {
+                  currentMessages += s"Creating table: $name"
+                  table.get.data
+                    .write
+                    .mode("overwrite")
+                    .saveAsTable(name)
+                } else {
+                  // the table could be subquery
+                  println(s"Couldn't read table $name and its not defined as a Benchmark.Table.")
+                }
             }
           }
 
@@ -197,12 +209,18 @@ abstract class Benchmark(
 
                 currentExecution = q.name
                 currentPlan = q match {
-                  case query: Query => query.newDataFrame().queryExecution.executedPlan.toString()
+                  case query: Query =>
+                    try {
+                      query.newDataFrame().queryExecution.executedPlan.toString()
+                    } catch {
+                      case e: Exception =>
+                        s"failed to parse: $e"
+                    }
                   case _ => ""
                 }
                 startTime = System.currentTimeMillis()
 
-                val singleResult = q.benchmark(includeBreakdown, setup, currentMessages)
+                val singleResult = q.benchmark(includeBreakdown, setup, currentMessages, timeout)
                 singleResult.failure.foreach { f =>
                   failures += 1
                   currentMessages += s"Execution '${q.name}' failed: ${f.message}"
@@ -463,10 +481,11 @@ abstract class Benchmark(
     final def benchmark(
         includeBreakdown: Boolean,
         description: String = "",
-        messages: ArrayBuffer[String]): BenchmarkResult = {
+        messages: ArrayBuffer[String],
+        timeout: Long): BenchmarkResult = {
       sparkContext.setJobDescription(s"Execution: $name, $description")
       beforeBenchmark()
-      val result = doBenchmark(includeBreakdown, description, messages)
+      val result = runBenchmark(includeBreakdown, description, messages, timeout)
       afterBenchmark(sqlContext.sparkContext)
       result
     }
@@ -480,6 +499,34 @@ abstract class Benchmark(
       sc.getExecutorStorageStatus
         .flatMap { status => status.blocks.map { case (bid, _) => bid } }
         .foreach { bid => SparkEnv.get.blockManager.master.removeBlock(bid) }
+    }
+
+    private def runBenchmark(
+        includeBreakdown: Boolean,
+        description: String = "",
+        messages: ArrayBuffer[String],
+        timeout: Long): BenchmarkResult = {
+      val jobgroup = UUID.randomUUID().toString
+      var result: BenchmarkResult = null
+      val thread = new Thread("benchmark runner") {
+        override def run(): Unit = {
+          sparkContext.setJobGroup(jobgroup, s"benchmark $name", true)
+          result = doBenchmark(includeBreakdown, description, messages)
+        }
+      }
+      thread.setDaemon(true)
+      thread.start()
+      thread.join(timeout)
+      if (thread.isAlive) {
+        sparkContext.cancelJobGroup(jobgroup)
+        thread.interrupt()
+        result = BenchmarkResult(
+          name = name,
+          mode = executionMode.toString,
+          failure = Some(Failure("Timeout", s"timeout after ${timeout / 1000} seconds"))
+        )
+      }
+      result
     }
 
     protected def doBenchmark(
@@ -546,11 +593,22 @@ abstract class Benchmark(
       override val executionMode: ExecutionMode = ExecutionMode.ForeachResults)
     extends Benchmarkable with Serializable {
 
-    override def toString =
-      s"""
-         |== Query: $name ==
-         |${buildDataFrame.queryExecution.analyzed}
+    override def toString = {
+      try {
+        s"""
+           |== Query: $name ==
+           |${buildDataFrame.queryExecution.analyzed}
        """.stripMargin
+      } catch {
+        case e: Exception =>
+          s"""
+             |== Query: $name ==
+             | Can't be analyzed: $e
+             |
+             | $description
+       """.stripMargin
+      }
+    }
 
     lazy val tablesInvolved = buildDataFrame.queryExecution.logical collect {
       case UnresolvedRelation(tableIdentifier, _) => {

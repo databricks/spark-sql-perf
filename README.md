@@ -35,7 +35,7 @@ val tpcds = new TPCDS (sqlContext = sqlContext)
 After setup, users can use `runExperiment` function to run benchmarking queries and record query execution time. Taking TPC-DS as an example, you can start an experiment by using
 
 ```
-val experiment = tpcds.runExperiment(queriesToRun = tpcds.interactiveQueries)
+val experiment = tpcds.runExperiment(tpcds.interactiveQueries)
 ```
 
 For every experiment run (i.e. every call of `runExperiment`), Spark SQL Perf will use the timestamp of the start time to identify this experiment. Performance results will be stored in the sub-dir named by the timestamp in the given `resultsLocation` (for example `results/1429213883272`). The performance results are stored in the JSON format.

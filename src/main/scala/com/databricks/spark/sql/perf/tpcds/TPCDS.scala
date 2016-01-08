@@ -72,20 +72,39 @@ class TPCDS (
     println(succeeded.map("\"" + _ + "\""))
   }
 
-  def run(queries: Seq[Query], numRows: Int = 1): Unit = {
+  def run(queries: Seq[Query], numRows: Int = 1, timeout: Int = 0): Unit = {
     val succeeded = mutable.ArrayBuffer.empty[String]
     queries.foreach { q =>
       println(s"Query: ${q.name}")
-      try {
-        val start = System.currentTimeMillis()
-        val df = sqlContext.sql(q.sqlText.get)
-        df.show(numRows)
-        succeeded += q.name
-        println(s"   Took: ${System.currentTimeMillis() - start} ms")
-        println("------------------------------------------------------------------")
-      } catch {
-        case e: Exception =>
-          println("Failed to run: " + e)
+      val start = System.currentTimeMillis()
+      val df = sqlContext.sql(q.sqlText.get)
+      var failed = false
+      val jobgroup = s"benchmark ${q.name}"
+      val t = new Thread("query runner") {
+        override def run(): Unit = {
+          try {
+            sqlContext.sparkContext.setJobGroup(jobgroup, jobgroup, true)
+            df.show(numRows)
+          } catch {
+            case e: Exception =>
+              println("Failed to run: " + e)
+              failed = true
+          }
+        }
+      }
+      t.setDaemon(true)
+      t.start()
+      t.join(timeout)
+      if (t.isAlive) {
+        println(s"Timeout after $timeout seconds")
+        sqlContext.sparkContext.cancelJobGroup(jobgroup)
+        t.interrupt()
+      } else {
+        if (!failed) {
+          succeeded += q.name
+          println(s"   Took: ${System.currentTimeMillis() - start} ms")
+          println("------------------------------------------------------------------")
+        }
       }
     }
     println(s"Ran ${succeeded.size} out of ${queries.size}")

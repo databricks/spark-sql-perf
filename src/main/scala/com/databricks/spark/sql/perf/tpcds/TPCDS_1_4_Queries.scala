@@ -3840,7 +3840,24 @@ trait Tpcds_1_4_Queries extends Benchmark {
             |    substr(w_warehouse_name,1,20), sm_type, cc_name
             | order by substr(w_warehouse_name,1,20), sm_type, cc_name
             | limit 100
-            """.stripMargin)
+            """.stripMargin),
+      ("qSsMax",
+        """
+          |select
+          |  count(*) as total,
+          |  count(ss_sold_date_sk) as not_null_total,
+          |  count(distinct ss_sold_date_sk) as unique_days,
+          |  max(ss_sold_date_sk) as max_ss_sold_date_sk,
+          |  max(ss_sold_time_sk) as max_ss_sold_time_sk,
+          |  max(ss_item_sk) as max_ss_item_sk,
+          |  max(ss_customer_sk) as max_ss_customer_sk,
+          |  max(ss_cdemo_sk) as max_ss_cdemo_sk,
+          |  max(ss_hdemo_sk) as max_ss_hdemo_sk,
+          |  max(ss_addr_sk) as max_ss_addr_sk,
+          |  max(ss_store_sk) as max_ss_store_sk,
+          |  max(ss_promo_sk) as max_ss_promo_sk
+          |from store_sales
+        """.stripMargin)
   ).map { case (name, sqlText) =>
     Query(name + "-v1.4", sqlText, description = "TPCDS 1.4 Query", executionMode = CollectResults)
   }
@@ -3851,14 +3868,14 @@ trait Tpcds_1_4_Queries extends Benchmark {
     "q19", "q21", "q25", "q26", "q28", "q29", "q31", "q34", "q37", "q38", "q39a", "q39b", "q40",
     "q42", "q43", "q46", "q48", "q52", "q55", "q59", "q64", "q65", "q66", "q68", "q71", "q72",
     "q73", "q74", "q75", "q76", "q78", "q79", "q82", "q84", "q85", "q87", "q88", "q90", "q91",
-    "q93", "q96", "q97").map(tpcds1_4QueriesMap)
+    "q93", "q96", "q97", "qSsMax").map(tpcds1_4QueriesMap)
 
   // Queries that are plannable using HiveQL
   val hiveDialectPlannableQueries = Seq("q3", "q4", "q7", "q11", "q13", "q15", "q17", "q19", "q21",
     "q25", "q26", "q28", "q29", "q31", "q34", "q37", "q39a", "q39b", "q40", "q42", "q43", "q46",
     "q47", "q48", "q49", "q51", "q52", "q53", "q55", "q57", "q59", "q63", "q64", "q65", "q68",
     "q71", "q72", "q73", "q74", "q75", "q76", "q78", "q79", "q82", "q84", "q85", "q88", "q89",
-    "q90", "q91", "q93", "q96", "q97").map(tpcds1_4QueriesMap)
+    "q90", "q91", "q93", "q96", "q97", "qSsMax").map(tpcds1_4QueriesMap)
 
   // check results q17, q25, q91
   // OOM: q4, q11, q13, q48, q65, q78, q85
@@ -3868,5 +3885,5 @@ trait Tpcds_1_4_Queries extends Benchmark {
   val sqlDialectRunnable: Seq[Query] = Seq("q2", "q3", "q7", "q8", "q15", "q17", "q19", "q21",
     "q25", "q26", "q28", "q29", "q31", "q34", "q37", "q38", "q39a", "q39b", "q40", "q42", "q43",
     "q46", "q52", "q55", "q59", "q66", "q68", "q71", "q72", "q73", "q74", "q75", "q76", "q79",
-    "q82", "q84", "q87", "q88", "q90", "q91", "q93", "q96", "q97").map(tpcds1_4QueriesMap)
+    "q82", "q84", "q87", "q88", "q90", "q91", "q93", "q96", "q97", "qSsMax").map(tpcds1_4QueriesMap)
 }
