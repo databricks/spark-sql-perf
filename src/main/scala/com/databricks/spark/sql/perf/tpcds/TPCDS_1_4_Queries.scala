@@ -27,6 +27,10 @@ trait Tpcds_1_4_Queries extends Benchmark {
 
   import ExecutionMode._
 
+  // should be random generated based on scale
+  // RC=ulist(random(1, rowcount("store_sales")/5,uniform),5);
+  val rc = Array(1000000, 1000000, 1000000, 1000000, 1000000)
+
   // Queries the TPCDS 1.4 queries using the qualifcations values in the templates.
   val tpcds1_4Queries = Seq(
     ("q1", """
@@ -459,7 +463,7 @@ trait Tpcds_1_4_Queries extends Benchmark {
             | group by s_store_name
             | order by s_store_name LIMIT 100
             """.stripMargin),
-    ("q9", """
+    ("q9", s"""
             |select case when (select count(*) from store_sales
             |                  where ss_quantity between 1 and 20) > ${rc(0)}
             |            then (select avg(ss_ext_discount_amt) from store_sales
@@ -835,11 +839,12 @@ trait Tpcds_1_4_Queries extends Benchmark {
             | order by ca_zip
             | limit 100
             """.stripMargin),
+    // Modifications: " -> `
     ("q16", """
             | select
-            |   count(distinct cs_order_number) as "order count",
-            |   sum(cs_ext_ship_cost) as "total shipping cost",
-            |   sum(cs_net_profit) as "total net profit"
+            |   count(distinct cs_order_number) as `order count`,
+            |   sum(cs_ext_ship_cost) as `total shipping cost`,
+            |   sum(cs_net_profit) as `total net profit`
             | from
             |   catalog_sales cs1, date_dim, customer_address, call_center
             | where
@@ -1355,8 +1360,9 @@ trait Tpcds_1_4_Queries extends Benchmark {
             |       > case when ss2.store_sales > 0 then ss3.store_sales/ss2.store_sales else null end
             | order by ss1.ca_county
             """.stripMargin),
+    // Modifications: " -> `
     ("q32", """
-            | select sum(cs_ext_discount_amt) as "excess discount amount"
+            | select sum(cs_ext_discount_amt) as `excess discount amount`
             | from
             |    catalog_sales, item, date_dim
             | where
@@ -2005,18 +2011,19 @@ trait Tpcds_1_4_Queries extends Benchmark {
             | order by 1,4,5
             | limit 100
             """.stripMargin),
+    // Modifications: " -> `
     ("q50", """
             | select
             |    s_store_name, s_company_id, s_street_number, s_street_name, s_street_type,
             |    s_suite_number, s_city, s_county, s_state, s_zip
-            |   ,sum(case when (sr_returned_date_sk - ss_sold_date_sk <= 30 ) then 1 else 0 end)  as "30 days"
+            |   ,sum(case when (sr_returned_date_sk - ss_sold_date_sk <= 30 ) then 1 else 0 end)  as `30 days`
             |   ,sum(case when (sr_returned_date_sk - ss_sold_date_sk > 30) and
-            |                  (sr_returned_date_sk - ss_sold_date_sk <= 60) then 1 else 0 end )  as "31-60 days"
+            |                  (sr_returned_date_sk - ss_sold_date_sk <= 60) then 1 else 0 end )  as `31-60 days`
             |   ,sum(case when (sr_returned_date_sk - ss_sold_date_sk > 60) and
-            |                  (sr_returned_date_sk - ss_sold_date_sk <= 90) then 1 else 0 end)  as "61-90 days"
+            |                  (sr_returned_date_sk - ss_sold_date_sk <= 90) then 1 else 0 end)  as `61-90 days`
             |   ,sum(case when (sr_returned_date_sk - ss_sold_date_sk > 90) and
-            |                  (sr_returned_date_sk - ss_sold_date_sk <= 120) then 1 else 0 end)  as "91-120 days"
-            |   ,sum(case when (sr_returned_date_sk - ss_sold_date_sk  > 120) then 1 else 0 end)  as ">120 days"
+            |                  (sr_returned_date_sk - ss_sold_date_sk <= 120) then 1 else 0 end)  as `91-120 days`
+            |   ,sum(case when (sr_returned_date_sk - ss_sold_date_sk  > 120) then 1 else 0 end)  as `>120 days`
             | from
             |    store_sales, store_returns, store, date_dim d1, date_dim d2
             | where
@@ -2422,7 +2429,7 @@ trait Tpcds_1_4_Queries extends Benchmark {
             | order by i_item_id, total_sales
             | limit 100
             """.stripMargin),
-    ("q61", """
+    ("q61", s"""
             | select promotions,total,cast(promotions as decimal(15,4))/cast(total as decimal(15,4))*100
             | from
             |   (select sum(ss_ext_sales_price) promotions
@@ -2436,7 +2443,7 @@ trait Tpcds_1_4_Queries extends Benchmark {
             |     and   ca_gmt_offset = -5
             |     and   i_category = 'Jewelry'
             |     and   (p_channel_dmail = 'Y' or p_channel_email = 'Y' or p_channel_tv = 'Y')
-            |     and   s_gmt_offset = $gmt
+            |     and   s_gmt_offset = -5
             |     and   d_year = 1998
             |     and   d_moy  = 11) promotional_sales,
             |   (select sum(ss_ext_sales_price) total
@@ -2446,7 +2453,7 @@ trait Tpcds_1_4_Queries extends Benchmark {
             |     and   ss_customer_sk= c_customer_sk
             |     and   ca_address_sk = c_current_addr_sk
             |     and   ss_item_sk = i_item_sk
-            |     and   ca_gmt_offset = $gmt
+            |     and   ca_gmt_offset = -5
             |     and   i_category = 'Jewelry'
             |     and   s_gmt_offset = -5
             |     and   d_year = 1998
@@ -2454,19 +2461,20 @@ trait Tpcds_1_4_Queries extends Benchmark {
             | order by promotions, total
             | limit 100
             """.stripMargin),
+    // Modifications: " -> `
     ("q62", """
             | select
             |   substr(w_warehouse_name,1,20)
             |  ,sm_type
             |  ,web_name
-            |  ,sum(case when (ws_ship_date_sk - ws_sold_date_sk <= 30 ) then 1 else 0 end)  as "30 days"
+            |  ,sum(case when (ws_ship_date_sk - ws_sold_date_sk <= 30 ) then 1 else 0 end)  as `30 days`
             |  ,sum(case when (ws_ship_date_sk - ws_sold_date_sk > 30) and
-            |                 (ws_ship_date_sk - ws_sold_date_sk <= 60) then 1 else 0 end )  as "31-60 days"
+            |                 (ws_ship_date_sk - ws_sold_date_sk <= 60) then 1 else 0 end )  as `31-60 days`
             |  ,sum(case when (ws_ship_date_sk - ws_sold_date_sk > 60) and
-            |                 (ws_ship_date_sk - ws_sold_date_sk <= 90) then 1 else 0 end)  as "61-90 days"
+            |                 (ws_ship_date_sk - ws_sold_date_sk <= 90) then 1 else 0 end)  as `61-90 days`
             |  ,sum(case when (ws_ship_date_sk - ws_sold_date_sk > 90) and
-            |                 (ws_ship_date_sk - ws_sold_date_sk <= 120) then 1 else 0 end)  as "91-120 days"
-            |  ,sum(case when (ws_ship_date_sk - ws_sold_date_sk  > 120) then 1 else 0 end)  as ">120 days"
+            |                 (ws_ship_date_sk - ws_sold_date_sk <= 120) then 1 else 0 end)  as `91-120 days`
+            |  ,sum(case when (ws_ship_date_sk - ws_sold_date_sk  > 120) then 1 else 0 end)  as `>120 days`
             | from
             |    web_sales, warehouse, ship_mode, web_site, date_dim
             | where
@@ -3666,8 +3674,9 @@ trait Tpcds_1_4_Queries extends Benchmark {
             | order by sum(cr_net_loss) desc
             """.stripMargin),
     // Modifications: "+ days" -> date_add
+    // Modifications: " -> `
     ("q92", """
-            | select sum(ws_ext_discount_amt) as "Excess Discount Amount"
+            | select sum(ws_ext_discount_amt) as `Excess Discount Amount"
             | from web_sales, item, date_dim
             | where i_manufact_id = 350
             | and i_item_sk = ws_item_sk
@@ -3700,11 +3709,12 @@ trait Tpcds_1_4_Queries extends Benchmark {
             | limit 100
             """.stripMargin),
     // Modifications: "+ days" -> date_add
+    // Modifications: " -> `
     ("q94", """
             | select
-            |    count(distinct ws_order_number) as "order count"
-            |   ,sum(ws_ext_ship_cost) as "total shipping cost"
-            |   ,sum(ws_net_profit) as "total net profit"
+            |    count(distinct ws_order_number) as `order count`
+            |   ,sum(ws_ext_ship_cost) as `total shipping cost`
+            |   ,sum(ws_net_profit) as `total net profit`
             | from
             |    web_sales ws1, date_dim, customer_address, web_site
             | where
@@ -3733,9 +3743,9 @@ trait Tpcds_1_4_Queries extends Benchmark {
             |  where ws1.ws_order_number = ws2.ws_order_number
             |    and ws1.ws_warehouse_sk <> ws2.ws_warehouse_sk)
             | select
-            |    count(distinct ws_order_number) as "order count"
-            |   ,sum(ws_ext_ship_cost) as "total shipping cost"
-            |   ,sum(ws_net_profit) as "total net profit"
+            |    count(distinct ws_order_number) as `order count"
+            |   ,sum(ws_ext_ship_cost) as `total shipping cost"
+            |   ,sum(ws_net_profit) as `total net profit"
             | from
             |    web_sales ws1, date_dim, customer_address, web_site
             | where
@@ -3806,17 +3816,18 @@ trait Tpcds_1_4_Queries extends Benchmark {
             |order by
             |	i_category, i_class, i_item_id, i_item_desc, revenueratio
             """.stripMargin),
+    // Modifications: " -> `
     ("q99", """
             | select
             |    substr(w_warehouse_name,1,20), sm_type, cc_name
-            |   ,sum(case when (cs_ship_date_sk - cs_sold_date_sk <= 30 ) then 1 else 0 end)  as "30 days"
+            |   ,sum(case when (cs_ship_date_sk - cs_sold_date_sk <= 30 ) then 1 else 0 end)  as `30 days`
             |   ,sum(case when (cs_ship_date_sk - cs_sold_date_sk > 30) and
-            |                  (cs_ship_date_sk - cs_sold_date_sk <= 60) then 1 else 0 end )  as "31-60 days"
+            |                  (cs_ship_date_sk - cs_sold_date_sk <= 60) then 1 else 0 end )  as `31-60 days`
             |   ,sum(case when (cs_ship_date_sk - cs_sold_date_sk > 60) and
-            |                  (cs_ship_date_sk - cs_sold_date_sk <= 90) then 1 else 0 end)  as "61-90 days"
+            |                  (cs_ship_date_sk - cs_sold_date_sk <= 90) then 1 else 0 end)  as `61-90 days`
             |   ,sum(case when (cs_ship_date_sk - cs_sold_date_sk > 90) and
-            |                  (cs_ship_date_sk - cs_sold_date_sk <= 120) then 1 else 0 end)  as "91-120 days"
-            |   ,sum(case when (cs_ship_date_sk - cs_sold_date_sk  > 120) then 1 else 0 end)  as ">120 days"
+            |                  (cs_ship_date_sk - cs_sold_date_sk <= 120) then 1 else 0 end)  as `91-120 days`
+            |   ,sum(case when (cs_ship_date_sk - cs_sold_date_sk  > 120) then 1 else 0 end)  as `>120 days`
             | from
             |    catalog_sales, warehouse, ship_mode, call_center, date_dim
             | where
