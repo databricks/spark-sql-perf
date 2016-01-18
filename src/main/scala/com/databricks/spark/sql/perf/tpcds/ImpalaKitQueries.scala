@@ -16,7 +16,7 @@
 
 package com.databricks.spark.sql.perf.tpcds
 
-import com.databricks.spark.sql.perf.Benchmark
+import com.databricks.spark.sql.perf.{ExecutionMode, Benchmark}
 
 trait ImpalaKitQueries extends Benchmark {
 

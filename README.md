@@ -6,6 +6,14 @@ This is a performance testing framework for [Spark SQL](https://spark.apache.org
 
 **Note: This README is still under development. Please also check our source code for more information.**
 
+# Quick Start
+
+```
+build/sbt run-main com.databricks.spark.sql.perf.RunBenchmark --benchmark com.databricks.spark.sql.perf.DatasetPerformance
+```
+
+# TPC-DS
+
 ## How to use it
 The rest of document will use TPC-DS benchmark as an example. We will add contents to explain how to use other benchmarks add the support of a new benchmark dataset in future.
 

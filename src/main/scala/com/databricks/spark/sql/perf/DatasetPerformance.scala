@@ -1,33 +1,29 @@
+/*
+ * Copyright 2015 Databricks Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.databricks.spark.sql.perf
 
 import org.apache.spark.sql.SQLContext
-import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.sql.expressions.Aggregator
 
 case class Data(id: Long)
 
 case class SumAndCount(var sum: Long, var count: Int)
 
-object DatasetBenchmark {
-  def main(args: Array[String]): Unit = {
-    val sc = new SparkContext("local[*]", "spark-sql-perf", new SparkConf())
-    val sqlContext = new SQLContext(sc)
-
-    val resultsDir = new java.io.File("performance").toURI.toString
-    val benchmark = new Benchmark(sqlContext, resultsLocation = resultsDir) with DatasetPerformance
-    import benchmark._
-
-    val queries = allBenchmarks
-    val experiment = runExperiment(
-      executionsToRun = queries,
-      iterations = 3,
-      tags = Map("runtype" -> "local"))
-
-    experiment.waitForFinish(1000 * 60 * 30)
-  }
-}
-
-trait DatasetPerformance extends Benchmark {
+class DatasetPerformance extends Benchmark {
 
   import sqlContext.implicits._
 
@@ -52,7 +48,7 @@ trait DatasetPerformance extends Benchmark {
       executionMode = ExecutionMode.ForeachResults),
     RDDCount(
       "RDD: range",
-      rdd.map(Data))
+      rdd.map(Data(_)))
   )
 
   val backToBackFilters = Seq(
@@ -72,7 +68,7 @@ trait DatasetPerformance extends Benchmark {
         .filter("id % 103 != 0")),
     RDDCount(
       "RDD: back-to-back filters",
-      rdd.map(Data)
+      rdd.map(Data(_))
         .filter(_.id % 100 != 0)
         .filter(_.id % 101 != 0)
         .filter(_.id % 102 != 0)

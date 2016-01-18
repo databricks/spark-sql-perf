@@ -6,7 +6,7 @@ import org.scalatest.FunSuite
 
 class DatasetPerformanceSuite extends FunSuite {
   test("run benchmark") {
-    val benchmark = new Benchmark(TestHive) with DatasetPerformance {
+    val benchmark = new DatasetPerformance(TestHive) {
       override val numLongs = 100
     }
     import benchmark._

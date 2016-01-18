@@ -33,6 +33,8 @@ initialCommands in console :=
 
 libraryDependencies += "org.apache.spark" %% "spark-sql" % sparkVersion.value
 
+libraryDependencies += "com.github.scopt" %% "scopt" % "3.3.0"
+
 libraryDependencies += "com.twitter" %% "util-jvm" % "6.23.0" % "provided"
 
 libraryDependencies += "org.scalatest" %% "scalatest" % "2.2.1" % "test"

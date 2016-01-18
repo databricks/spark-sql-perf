@@ -16,7 +16,7 @@
 
 package com.databricks.spark.sql.perf.tpcds
 
-import com.databricks.spark.sql.perf.Benchmark
+import com.databricks.spark.sql.perf.{ExecutionMode, Benchmark}
 
 /**
  * This implements the official TPCDS v1.4 queries with only cosmetic modifications
