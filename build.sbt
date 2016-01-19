@@ -29,8 +29,6 @@ initialCommands in console :=
     |import sqlContext.implicits._
   """.stripMargin
 
-libraryDependencies += "org.apache.spark" %% "spark-sql" % sparkVersion.value
-
 libraryDependencies += "com.github.scopt" %% "scopt" % "3.3.0"
 
 libraryDependencies += "com.twitter" %% "util-jvm" % "6.23.0" % "provided"
