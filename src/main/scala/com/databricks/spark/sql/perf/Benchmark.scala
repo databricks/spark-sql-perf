@@ -39,22 +39,21 @@ import com.databricks.spark.sql.perf.cpu._
  * @param sqlContext An existing SQLContext.
  */
 abstract class Benchmark(
-    @transient protected val sqlContext: SQLContext,
-    val resultsLocation: String = "/spark/sql/performance",
-    val resultsTableName: String = "sqlPerformance")
+    @transient val sqlContext: SQLContext)
   extends Serializable {
 
   import sqlContext.implicits._
 
-  def createResultsTable() = {
-    sqlContext.sql(s"DROP TABLE $resultsTableName")
-    sqlContext.createExternalTable(
-      "sqlPerformance", "json", Map("path" -> (resultsLocation + "/*/")))
-  }
+  def this() = this(SQLContext.getOrCreate(SparkContext.getOrCreate()))
+
+  val resultsLocation =
+    sqlContext.getAllConfs.getOrElse(
+      "spark.sql.perf.results",
+      "/spark/sql/performance")
 
   protected def sparkContext = sqlContext.sparkContext
 
-  protected implicit def toOption[A](a: A) = Option(a)
+  protected implicit def toOption[A](a: A): Option[A] = Option(a)
 
   val buildInfo = Try(getClass.getClassLoader.loadClass("org.apache.spark.BuildInfo")).map { cls =>
     cls.getMethods
@@ -132,6 +131,11 @@ abstract class Benchmark(
       val currentRuns = new collection.mutable.ArrayBuffer[ExperimentRun]()
       val currentMessages = new collection.mutable.ArrayBuffer[String]()
 
+      def logMessage(msg: String) = {
+        println(msg)
+        currentMessages += msg
+      }
+
       // Stats for HTML status message.
       @volatile var currentExecution = ""
       @volatile var currentPlan = "" // for queries only
@@ -149,6 +153,7 @@ abstract class Benchmark(
       }
 
       val timestamp = System.currentTimeMillis()
+      val resultPath = s"$resultsLocation/timestamp=$timestamp"
       val combinations = cartesianProduct(variations.map(l => (0 until l.options.size).toList).toList)
       val resultsFuture = Future {
 
@@ -169,20 +174,20 @@ abstract class Benchmark(
           .foreach { name =>
             try {
               sqlContext.table(name)
-              currentMessages += s"Table $name exists."
+              logMessage(s"Table $name exists.")
             } catch {
               case ae: Exception =>
                 val table = allTables
                   .find(_.name == name)
                 if (table.isDefined) {
-                  currentMessages += s"Creating table: $name"
+                  logMessage(s"Creating table: $name")
                   table.get.data
                     .write
                     .mode("overwrite")
                     .saveAsTable(name)
                 } else {
                   // the table could be subquery
-                  println(s"Couldn't read table $name and its not defined as a Benchmark.Table.")
+                  logMessage(s"Couldn't read table $name and its not defined as a Benchmark.Table.")
                 }
             }
           }
@@ -205,7 +210,7 @@ abstract class Benchmark(
 
               executionsToRun.flatMap { q =>
                 val setup = s"iteration: $i, ${currentOptions.map { case (k, v) => s"$k=$v"}.mkString(", ")}"
-                currentMessages += s"Running execution ${q.name} $setup"
+                logMessage(s"Running execution ${q.name} $setup")
 
                 currentExecution = q.name
                 currentPlan = q match {
@@ -220,13 +225,15 @@ abstract class Benchmark(
                 }
                 startTime = System.currentTimeMillis()
 
-                val singleResult = q.benchmark(includeBreakdown, setup, currentMessages, timeout)
+                val singleResult =
+                  q.benchmark(includeBreakdown, setup, currentMessages, timeout)
+
                 singleResult.failure.foreach { f =>
                   failures += 1
-                  currentMessages += s"Execution '${q.name}' failed: ${f.message}"
+                  logMessage(s"Execution '${q.name}' failed: ${f.message}")
                 }
                 singleResult.executionTime.foreach { time =>
-                  currentMessages += s"Execution time: ${time / 1000}s"
+                  logMessage(s"Execution time: ${time / 1000}s")
                 }
                 currentResults += singleResult
                 singleResult :: Nil
@@ -240,16 +247,16 @@ abstract class Benchmark(
 
         try {
           val resultsTable = sqlContext.createDataFrame(results)
-          currentMessages += s"Results written to table: 'sqlPerformance' at $resultsLocation/$timestamp"
+          logMessage(s"Results written to table: 'sqlPerformance' at $resultPath")
           results.toDF()
             .coalesce(1)
             .write
             .format("json")
-            .save(s"$resultsLocation/$timestamp")
+            .save(resultPath)
 
           results.toDF()
         } catch {
-          case e: Throwable => currentMessages += s"Failed to write data: $e"
+          case e: Throwable => logMessage(s"Failed to write data: $e")
         }
 
         logCollection()
@@ -257,13 +264,13 @@ abstract class Benchmark(
 
       def scheduleCpuCollection(fs: FS) = {
         logCollection = () => {
-          currentMessages += s"Begining CPU log collection"
+          logMessage(s"Begining CPU log collection")
           try {
             val location = cpu.collectLogs(sqlContext, fs, timestamp)
-            currentMessages += s"cpu results recorded to $location"
+            logMessage(s"cpu results recorded to $location")
           } catch {
             case e: Throwable =>
-              currentMessages += s"Error collecting logs: $e"
+              logMessage(s"Error collecting logs: $e")
               throw e
           }
         }
@@ -327,7 +334,7 @@ abstract class Benchmark(
           }
         s"""
            |<h2>$status Experiment</h2>
-           |<b>Permalink:</b> <tt>table("$resultsTableName").where('timestamp === ${timestamp}L)</tt><br/>
+           |<b>Permalink:</b> <tt>sqlContext.read.json("$resultPath")</tt><br/>
            |<b>Iterations complete:</b> ${currentRuns.size / combinations.size} / $iterations<br/>
            |<b>Failures:</b> $failures<br/>
            |<b>Executions run:</b> ${currentResults.size} / ${iterations * combinations.size * executionsToRun.size}
@@ -383,15 +390,15 @@ abstract class Benchmark(
     myType.declarations
       .filter(m => m.isMethod)
       .map(_.asMethod)
-      .filter(_.asMethod.returnType =:= typeOf[Query])
-      .map(method => runtimeMirror.reflect(this).reflectMethod(method).apply().asInstanceOf[Query])
+      .filter(_.asMethod.returnType =:= typeOf[Benchmarkable])
+      .map(method => runtimeMirror.reflect(this).reflectMethod(method).apply().asInstanceOf[Benchmarkable])
 
   def groupedQueries =
     myType.declarations
       .filter(m => m.isMethod)
       .map(_.asMethod)
-      .filter(_.asMethod.returnType =:= typeOf[Seq[Query]])
-      .flatMap(method => runtimeMirror.reflect(this).reflectMethod(method).apply().asInstanceOf[Seq[Query]])
+      .filter(_.asMethod.returnType =:= typeOf[Seq[Benchmarkable]])
+      .flatMap(method => runtimeMirror.reflect(this).reflectMethod(method).apply().asInstanceOf[Seq[Benchmarkable]])
 
   @transient
   lazy val allQueries = (singleQueries ++ groupedQueries).toSeq
@@ -426,35 +433,6 @@ abstract class Benchmark(
      """.stripMargin
   }
 
-  trait ExecutionMode extends Serializable
-  case object ExecutionMode {
-    // Benchmark run by collecting queries results  (e.g. rdd.collect())
-    case object CollectResults extends ExecutionMode {
-      override def toString: String = "collect"
-    }
-
-    // Benchmark run by iterating through the queries results rows (e.g. rdd.foreach(row => Unit))
-    case object ForeachResults extends ExecutionMode {
-      override def toString: String = "foreach"
-    }
-
-    // Benchmark run by saving the output of each query as a parquet file at the specified location
-    case class WriteParquet(location: String) extends ExecutionMode {
-      override def toString: String = "saveToParquet"
-    }
-
-    // Benchmark run by calculating the sum of the hash value of all rows. This is used to check
-    // query results.
-    case object HashResults extends ExecutionMode {
-      override def toString: String = "hash"
-    }
-
-    // Results from Spark perf
-    case object SparkPerfResults extends ExecutionMode {
-      override def toString: String = "sparkPerf"
-    }
-  }
-
   /** Factory object for benchmark queries. */
   case object Query {
     def apply(
@@ -473,80 +451,16 @@ abstract class Benchmark(
     }
   }
 
-  /** A trait to describe things that can be benchmarked. */
-  trait Benchmarkable {
-    val name: String
-    protected val executionMode: ExecutionMode
-
-    final def benchmark(
-        includeBreakdown: Boolean,
-        description: String = "",
-        messages: ArrayBuffer[String],
-        timeout: Long): BenchmarkResult = {
-      sparkContext.setJobDescription(s"Execution: $name, $description")
-      beforeBenchmark()
-      val result = runBenchmark(includeBreakdown, description, messages, timeout)
-      afterBenchmark(sqlContext.sparkContext)
-      result
-    }
-
-    protected def beforeBenchmark(): Unit = { }
-
-    private def afterBenchmark(sc: SparkContext): Unit = {
-      // Best-effort clean up of weakly referenced RDDs, shuffles, and broadcasts
-      System.gc()
-      // Remove any leftover blocks that still exist
-      sc.getExecutorStorageStatus
-        .flatMap { status => status.blocks.map { case (bid, _) => bid } }
-        .foreach { bid => SparkEnv.get.blockManager.master.removeBlock(bid) }
-    }
-
-    private def runBenchmark(
-        includeBreakdown: Boolean,
-        description: String = "",
-        messages: ArrayBuffer[String],
-        timeout: Long): BenchmarkResult = {
-      val jobgroup = UUID.randomUUID().toString
-      var result: BenchmarkResult = null
-      val thread = new Thread("benchmark runner") {
-        override def run(): Unit = {
-          sparkContext.setJobGroup(jobgroup, s"benchmark $name", true)
-          result = doBenchmark(includeBreakdown, description, messages)
-        }
-      }
-      thread.setDaemon(true)
-      thread.start()
-      thread.join(timeout)
-      if (thread.isAlive) {
-        sparkContext.cancelJobGroup(jobgroup)
-        thread.interrupt()
-        result = BenchmarkResult(
-          name = name,
-          mode = executionMode.toString,
-          failure = Some(Failure("Timeout", s"timeout after ${timeout / 1000} seconds"))
-        )
-      }
-      result
-    }
-
-    protected def doBenchmark(
-        includeBreakdown: Boolean,
-        description: String = "",
-        messages: ArrayBuffer[String]): BenchmarkResult
-
-    protected def measureTimeMs[A](f: => A): Double = {
-      val startTime = System.nanoTime()
-      f
-      val endTime = System.nanoTime()
-      (endTime - startTime).toDouble / 1000000
-    }
-  }
-
   object RDDCount {
     def apply(
         name: String,
         rdd: RDD[_]) = {
-      new SparkPerfExecution(name, Map.empty, () => Unit, () => rdd.count())
+      new SparkPerfExecution(
+        name,
+        Map.empty,
+        () => Unit,
+        () => rdd.count(),
+        rdd.toDebugString)
     }
   }
 
@@ -555,8 +469,15 @@ abstract class Benchmark(
       override val name: String,
       parameters: Map[String, String],
       prepare: () => Unit,
-      run: () => Unit)
+      run: () => Unit,
+      description: String = "")
     extends Benchmarkable {
+
+    override def toString: String =
+      s"""
+         |== $name ==
+         |$description
+       """.stripMargin
 
     protected override val executionMode: ExecutionMode = ExecutionMode.SparkPerfResults
 
@@ -593,7 +514,7 @@ abstract class Benchmark(
       override val executionMode: ExecutionMode = ExecutionMode.ForeachResults)
     extends Benchmarkable with Serializable {
 
-    override def toString = {
+    override def toString: String = {
       try {
         s"""
            |== Query: $name ==
@@ -606,7 +527,7 @@ abstract class Benchmark(
              | Can't be analyzed: $e
              |
              | $description
-       """.stripMargin
+           """.stripMargin
       }
     }
 

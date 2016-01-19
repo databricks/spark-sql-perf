@@ -2,9 +2,31 @@
 
 [![Build Status](https://travis-ci.org/databricks/spark-sql-perf.svg)](https://travis-ci.org/databricks/spark-sql-perf)
 
-This is a performance testing framework for [Spark SQL](https://spark.apache.org/sql/) in [Apache Spark](https://spark.apache.org/) 1.4+.
+This is a performance testing framework for [Spark SQL](https://spark.apache.org/sql/) in [Apache Spark](https://spark.apache.org/) 1.6+.
 
 **Note: This README is still under development. Please also check our source code for more information.**
+
+# Quick Start
+
+```
+$ bin/run --help
+
+spark-sql-perf 0.2.0
+Usage: spark-sql-perf [options]
+
+  -b <value> | --benchmark <value>
+        the name of the benchmark to run
+  -f <value> | --filter <value>
+        a filter on the name of the queries to run
+  -i <value> | --iterations <value>
+        the number of iterations to run
+  --help
+        prints this usage text
+        
+$ bin/run --benchmark DatasetPerformance
+```
+
+# TPC-DS
 
 ## How to use it
 The rest of document will use TPC-DS benchmark as an example. We will add contents to explain how to use other benchmarks add the support of a new benchmark dataset in future.

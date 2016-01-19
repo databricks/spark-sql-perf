@@ -1,0 +1,4 @@
+#!/bin/bash
+
+ARGS="runMain com.databricks.spark.sql.perf.RunBenchmark $@"
+build/sbt "$ARGS"
