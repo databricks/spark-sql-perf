@@ -386,12 +386,6 @@ abstract class Benchmark(
   @transient
   lazy val allTables: Seq[Table] = (singleTables ++ groupedTables).toSeq
 
-  println(
-    myType.declarations
-      .filter(m => m.isMethod)
-      .map(_.asMethod)
-      .map(_.returnType))
-
   def singleQueries =
     myType.declarations
       .filter(m => m.isMethod)
