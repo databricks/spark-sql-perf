@@ -14,8 +14,6 @@ licenses := Seq("Apache-2.0" -> url("http://opensource.org/licenses/Apache-2.0")
 
 sparkVersion := "1.6.0"
 
-resolvers += "Apache Preview Repo" at "https://repository.apache.org/content/repositories/orgapachespark-1175/"
-
 sparkComponents ++= Seq("sql", "hive")
 
 initialCommands in console :=
