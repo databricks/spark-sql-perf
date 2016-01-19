@@ -9,7 +9,7 @@ This is a performance testing framework for [Spark SQL](https://spark.apache.org
 # Quick Start
 
 ```
-build/sbt run-main com.databricks.spark.sql.perf.RunBenchmark --benchmark com.databricks.spark.sql.perf.DatasetPerformance
+build/sbt run-main "com.databricks.spark.sql.perf.RunBenchmark --benchmark com.databricks.spark.sql.perf.DatasetPerformance"
 ```
 
 # TPC-DS
