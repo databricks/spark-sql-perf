@@ -9,8 +9,21 @@ This is a performance testing framework for [Spark SQL](https://spark.apache.org
 # Quick Start
 
 ```
-bin/run --help
+$ bin/run --help
 
+spark-sql-perf 0.2.0
+Usage: spark-sql-perf [options]
+
+  -b <value> | --benchmark <value>
+        the name of the benchmark to run
+  -f <value> | --filter <value>
+        a filter on the name of the queries to run
+  -i <value> | --iterations <value>
+        the number of iterations to run
+  --help
+        prints this usage text
+        
+$ bin/run --benchmark DatasetPerformance
 ```
 
 # TPC-DS
