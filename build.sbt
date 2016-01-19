@@ -84,6 +84,33 @@ pomExtra := (
         <url>git@github.com:databricks/spark-sql-perf.git</url>
         <connection>scm:git:git@github.com:databricks/spark-sql-perf.git</connection>
       </scm>
+      <developers>
+        <developer>
+          <id>marmbrus</id>
+          <name>Michael Armbrust</name>
+          <url>https://github.com/marmbrus</url>
+        </developer>
+        <developer>
+          <id>yhuai</id>
+          <name>Yin Huai</name>
+          <url>https://github.com/yhuai</url>
+        </developer>
+        <developer>
+          <id>nongli</id>
+          <name>Nong Li</name>
+          <url>https://github.com/nongli</url>
+        </developer>
+        <developer>
+          <id>andrewor14</id>
+          <name>Andrew Or</name>
+          <url>https://github.com/andrewor14</url>
+        </developer>
+        <developer>
+          <id>davies</id>
+          <name>Davies Liu</name>
+          <url>https://github.com/davies</url>
+        </developer>
+      </developers>
     )
 
 bintrayReleaseOnPublish in ThisBuild := false
