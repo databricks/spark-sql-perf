@@ -27,7 +27,8 @@ import scala.util.Try
 case class RunConfig(
     benchmarkName: String = null,
     filter: Option[String] = None,
-    iterations: Int = 3)
+    iterations: Int = 3,
+    baseline: Option[Long] = None)
 
 /**
  * Runs a benchmark locally and prints the results to the screen.
@@ -46,6 +47,9 @@ object RunBenchmark {
       opt[Int]('i', "iterations")
         .action((x, c) => c.copy(iterations = x))
         .text("the number of iterations to run")
+      opt[Long]('c', "compare")
+          .action((x, c) => c.copy(baseline = Some(x)))
+          .text("the timestamp of the baseline experiment to compare with")
       help("help")
         .text("prints this usage text")
     }
@@ -96,6 +100,8 @@ object RunBenchmark {
 
     println("== STARTING EXPERIMENT ==")
     experiment.waitForFinish(1000 * 60 * 30)
+
+    sqlContext.setConf("spark.sql.shuffle.partitions", "1")
     experiment.getCurrentRuns()
         .withColumn("result", explode($"results"))
         .select("result.*")
@@ -106,7 +112,28 @@ object RunBenchmark {
           avg($"executionTime") as 'avgTimeMs,
           stddev($"executionTime") as 'stdDev)
         .orderBy("name")
-        .show()
+        .show(truncate = false)
     println(s"""Results: sqlContext.read.json("${experiment.resultPath}")""")
+
+    config.baseline.foreach { baseTimestamp =>
+      val baselineTime = when($"timestamp" === baseTimestamp, $"executionTime").otherwise(null)
+      val thisRunTime = when($"timestamp" === experiment.timestamp, $"executionTime").otherwise(null)
+
+      val data = sqlContext.read.json(benchmark.resultsLocation)
+          .coalesce(1)
+          .where(s"timestamp IN ($baseTimestamp, ${experiment.timestamp})")
+          .withColumn("result", explode($"results"))
+          .select("timestamp", "result.*")
+          .groupBy("name")
+          .agg(
+            avg(baselineTime) as 'baselineTimeMs,
+            avg(thisRunTime) as 'thisRunTimeMs,
+            stddev(baselineTime) as 'stddev)
+          .withColumn(
+            "percentChange", ($"baselineTimeMs" - $"thisRunTimeMs") / $"baselineTimeMs" * 100)
+          .filter('thisRunTimeMs.isNotNull)
+
+      data.show(truncate = false)
+    }
   }
 }
