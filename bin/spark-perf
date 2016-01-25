@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# runs the most recent published version of spark-sql-perf, from within the spark directory
+# spark is compiled using SBT
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+VERSION=`git -C $DIR/../ tag | tail -n 1 | cut -c 2-`
+ARGS="sparkPackage com.databricks:spark-sql-perf_2.10:$VERSION com.databricks.spark.sql.perf.RunBenchmark $@"
+build/sbt "$ARGS"

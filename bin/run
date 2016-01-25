@@ -1,4 +1,6 @@
 #!/bin/bash
 
-ARGS="runMain com.databricks.spark.sql.perf.RunBenchmark $@"
+# runs spark-sql-perf from the current directory
+
+ARGS="runBenchmark $@"
 build/sbt "$ARGS"

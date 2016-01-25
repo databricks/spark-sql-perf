@@ -52,6 +52,16 @@ dbcClusters += sys.env.getOrElse("DBC_USERNAME", sys.error("Please set DBC_USERN
 
 dbcLibraryPath := s"/Users/${sys.env.getOrElse("DBC_USERNAME", sys.error("Please set DBC_USERNAME"))}/lib"
 
+val runBenchmark = inputKey[Unit]("runs a benchmark")
+
+runBenchmark := {
+  import complete.DefaultParsers._
+  val args = spaceDelimited("[args]").parsed
+  val scalaRun = (runner in run).value
+  val classpath = (fullClasspath in Compile).value
+  scalaRun.run("com.databricks.spark.sql.perf.RunBenchmark", classpath.map(_.data), args, streams.value.log)
+}
+
 import ReleaseTransformations._
 
 /** Push to the team directory instead of the user's homedir for releases. */
