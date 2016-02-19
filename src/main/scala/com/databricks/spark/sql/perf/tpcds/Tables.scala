@@ -18,13 +18,16 @@ package com.databricks.spark.sql.perf.tpcds
 
 import scala.sys.process._
 
-import org.apache.spark.Logging
+import org.slf4j.LoggerFactory
+
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{Row, SQLContext, SaveMode}
 
-class Tables(sqlContext: SQLContext, dsdgenDir: String, scaleFactor: Int) extends Serializable with Logging {
+class Tables(sqlContext: SQLContext, dsdgenDir: String, scaleFactor: Int) extends Serializable {
   import sqlContext.implicits._
+
+  private val log = LoggerFactory.getLogger(getClass)
 
   def sparkContext = sqlContext.sparkContext
   val dsdgen = s"$dsdgenDir/dsdgen"
@@ -149,7 +152,7 @@ class Tables(sqlContext: SQLContext, dsdgenDir: String, scaleFactor: Int) extend
             """.stripMargin
           val grouped = sqlContext.sql(query)
           println(s"Pre-clustering with partitioning columns with query $query.")
-          logInfo(s"Pre-clustering with partitioning columns with query $query.")
+          log.info(s"Pre-clustering with partitioning columns with query $query.")
           grouped.write
         } else {
           data.write
@@ -163,7 +166,7 @@ class Tables(sqlContext: SQLContext, dsdgenDir: String, scaleFactor: Int) extend
         writer.partitionBy(partitionColumns : _*)
       }
       println(s"Generating table $name in database to $location with save mode $mode.")
-      logInfo(s"Generating table $name in database to $location with save mode $mode.")
+      log.info(s"Generating table $name in database to $location with save mode $mode.")
       writer.save(location)
       sqlContext.dropTempTable(tempTableName)
     }
@@ -176,14 +179,14 @@ class Tables(sqlContext: SQLContext, dsdgenDir: String, scaleFactor: Int) extend
       }
       if (!tableExists || overwrite) {
         println(s"Creating external table $name in database $databaseName using data stored in $location.")
-        logInfo(s"Creating external table $name in database $databaseName using data stored in $location.")
+        log.info(s"Creating external table $name in database $databaseName using data stored in $location.")
         sqlContext.createExternalTable(qualifiedTableName, location, format)
       }
     }
 
     def createTemporaryTable(location: String, format: String): Unit = {
       println(s"Creating temporary table $name using data stored in $location.")
-      logInfo(s"Creating temporary table $name using data stored in $location.")
+      log.info(s"Creating temporary table $name using data stored in $location.")
       sqlContext.read.format(format).load(location).registerTempTable(name)
     }
   }
@@ -237,7 +240,7 @@ class Tables(sqlContext: SQLContext, dsdgenDir: String, scaleFactor: Int) extend
     }
     sqlContext.sql(s"USE $databaseName")
     println(s"The current database has been set to $databaseName.")
-    logInfo(s"The current database has been set to $databaseName.")
+    log.info(s"The current database has been set to $databaseName.")
   }
 
   def createTemporaryTables(location: String, format: String, tableFilter: String = ""): Unit = {

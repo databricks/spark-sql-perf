@@ -12,7 +12,7 @@ sparkPackageName := "databricks/spark-sql-perf"
 // All Spark Packages need a license
 licenses := Seq("Apache-2.0" -> url("http://opensource.org/licenses/Apache-2.0"))
 
-sparkVersion := "1.6.0"
+sparkVersion := "2.0.0-SNAPSHOT"
 
 sparkComponents ++= Seq("sql", "hive")
 
@@ -28,6 +28,11 @@ initialCommands in console :=
     |val sqlContext = TestHive
     |import sqlContext.implicits._
   """.stripMargin
+
+// TODO: remove after Spark 2.0.0 is released:
+resolvers += "apache-snapshots" at "https://repository.apache.org/snapshots/"
+
+libraryDependencies += "org.slf4j" % "slf4j-api" % "1.7.5"
 
 libraryDependencies += "com.github.scopt" %% "scopt" % "3.3.0"
 

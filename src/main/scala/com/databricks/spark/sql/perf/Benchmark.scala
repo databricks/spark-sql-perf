@@ -603,7 +603,7 @@ abstract class Benchmark(
             case ExecutionMode.CollectResults => dataFrame.rdd.collect()
             case ExecutionMode.ForeachResults => dataFrame.rdd.foreach { row => Unit }
             case ExecutionMode.WriteParquet(location) =>
-              dataFrame.saveAsParquetFile(s"$location/$name.parquet")
+              dataFrame.write.parquet(s"$location/$name.parquet")
             case ExecutionMode.HashResults =>
               val columnStr = dataFrame.schema.map(_.name).mkString(",")
               // SELECT SUM(HASH(col1, col2, ...)) FROM (benchmark query)
