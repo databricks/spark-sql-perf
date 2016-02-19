@@ -20,6 +20,6 @@ import org.apache.spark.sql.SQLContext
 
 case class Results(resultsLocation: String, @transient sqlContext: SQLContext) {
   def allResults =
-    sqlContext.jsonRDD(
+    sqlContext.read.json(
       sqlContext.sparkContext.textFile(s"$resultsLocation/*/"))
 }
