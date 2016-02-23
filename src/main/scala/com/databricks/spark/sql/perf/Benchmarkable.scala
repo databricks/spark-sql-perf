@@ -25,8 +25,8 @@ import scala.collection.mutable.ArrayBuffer
 
 /** A trait to describe things that can be benchmarked. */
 trait Benchmarkable {
-  val sqlContext = SQLContext.getOrCreate(SparkContext.getOrCreate())
-  val sparkContext = sqlContext.sparkContext
+  @transient protected[this] val sqlContext = SQLContext.getOrCreate(SparkContext.getOrCreate())
+  @transient protected[this] val sparkContext = sqlContext.sparkContext
 
   val name: String
   protected val executionMode: ExecutionMode
