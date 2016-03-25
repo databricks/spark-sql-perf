@@ -24,7 +24,7 @@ import scala.language.implicitConversions
 import scala.util.Try
 
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.{DataFrame, SQLContext}
+import org.apache.spark.sql.{Dataset, DataFrame, SQLContext}
 import org.apache.spark.sql.catalyst.analysis.UnresolvedRelation
 import org.apache.spark.SparkContext
 
@@ -355,7 +355,7 @@ abstract class Benchmark(
 
   case class Table(
       name: String,
-      data: DataFrame)
+      data: Dataset[_])
 
   import reflect.runtime._, universe._
   import reflect.runtime._
