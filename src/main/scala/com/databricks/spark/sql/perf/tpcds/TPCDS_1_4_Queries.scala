@@ -3863,27 +3863,16 @@ trait Tpcds_1_4_Queries extends Benchmark {
   }
   val tpcds1_4QueriesMap = tpcds1_4Queries.map(q => q.name.split("-").get(0) -> q).toMap
 
-  // Queries that are plannable using the SQL dialect.
-  val sqlDialectPlannableQueries = Seq("q2", "q3", "q4", "q7", "q8", "q11", "q13", "q15", "q17",
-    "q19", "q21", "q25", "q26", "q28", "q29", "q31", "q34", "q37", "q38", "q39a", "q39b", "q40",
-    "q42", "q43", "q46", "q48", "q52", "q55", "q59", "q64", "q65", "q66", "q68", "q71", "q72",
-    "q73", "q74", "q75", "q76", "q78", "q79", "q82", "q84", "q85", "q87", "q88", "q90", "q91",
-    "q93", "q96", "q97", "qSsMax").map(tpcds1_4QueriesMap)
-
-  // Queries that are plannable using HiveQL
-  val hiveDialectPlannableQueries = Seq("q3", "q4", "q7", "q11", "q13", "q15", "q17", "q19", "q21",
-    "q25", "q26", "q28", "q29", "q31", "q34", "q37", "q39a", "q39b", "q40", "q42", "q43", "q46",
-    "q47", "q48", "q49", "q51", "q52", "q53", "q55", "q57", "q59", "q63", "q64", "q65", "q68",
-    "q71", "q72", "q73", "q74", "q75", "q76", "q78", "q79", "q82", "q84", "q85", "q88", "q89",
-    "q90", "q91", "q93", "q96", "q97", "qSsMax").map(tpcds1_4QueriesMap)
-
-  // check results q17, q25, q91
-  // OOM: q4, q11, q13, q48, q65, q78, q85
-  // Hang/OOM: q64
-  // q84 failed when run together.
-  // q93 sporadic OOM
-  val sqlDialectRunnable: Seq[Query] = Seq("q2", "q3", "q7", "q8", "q15", "q17", "q19", "q21",
-    "q25", "q26", "q28", "q29", "q31", "q34", "q37", "q38", "q39a", "q39b", "q40", "q42", "q43",
-    "q46", "q52", "q55", "q59", "q66", "q68", "q71", "q72", "q73", "q74", "q75", "q76", "q79",
-    "q82", "q84", "q87", "q88", "q90", "q91", "q93", "q96", "q97", "qSsMax").map(tpcds1_4QueriesMap)
+  // q72 slow on SC=1
+  val runnable: Seq[Query] = Seq(
+    "q1", "q2", "q3", "q4", "q5", "q7", "q8", "q9",
+    "q11", "q12", "q13", "q15", "q17", "q18", "q19",
+    "q20", "q21", "q22", "q25", "q26", "q27", "q28", "q29",
+    "q31", "q34", "q36", "q37", "q38", "q39a", "q39b",
+    "q40", "q42", "q43", "q44", "q46", "q47", "q48", "q49",
+    "q50", "q51", "q52", "q53", "q54", "q55", "q57", "q59",
+    "q61", "q62", "q63", "q64", "q65", "q66", "q67", "q68",
+    "q71", "q72", "q73", "q74", "q75", "q76", "q77", "q78", "q79",
+    "q80", "q82", "q84", "q85", "q86", "q87", "q88", "q89",
+    "q90", "q91", "q93", "q96", "q97", "q98", "q99", "qSsMax").map(tpcds1_4QueriesMap)
 }

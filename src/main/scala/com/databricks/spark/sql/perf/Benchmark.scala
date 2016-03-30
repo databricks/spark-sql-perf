@@ -191,7 +191,7 @@ abstract class Benchmark(
           }
 
         // Run the benchmarks!
-        val results = (1 to iterations).flatMap { i =>
+        val results: Seq[ExperimentRun] = (1 to iterations).flatMap { i =>
           combinations.map { setup =>
             val currentOptions = variations.asInstanceOf[Seq[Variation[Any]]].zip(setup).map {
               case (v, idx) =>
@@ -246,13 +246,11 @@ abstract class Benchmark(
         try {
           val resultsTable = sqlContext.createDataFrame(results)
           logMessage(s"Results written to table: 'sqlPerformance' at $resultPath")
-          results.toDF()
+          resultsTable
             .coalesce(1)
             .write
             .format("json")
             .save(resultPath)
-
-          results.toDF()
         } catch {
           case e: Throwable => logMessage(s"Failed to write data: $e")
         }
