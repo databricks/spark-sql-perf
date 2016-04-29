@@ -826,39 +826,17 @@ trait ImpalaKitQueries extends Benchmark {
             """.stripMargin),
 
     ("q8", """
-             |
-             |-- start query 1 in stream 0 using template query8.tpl
-             |select
-             |  s_store_name,
-             |  sum(ss_net_profit)
-             |from
-             |  store_sales
-             |  join store on (store_sales.ss_store_sk = store.s_store_sk)
-             |  -- join date_dim on (store_sales.ss_sold_date_sk = date_dim.d_date_sk)
-             |  join
-             |  (select
-             |    a.ca_zip
-             |  from
-             |    (select
-             |      substr(ca_zip, 1, 5) ca_zip,
-             |      count( *) cnt
-             |    from
-             |      customer_address
-             |      join customer on (customer_address.ca_address_sk = customer.c_current_addr_sk)
-             |    where
-             |      c_preferred_cust_flag = 'Y'
-             |    group by
-             |      ca_zip
-             |    having
-             |      count( *) > 10
-             |    ) a
-             |    left semi join
-             |    (select
-             |      substr(ca_zip, 1, 5) ca_zip
-             |    from
-             |      customer_address
-             |    where
-             |      substr(ca_zip, 1, 5) in ('89436', '30868', '65085', '22977', '83927', '77557', '58429', '40697', '80614', '10502', '32779',
+             |-- start query 8 in stream 0 using template query8.tpl
+             |select  s_store_name
+             |      ,sum(ss_net_profit)
+             | from store_sales
+             |     ,date_dim
+             |     ,store,
+             |     (select distinct a01.ca_zip
+             |     from
+             |     (SELECT substr(ca_zip,1,5) ca_zip
+             |      FROM customer_address
+             |      WHERE substr(ca_zip,1,5) IN ('89436', '30868', '65085', '22977', '83927', '77557', '58429', '40697', '80614', '10502', '32779',
              |      '91137', '61265', '98294', '17921', '18427', '21203', '59362', '87291', '84093', '21505', '17184', '10866', '67898', '25797',
              |      '28055', '18377', '80332', '74535', '21757', '29742', '90885', '29898', '17819', '40811', '25990', '47513', '89531', '91068',
              |      '10391', '18846', '99223', '82637', '41368', '83658', '86199', '81625', '26696', '89338', '88425', '32200', '81427', '19053',
@@ -881,25 +859,32 @@ trait ImpalaKitQueries extends Benchmark {
              |      '18767', '23969', '43905', '66979', '33113', '21286', '58471', '59080', '13395', '79144', '70373', '67031', '38360', '26705',
              |      '50906', '52406', '26066', '73146', '15884', '31897', '30045', '61068', '45550', '92454', '13376', '14354', '19770', '22928',
              |      '97790', '50723', '46081', '30202', '14410', '20223', '88500', '67298', '13261', '14172', '81410', '93578', '83583', '46047',
-             |      '94167', '82564', '21156', '15799', '86709', '37931', '74703', '83103', '23054', '70470', '72008', '49247', '91911', '69998',
-             |      '20961', '70070', '63197', '54853', '88191', '91830', '49521', '19454', '81450', '89091', '62378', '25683', '61869', '51744',
+             |      '94167', '82564', '21156', '15799', '86709', '37931', '74703', '83103', '23054', '70470', '72008', '35709', '91911', '69998',
+             |      '20961', '70070', '63197', '54853', '88191', '91830', '49521', '19454', '81450', '89091', '62378', '31904', '61869', '51744',
              |      '36580', '85778', '36871', '48121', '28810', '83712', '45486', '67393', '26935', '42393', '20132', '55349', '86057', '21309',
              |      '80218', '10094', '11357', '48819', '39734', '40758', '30432', '21204', '29467', '30214', '61024', '55307', '74621', '11622',
              |      '68908', '33032', '52868', '99194', '99900', '84936', '69036', '99149', '45013', '32895', '59004', '32322', '14933', '32936',
-             |      '33562', '72550', '27385', '58049', '58200', '16808', '21360', '32961', '18586', '79307', '15492')
-             |    ) b
-             |  on (a.ca_zip = b.ca_zip)
-             |  ) v1 on (substr(store.s_zip, 1, 2) = substr(v1.ca_zip, 1, 2))
-             |where
-             |  ss_date between '2002-01-01' and '2002-04-01'
-             |  -- and d_qoy = 1
-             |  -- and d_year = 2002
-             |group by
-             |  s_store_name
-             |order by
-             |  s_store_name
-             |limit 100;
-             |-- end query 1 in stream 0 using template query8.tpl
+             |      '33562', '72550', '27385', '58049', '58200', '16808', '21360', '32961', '18586', '79307', '15492'
+             |                          )) a01
+             |     inner join
+             |     (select ca_zip
+             |      from (SELECT substr(ca_zip,1,5) ca_zip,count(*) cnt
+             |            FROM customer_address, customer
+             |            WHERE ca_address_sk = c_current_addr_sk and
+             |                  c_preferred_cust_flag='Y'
+             |            group by ca_zip
+             |            having count(*) > 10)A1
+             |      ) b11
+             |      on (a01.ca_zip = b11.ca_zip )) A2
+             | where ss_store_sk = s_store_sk
+             |  and ss_sold_date_sk = d_date_sk
+             |  and ss_sold_date_sk between 2451271 and 2451361
+             |  and d_qoy = 2 and d_year = 1999
+             |  and (substr(s_zip,1,2) = substr(a2.ca_zip,1,2))
+             | group by s_store_name
+             | order by s_store_name
+             |limit 100
+             |-- end query 8 in stream 0 using template query8.tpl
            """.stripMargin),
 
     ("q82", """
@@ -1479,7 +1464,7 @@ trait ImpalaKitQueries extends Benchmark {
 
   val interactiveQueries =
     Seq("q19", "q42", "q52", "q55", "q63", "q68", "q73", "q98").map(queriesMap)
-  val reportingQueries = Seq("q3","q7","q27","q43", "q53", "q89").map(queriesMap)
+  val reportingQueries = Seq("q3","q7", "q27","q43", "q53", "q89").map(queriesMap)
   val deepAnalyticQueries = Seq("q34", "q46", "q59", "q65",  "q79", "ss_max").map(queriesMap)
   val impalaKitQueries = interactiveQueries ++ reportingQueries ++ deepAnalyticQueries
 }
