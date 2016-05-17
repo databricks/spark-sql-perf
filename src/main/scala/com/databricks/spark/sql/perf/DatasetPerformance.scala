@@ -16,7 +16,7 @@
 
 package com.databricks.spark.sql.perf
 
-import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.{Encoder, SQLContext}
 import org.apache.spark.sql.expressions.Aggregator
 
 case class Data(id: Long)
@@ -101,6 +101,10 @@ class DatasetPerformance extends Benchmark {
 
   val average = new Aggregator[Long, SumAndCount, Double] {
     override def zero: SumAndCount = SumAndCount(0, 0)
+
+    override def bufferEncoder = implicitly[Encoder[SumAndCount]]
+
+    override def outputEncoder = implicitly[Encoder[Double]]
 
     override def reduce(b: SumAndCount, a: Long): SumAndCount = {
       b.count += 1
