@@ -77,7 +77,8 @@ case class BenchmarkResult(
     result: Option[Long] = None,
     breakDown: Seq[BreakdownResult] = Nil,
     queryExecution: Option[String] = None,
-    failure: Option[Failure] = None)
+    failure: Option[Failure] = None,
+    ml: Option[MLResult] = None)
 
 /**
  * The execution time of a subtree of the query plan tree of a specific query.
@@ -97,3 +98,25 @@ case class BreakdownResult(
     delta: Double)
 
 case class Failure(className: String, message: String)
+
+case class MLTestParameters(
+    numFeatures: Option[Int] = None,
+    numExamples: Option[Long] = None,
+    randomSee: Option[Int] = None)
+
+/**
+ * Result information specific to MLlib.
+ *
+ * @param trainingTime  (MLlib) Training time.
+ *                      executionTime is set to the same value to match Spark Core tests.
+ * @param trainingMetric  (MLlib) Training metric, such as accuracy
+ * @param testTime  (MLlib) Test time (for prediction on test set, or on training set if there
+ *                  is no test set).
+ * @param testMetric  (MLlib) Test metric, such as accuracy
+ */
+case class MLResult(
+    testParameters: Option[MLTestParameters] = None,
+    trainingTime: Option[Double] = None,
+    trainingMetric: Option[Double] = None,
+    testTime: Option[Double] = None,
+    testMetric: Option[Double] = None)
