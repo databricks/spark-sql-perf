@@ -16,7 +16,7 @@
 
 package com.databricks.spark.sql.perf
 
-import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.{Encoder, SQLContext}
 import org.apache.spark.sql.expressions.Aggregator
 
 case class Data(id: Long)
@@ -107,6 +107,10 @@ class DatasetPerformance extends Benchmark {
       b.sum += a
       b
     }
+
+    override def bufferEncoder = implicitly[Encoder[SumAndCount]]
+
+    override def outputEncoder = implicitly[Encoder[Double]]
 
     override def finish(reduction: SumAndCount): Double = reduction.sum.toDouble / reduction.count
 

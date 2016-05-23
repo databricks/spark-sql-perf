@@ -5,6 +5,7 @@
 sbt/*.jar
 .idea
 .idea_modules
+*.iml
 
 # sbt specific
 build/*.jar
