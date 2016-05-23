@@ -848,7 +848,7 @@ trait Tpcds_1_4_Queries extends Benchmark {
             | from
             |   catalog_sales cs1, date_dim, customer_address, call_center
             | where
-            |   d_date between '2002-2-01' and (cast('2002-2-01' as date) + 60)
+            |   d_date between '2002-02-01' and (cast('2002-02-01' as date) + 60)
             | and cs1.cs_ship_date_sk = d_date_sk
             | and cs1.cs_ship_addr_sk = ca_address_sk
             | and ca_state = 'GA'
@@ -3185,7 +3185,7 @@ trait Tpcds_1_4_Queries extends Benchmark {
             |   coalesce(ws_sp,0)+coalesce(cs_sp,0) other_chan_sales_price
             | from ss
             | left join ws on (ws_sold_year=ss_sold_year and ws_item_sk=ss_item_sk and ws_customer_sk=ss_customer_sk)
-            | left join cs on (cs_sold_year=ss_sold_year and cs_item_sk=cs_item_sk and cs_customer_sk=ss_customer_sk)
+            | left join cs on (cs_sold_year=ss_sold_year and ss_item_sk=cs_item_sk and cs_customer_sk=ss_customer_sk)
             | where coalesce(ws_qty,0)>0 and coalesce(cs_qty, 0)>0 and ss_sold_year=2000
             | order by
             |   ratio,
