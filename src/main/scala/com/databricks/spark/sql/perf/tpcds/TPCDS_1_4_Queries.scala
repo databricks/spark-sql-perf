@@ -3863,7 +3863,6 @@ trait Tpcds_1_4_Queries extends Benchmark {
   }
   val tpcds1_4QueriesMap = tpcds1_4Queries.map(q => q.name.split("-").get(0) -> q).toMap
 
-  // q72 slow on SC=1
   val runnable: Seq[Query] = Seq(
     "q1", "q2", "q3", "q4", "q5", "q7", "q8", "q9",
     "q11", "q12", "q13", "q15", "q17", "q18", "q19",
