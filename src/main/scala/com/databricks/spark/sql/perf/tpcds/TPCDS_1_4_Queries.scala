@@ -1038,7 +1038,7 @@ trait Tpcds_1_4_Queries extends Benchmark {
             |         and ws_sold_date_sk = d_date_sk
             |         and ws_item_sk in (select item_sk from frequent_ss_items)
             |         and ws_bill_customer_sk in (select c_customer_sk from best_ss_customer))) y
-            | limit 100;
+            | limit 100
             """.stripMargin),
     ("q23b", """
             |
@@ -1368,13 +1368,13 @@ trait Tpcds_1_4_Queries extends Benchmark {
             | where
             |   i_manufact_id = 977
             |   and i_item_sk = cs_item_sk
-            |   and d_date between '2000-01-27' and (cast('2000-01-27' as date) + 90 days)
+            |   and d_date between '2000-01-27' and (cast('2000-01-27' as date) + interval 90 days)
             |   and d_date_sk = cs_sold_date_sk
             |   and cs_ext_discount_amt > (
             |          select 1.3 * avg(cs_ext_discount_amt)
             |          from catalog_sales, date_dim
             |          where cs_item_sk = i_item_sk
-            |           and d_date between '2000-01-27]' and (cast('2000-01-27' as date) + 90 days)
+            |           and d_date between '2000-01-27]' and (cast('2000-01-27' as date) + interval 90 days)
             |           and d_date_sk = cs_sold_date_sk)
             |limit 100
             """.stripMargin),
@@ -3676,7 +3676,7 @@ trait Tpcds_1_4_Queries extends Benchmark {
     // Modifications: "+ days" -> date_add
     // Modifications: " -> `
     ("q92", """
-            | select sum(ws_ext_discount_amt) as `Excess Discount Amount"
+            | select sum(ws_ext_discount_amt) as `Excess Discount Amount`
             | from web_sales, item, date_dim
             | where i_manufact_id = 350
             | and i_item_sk = ws_item_sk
@@ -3743,9 +3743,9 @@ trait Tpcds_1_4_Queries extends Benchmark {
             |  where ws1.ws_order_number = ws2.ws_order_number
             |    and ws1.ws_warehouse_sk <> ws2.ws_warehouse_sk)
             | select
-            |    count(distinct ws_order_number) as `order count"
-            |   ,sum(ws_ext_ship_cost) as `total shipping cost"
-            |   ,sum(ws_net_profit) as `total net profit"
+            |    count(distinct ws_order_number) as `order count`
+            |   ,sum(ws_ext_ship_cost) as `total shipping cost`
+            |   ,sum(ws_net_profit) as `total net profit`
             | from
             |    web_sales ws1, date_dim, customer_address, web_site
             | where
