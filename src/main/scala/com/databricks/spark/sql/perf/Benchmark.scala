@@ -39,7 +39,7 @@ abstract class Benchmark(
     @transient val sqlContext: SQLContext)
   extends Serializable {
 
-  import sqlContext.implicits._
+  import Benchmark._
 
   def this() = this(SQLContext.getOrCreate(SparkContext.getOrCreate()))
 
@@ -66,25 +66,6 @@ abstract class Benchmark(
     defaultParallelism = sparkContext.defaultParallelism,
     buildInfo = buildInfo)
 
-  /**
-   * A Variation represents a setting (e.g. the number of shuffle partitions or if tables
-   * are cached in memory) that we want to change in a experiment run.
-   * A Variation has three parts, `name`, `options`, and `setup`.
-   * The `name` is the identifier of a Variation. `options` is a Seq of options that
-   * will be used for a query. Basically, a query will be executed with every option
-   * defined in the list of `options`. `setup` defines the needed action for every
-   * option. For example, the following Variation is used to change the number of shuffle
-   * partitions of a query. The name of the Variation is "shufflePartitions". There are
-   * two options, 200 and 2000. The setup is used to set the value of property
-   * "spark.sql.shuffle.partitions".
-   *
-   * {{{
-   *   Variation("shufflePartitions", Seq("200", "2000")) {
-   *     case num => sqlContext.setConf("spark.sql.shuffle.partitions", num)
-   *   }
-   * }}}
-   */
-  case class Variation[T](name: String, options: Seq[T])(val setup: T => Unit)
 
   val codegen = Variation("codegen", Seq("on", "off")) {
     case "off" => sqlContext.setConf("spark.sql.codegen", "false")
@@ -124,236 +105,10 @@ abstract class Benchmark(
       tags: Map[String, String] = Map.empty,
       timeout: Long = 0L) = {
 
-    class ExperimentStatus {
-      val currentResults = new collection.mutable.ArrayBuffer[BenchmarkResult]()
-      val currentRuns = new collection.mutable.ArrayBuffer[ExperimentRun]()
-      val currentMessages = new collection.mutable.ArrayBuffer[String]()
-
-      def logMessage(msg: String) = {
-        println(msg)
-        currentMessages += msg
-      }
-
-      // Stats for HTML status message.
-      @volatile var currentExecution = ""
-      @volatile var currentPlan = "" // for queries only
-      @volatile var currentConfig = ""
-      @volatile var failures = 0
-      @volatile var startTime = 0L
-
-      /** An optional log collection task that will run after the experiment. */
-      @volatile var logCollection: () => Unit = () => {}
-
-
-      def cartesianProduct[T](xss: List[List[T]]): List[List[T]] = xss match {
-        case Nil => List(Nil)
-        case h :: t => for(xh <- h; xt <- cartesianProduct(t)) yield xh :: xt
-      }
-
-      val timestamp = System.currentTimeMillis()
-      val resultPath = s"$resultsLocation/timestamp=$timestamp"
-      val combinations = cartesianProduct(variations.map(l => (0 until l.options.size).toList).toList)
-      val resultsFuture = Future {
-
-        // If we're running queries, create tables for them
-        executionsToRun
-          .collect { case query: Query => query }
-          .flatMap { query =>
-            try {
-              query.newDataFrame().queryExecution.logical.collect {
-                case UnresolvedRelation(t, _) => t.table
-              }
-            } catch {
-              // ignore the queries that can't be parsed
-              case e: Exception => Seq()
-            }
-          }
-          .distinct
-          .foreach { name =>
-            try {
-              sqlContext.table(name)
-              logMessage(s"Table $name exists.")
-            } catch {
-              case ae: Exception =>
-                val table = allTables
-                  .find(_.name == name)
-                if (table.isDefined) {
-                  logMessage(s"Creating table: $name")
-                  table.get.data
-                    .write
-                    .mode("overwrite")
-                    .saveAsTable(name)
-                } else {
-                  // the table could be subquery
-                  logMessage(s"Couldn't read table $name and its not defined as a Benchmark.Table.")
-                }
-            }
-          }
-
-        // Run the benchmarks!
-        val results: Seq[ExperimentRun] = (1 to iterations).flatMap { i =>
-          combinations.map { setup =>
-            val currentOptions = variations.asInstanceOf[Seq[Variation[Any]]].zip(setup).map {
-              case (v, idx) =>
-                v.setup(v.options(idx))
-                v.name -> v.options(idx).toString
-            }
-            currentConfig = currentOptions.map { case (k,v) => s"$k: $v" }.mkString(", ")
-
-            val result = ExperimentRun(
-              timestamp = timestamp,
-              iteration = i,
-              tags = currentOptions.toMap ++ tags,
-              configuration = currentConfiguration,
-
-              executionsToRun.flatMap { q =>
-                val setup = s"iteration: $i, ${currentOptions.map { case (k, v) => s"$k=$v"}.mkString(", ")}"
-                logMessage(s"Running execution ${q.name} $setup")
-
-                currentExecution = q.name
-                currentPlan = q match {
-                  case query: Query =>
-                    try {
-                      query.newDataFrame().queryExecution.executedPlan.toString()
-                    } catch {
-                      case e: Exception =>
-                        s"failed to parse: $e"
-                    }
-                  case _ => ""
-                }
-                startTime = System.currentTimeMillis()
-
-                val singleResult =
-                  q.benchmark(includeBreakdown, setup, currentMessages, timeout)
-
-                singleResult.failure.foreach { f =>
-                  failures += 1
-                  logMessage(s"Execution '${q.name}' failed: ${f.message}")
-                }
-                singleResult.executionTime.foreach { time =>
-                  logMessage(s"Execution time: ${time / 1000}s")
-                }
-                currentResults += singleResult
-                singleResult :: Nil
-              })
-
-            currentRuns += result
-
-            result
-          }
-        }
-
-        try {
-          val resultsTable = sqlContext.createDataFrame(results)
-          logMessage(s"Results written to table: 'sqlPerformance' at $resultPath")
-          resultsTable
-            .coalesce(1)
-            .write
-            .format("json")
-            .save(resultPath)
-        } catch {
-          case e: Throwable => logMessage(s"Failed to write data: $e")
-        }
-
-        logCollection()
-      }
-
-      def scheduleCpuCollection(fs: FS) = {
-        logCollection = () => {
-          logMessage(s"Begining CPU log collection")
-          try {
-            val location = cpu.collectLogs(sqlContext, fs, timestamp)
-            logMessage(s"cpu results recorded to $location")
-          } catch {
-            case e: Throwable =>
-              logMessage(s"Error collecting logs: $e")
-              throw e
-          }
-        }
-      }
-
-      def cpuProfile = new Profile(sqlContext, sqlContext.read.json(getCpuLocation(timestamp)))
-
-      def cpuProfileHtml(fs: FS) = {
-        s"""
-           |<h1>CPU Profile</h1>
-           |<b>Permalink:</b> <tt>sqlContext.read.json("${getCpuLocation(timestamp)}")</tt></br>
-           |${cpuProfile.buildGraph(fs)}
-         """.stripMargin
-      }
-
-      /** Waits for the finish of the experiment. */
-      def waitForFinish(timeoutInSeconds: Int) = {
-        Await.result(resultsFuture, timeoutInSeconds.seconds)
-      }
-
-      /** Returns results from an actively running experiment. */
-      def getCurrentResults() = {
-        val tbl = sqlContext.createDataFrame(currentResults)
-        tbl.registerTempTable("currentResults")
-        tbl
-      }
-
-      /** Returns full iterations from an actively running experiment. */
-      def getCurrentRuns() = {
-        val tbl = sqlContext.createDataFrame(currentRuns)
-        tbl.registerTempTable("currentRuns")
-        tbl
-      }
-
-      def tail(n: Int = 20) = {
-        currentMessages.takeRight(n).mkString("\n")
-      }
-
-      def status =
-        if (resultsFuture.isCompleted) {
-          if (resultsFuture.value.get.isFailure) "Failed" else "Successful"
-        } else {
-          "Running"
-        }
-
-      override def toString =
-        s"""Permalink: table("sqlPerformance").where('timestamp === ${timestamp}L)"""
-
-
-      def html: String = {
-        val maybeQueryPlan: String =
-          if (currentPlan.nonEmpty) {
-            s"""
-              |<h3>QueryPlan</h3>
-              |<pre>
-              |${currentPlan.replaceAll("\n", "<br/>")}
-              |</pre>
-            """.stripMargin
-          } else {
-            ""
-          }
-        s"""
-           |<h2>$status Experiment</h2>
-           |<b>Permalink:</b> <tt>sqlContext.read.json("$resultPath")</tt><br/>
-           |<b>Iterations complete:</b> ${currentRuns.size / combinations.size} / $iterations<br/>
-           |<b>Failures:</b> $failures<br/>
-           |<b>Executions run:</b> ${currentResults.size} / ${iterations * combinations.size * executionsToRun.size}
-           |<br/>
-           |<b>Run time:</b> ${(System.currentTimeMillis() - timestamp) / 1000}s<br/>
-           |
-           |<h2>Current Execution: $currentExecution</h2>
-           |Runtime: ${(System.currentTimeMillis() - startTime) / 1000}s<br/>
-           |$currentConfig<br/>
-           |$maybeQueryPlan
-           |<h2>Logs</h2>
-           |<pre>
-           |${tail()}
-           |</pre>
-         """.stripMargin
-      }
-    }
-    new ExperimentStatus
+    new ExperimentStatus(executionsToRun, includeBreakdown, iterations, variations, tags,
+      timeout, resultsLocation, sqlContext, allTables, currentConfiguration)
   }
 
-  case class Table(
-      name: String,
-      data: Dataset[_])
 
   import reflect.runtime._, universe._
   import reflect.runtime._
@@ -500,66 +255,267 @@ abstract class Benchmark(
       }
     }
   }
-
 }
 
 /**
- * A class for benchmarking MLlib Spark perf results.
+ * A Variation represents a setting (e.g. the number of shuffle partitions or if tables
+ * are cached in memory) that we want to change in a experiment run.
+ * A Variation has three parts, `name`, `options`, and `setup`.
+ * The `name` is the identifier of a Variation. `options` is a Seq of options that
+ * will be used for a query. Basically, a query will be executed with every option
+ * defined in the list of `options`. `setup` defines the needed action for every
+ * option. For example, the following Variation is used to change the number of shuffle
+ * partitions of a query. The name of the Variation is "shufflePartitions". There are
+ * two options, 200 and 2000. The setup is used to set the value of property
+ * "spark.sql.shuffle.partitions".
  *
- * @param name  Test name
- * @param parameters  Parameters for test.  These are recorded here but set beforehand
- *                    (contained within the prepare, train, and test methods).
- * @param prepare  Prepare data.  Not timed.
- * @param train  Train the model.  Timed.
- * @param evaluateTrain  Compute training metric
- * @param evaluateTest  Compute test metric
+ * {{{
+ *   Variation("shufflePartitions", Seq("200", "2000")) {
+ *     case num => sqlContext.setConf("spark.sql.shuffle.partitions", num)
+ *   }
+ * }}}
  */
-class MLlibSparkPerfExecution(
-    override val name: String,
-    parameters: Map[String, String],
-    prepare: () => Unit,
-    train: () => Unit,
-    evaluateTrain: () => Option[Double],
-    evaluateTest: () => Option[Double])
-  extends Benchmarkable with Serializable {
+case class Variation[T](name: String, options: Seq[T])(val setup: T => Unit)
 
-  protected override val executionMode: ExecutionMode = ExecutionMode.SparkPerfResults
+case class Table(
+    name: String,
+    data: Dataset[_])
 
-  protected override def beforeBenchmark(): Unit = { prepare() }
 
-  protected override def doBenchmark(
-                                      includeBreakdown: Boolean,
-                                      description: String = "",
-                                      messages: ArrayBuffer[String]): BenchmarkResult = {
-    try {
-      val trainingTimeMs = measureTimeMs(train())
-      val trainingMetric = evaluateTrain()
-      val (testMetric, testTimeMs) = {
-        val startTime = System.nanoTime()
-        val metric = evaluateTest()
-        val endTime = System.nanoTime()
-        (metric, (endTime - startTime).toDouble / 1000000)
+object Benchmark {
+
+  class ExperimentStatus(
+      executionsToRun: Seq[Benchmarkable],
+      includeBreakdown: Boolean,
+      iterations: Int,
+      variations: Seq[Variation[_]],
+      tags: Map[String, String],
+      timeout: Long,
+      resultsLocation: String,
+      sqlContext: SQLContext,
+      allTables: Seq[Table],
+      currentConfiguration: BenchmarkConfiguration) {
+    val currentResults = new collection.mutable.ArrayBuffer[BenchmarkResult]()
+    val currentRuns = new collection.mutable.ArrayBuffer[ExperimentRun]()
+    val currentMessages = new collection.mutable.ArrayBuffer[String]()
+
+    def logMessage(msg: String) = {
+      println(msg)
+      currentMessages += msg
+    }
+
+    // Stats for HTML status message.
+    @volatile var currentExecution = ""
+    @volatile var currentPlan = "" // for queries only
+    @volatile var currentConfig = ""
+    @volatile var failures = 0
+    @volatile var startTime = 0L
+
+    /** An optional log collection task that will run after the experiment. */
+    @volatile var logCollection: () => Unit = () => {}
+
+
+    def cartesianProduct[T](xss: List[List[T]]): List[List[T]] = xss match {
+      case Nil => List(Nil)
+      case h :: t => for(xh <- h; xt <- cartesianProduct(t)) yield xh :: xt
+    }
+
+    val timestamp = System.currentTimeMillis()
+    val resultPath = s"$resultsLocation/timestamp=$timestamp"
+    val combinations = cartesianProduct(variations.map(l => (0 until l.options.size).toList).toList)
+    val resultsFuture = Future {
+
+      // If we're running queries, create tables for them
+      executionsToRun
+        .collect { case query: Query => query }
+        .flatMap { query =>
+          try {
+            query.newDataFrame().queryExecution.logical.collect {
+              case UnresolvedRelation(t, _) => t.table
+            }
+          } catch {
+            // ignore the queries that can't be parsed
+            case e: Exception => Seq()
+          }
+        }
+        .distinct
+        .foreach { name =>
+          try {
+            sqlContext.table(name)
+            logMessage(s"Table $name exists.")
+          } catch {
+            case ae: Exception =>
+              val table = allTables
+                .find(_.name == name)
+              if (table.isDefined) {
+                logMessage(s"Creating table: $name")
+                table.get.data
+                  .write
+                  .mode("overwrite")
+                  .saveAsTable(name)
+              } else {
+                // the table could be subquery
+                logMessage(s"Couldn't read table $name and its not defined as a Benchmark.Table.")
+              }
+          }
+        }
+
+      // Run the benchmarks!
+      val results: Seq[ExperimentRun] = (1 to iterations).flatMap { i =>
+        combinations.map { setup =>
+          val currentOptions = variations.asInstanceOf[Seq[Variation[Any]]].zip(setup).map {
+            case (v, idx) =>
+              v.setup(v.options(idx))
+              v.name -> v.options(idx).toString
+          }
+          currentConfig = currentOptions.map { case (k,v) => s"$k: $v" }.mkString(", ")
+
+          val result = ExperimentRun(
+            timestamp = timestamp,
+            iteration = i,
+            tags = currentOptions.toMap ++ tags,
+            configuration = currentConfiguration,
+
+            executionsToRun.flatMap { q =>
+              val setup = s"iteration: $i, ${currentOptions.map { case (k, v) => s"$k=$v"}.mkString(", ")}"
+              logMessage(s"Running execution ${q.name} $setup")
+
+              currentExecution = q.name
+              currentPlan = q match {
+                case query: Query =>
+                  try {
+                    query.newDataFrame().queryExecution.executedPlan.toString()
+                  } catch {
+                    case e: Exception =>
+                      s"failed to parse: $e"
+                  }
+                case _ => ""
+              }
+              startTime = System.currentTimeMillis()
+
+              val singleResult =
+                q.benchmark(includeBreakdown, setup, currentMessages, timeout)
+
+              singleResult.failure.foreach { f =>
+                failures += 1
+                logMessage(s"Execution '${q.name}' failed: ${f.message}")
+              }
+              singleResult.executionTime.foreach { time =>
+                logMessage(s"Execution time: ${time / 1000}s")
+              }
+              currentResults += singleResult
+              singleResult :: Nil
+            })
+
+          currentRuns += result
+
+          result
+        }
       }
 
-      val ml = MLResult(
-        trainingTime = Some(trainingTimeMs),
-        trainingMetric = trainingMetric,
-        testTime = Some(testTimeMs),
-        testMetric = testMetric)
+      try {
+        val resultsTable = sqlContext.createDataFrame(results)
+        logMessage(s"Results written to table: 'sqlPerformance' at $resultPath")
+        resultsTable
+          .coalesce(1)
+          .write
+          .format("json")
+          .save(resultPath)
+      } catch {
+        case e: Throwable => logMessage(s"Failed to write data: $e")
+      }
 
-      BenchmarkResult(
-        name = name,
-        mode = executionMode.toString,
-        parameters = parameters,
-        executionTime = Some(trainingTimeMs),
-        ml = Some(ml))
-    } catch {
-      case e: Exception =>
-        BenchmarkResult(
-          name = name,
-          mode = executionMode.toString,
-          parameters = parameters,
-          failure = Some(Failure(e.getClass.getSimpleName, e.getMessage)))
+      logCollection()
+    }
+
+    def scheduleCpuCollection(fs: FS) = {
+      logCollection = () => {
+        logMessage(s"Begining CPU log collection")
+        try {
+          val location = cpu.collectLogs(sqlContext, fs, timestamp)
+          logMessage(s"cpu results recorded to $location")
+        } catch {
+          case e: Throwable =>
+            logMessage(s"Error collecting logs: $e")
+            throw e
+        }
+      }
+    }
+
+    def cpuProfile = new Profile(sqlContext, sqlContext.read.json(getCpuLocation(timestamp)))
+
+    def cpuProfileHtml(fs: FS) = {
+      s"""
+         |<h1>CPU Profile</h1>
+         |<b>Permalink:</b> <tt>sqlContext.read.json("${getCpuLocation(timestamp)}")</tt></br>
+         |${cpuProfile.buildGraph(fs)}
+         """.stripMargin
+    }
+
+    /** Waits for the finish of the experiment. */
+    def waitForFinish(timeoutInSeconds: Int) = {
+      Await.result(resultsFuture, timeoutInSeconds.seconds)
+    }
+
+    /** Returns results from an actively running experiment. */
+    def getCurrentResults() = {
+      val tbl = sqlContext.createDataFrame(currentResults)
+      tbl.registerTempTable("currentResults")
+      tbl
+    }
+
+    /** Returns full iterations from an actively running experiment. */
+    def getCurrentRuns() = {
+      val tbl = sqlContext.createDataFrame(currentRuns)
+      tbl.registerTempTable("currentRuns")
+      tbl
+    }
+
+    def tail(n: Int = 20) = {
+      currentMessages.takeRight(n).mkString("\n")
+    }
+
+    def status =
+      if (resultsFuture.isCompleted) {
+        if (resultsFuture.value.get.isFailure) "Failed" else "Successful"
+      } else {
+        "Running"
+      }
+
+    override def toString =
+      s"""Permalink: table("sqlPerformance").where('timestamp === ${timestamp}L)"""
+
+
+    def html: String = {
+      val maybeQueryPlan: String =
+        if (currentPlan.nonEmpty) {
+          s"""
+             |<h3>QueryPlan</h3>
+             |<pre>
+             |${currentPlan.replaceAll("\n", "<br/>")}
+             |</pre>
+            """.stripMargin
+        } else {
+          ""
+        }
+      s"""
+         |<h2>$status Experiment</h2>
+         |<b>Permalink:</b> <tt>sqlContext.read.json("$resultPath")</tt><br/>
+         |<b>Iterations complete:</b> ${currentRuns.size / combinations.size} / $iterations<br/>
+         |<b>Failures:</b> $failures<br/>
+         |<b>Executions run:</b> ${currentResults.size} / ${iterations * combinations.size * executionsToRun.size}
+         |<br/>
+         |<b>Run time:</b> ${(System.currentTimeMillis() - timestamp) / 1000}s<br/>
+         |
+           |<h2>Current Execution: $currentExecution</h2>
+         |Runtime: ${(System.currentTimeMillis() - startTime) / 1000}s<br/>
+         |$currentConfig<br/>
+         |$maybeQueryPlan
+         |<h2>Logs</h2>
+         |<pre>
+         |${tail()}
+         |</pre>
+         """.stripMargin
     }
   }
 }

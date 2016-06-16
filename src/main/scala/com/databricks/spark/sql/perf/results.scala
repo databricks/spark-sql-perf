@@ -102,7 +102,8 @@ case class Failure(className: String, message: String)
 case class MLTestParameters(
     numFeatures: Option[Int] = None,
     numExamples: Option[Long] = None,
-    randomSee: Option[Int] = None)
+    numTestExamples: Option[Long] = None,
+    randomSeed: Option[Int] = None)
 
 /**
  * Result information specific to MLlib.
@@ -116,6 +117,7 @@ case class MLTestParameters(
  */
 case class MLResult(
     testParameters: Option[MLTestParameters] = None,
+    extraTestParameters: Map[String, String] = Map.empty,
     trainingTime: Option[Double] = None,
     trainingMetric: Option[Double] = None,
     testTime: Option[Double] = None,

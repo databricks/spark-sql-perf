@@ -11,16 +11,18 @@ import org.apache.spark.sql.{SQLContext, DataFrame}
 
 object DataGenerator {
 
-  def generateBinaryLabeledPoints(sql: SQLContext, conf: MLTestParameters): DataFrame = {
+  def generateBinaryLabeledPoints(
+      sql: SQLContext,
+      numPoints: Long,
+      conf: MLTestParameters): DataFrame = {
     val threshold = 0.5
     val numPartitions = 10
     val rdd = RandomRDDs.randomRDD(sql.sparkContext,
       new BinaryLabeledDataGenerator(conf.numFeatures.get, threshold),
-      conf.numExamples.get, numPartitions, conf.randomSee.get).map { p =>
+      conf.numExamples.get, numPartitions, conf.randomSeed.get).map { p =>
       p.label -> NewVectors.dense(p.features.toArray) }
     sql.createDataFrame(rdd).toDF("label", "features")
   }
-
 }
 
 class BinaryLabeledDataGenerator(

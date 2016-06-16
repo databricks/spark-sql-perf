@@ -102,11 +102,11 @@ class LogisticRegressionTest(sc: SparkContext, conf: MLTestParameters, mode: Exe
       conf.numExamples.get)
   }
 
-  def trainingRDD(conf: MLTestParameters): DataFrame =
-    DataGenerator.generateBinaryLabeledPoints(session, conf)
+  def trainingRDD(conf: MLTestParameters): DataFrame = ???
+//    DataGenerator.generateBinaryLabeledPoints(session, conf)
 
-  def testRDD(conf: MLTestParameters): DataFrame =
-    DataGenerator.generateBinaryLabeledPoints(session, conf)
+  def testRDD(conf: MLTestParameters): DataFrame = ???
+//    DataGenerator.generateBinaryLabeledPoints(session, conf)
 
 }
 
