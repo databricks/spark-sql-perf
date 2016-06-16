@@ -1,96 +1,117 @@
 package com.databricks.spark.sql.perf.mllib
 
-import com.databricks.spark.sql.perf._
-import com.databricks.spark.sql.perf.mllib.data.DataGenerator
+import scala.collection.mutable.ArrayBuffer
+
 import org.apache.spark.SparkContext
+import org.apache.spark.ml.Estimator
 import org.apache.spark.ml.classification.{LogisticRegression, LogisticRegressionModel}
+import org.apache.spark.ml.evaluation._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, Row, SQLContext, Dataset}
 
-import scala.collection.mutable.ArrayBuffer
+import com.databricks.spark.sql.perf._
+import com.databricks.spark.sql.perf.mllib.data.DataGenerator
 
 
-/** Parent class for tests which run on a large dataset. */
-abstract class RegressionAndClassificationTests[M](
-    sc: SparkContext,
-    private val baseName: String,
-    private val configuration: MLTestParameters,
-    override val executionMode: ExecutionMode) extends Benchmarkable {
+/**
+ * Parent class for MLlib Estimator tests.
+ */
+abstract class EstimatorTest(
+    protected val configuration: MLTestParameters) extends Benchmarkable {
 
-  val session = SQLContext.getOrCreate(sc)
+  override val name: String = this.getClass.getSimpleName
 
-  import session.implicits._
+  // This is currently ignored by MLlib tests.
+  override protected val executionMode: ExecutionMode = ExecutionMode.ForeachResults
 
-  def runTest(rdd: DataFrame): M
+  // The following fields should be initialized by `beforeBenchmark()`
+  protected var trainingData: DataFrame = _
+  protected var testData: Option[DataFrame] = _
+  protected var estimator: Estimator = _
+  protected var evaluator: Option[Evaluator] = _
 
-  def validate(model: M, rdd: DataFrame): Double
+  /**
+   * Prepare the training data.  It does not need to be cached or materialized by this method.
+   * @return (training data, optional test data)
+   */
+  protected def getData: (DataFrame, Option[DataFrame])
 
-  def trainingRDD(conf: MLTestParameters): DataFrame
+  /** Prepare Estimator */
+  protected def getEstimator: Estimator
 
-  def testRDD(conf: MLTestParameters): DataFrame
+  /** Prepare Evaluator.  Defaults to None.  */
+  protected def getEvaluator: Evaluator = None
 
-  private lazy val ds = {
-    trainingRDD(configuration)
+  final override protected def beforeBenchmark(): Unit = {
+    (trainingData, testData) = getData
+    trainingData.cache().count()
+    testData.map(_.cache().count())
+    estimator = getEstimator
+    evaluator = getEvaluator
+
+    // Process parameters
+    setTestParameters(estimator)
   }
 
-  private lazy val testDs = {
-    testRDD(configuration)
+  protected def setTestParameters(estimator: Estimator): Unit = {
+
   }
 
-  final override val name: String = {
-    val p1 = configuration.numExamples.map(x => s"_n$x").getOrElse("")
-    val p2 = configuration.numFeatures.map(x => s"_f$x").getOrElse("")
-    s"$baseName$p1$p2"
-  }
-
-  final override def doBenchmark(
+  // includeBreakdown is not used by MLlib
+  final override protected def doBenchmark(
       includeBreakdown: Boolean,
       description: String = "",
       messages: ArrayBuffer[String]): BenchmarkResult = {
-    var start = System.currentTimeMillis()
-    val model = runTest(ds)
-    val trainingTime = (System.currentTimeMillis() - start).toDouble / 1000.0
+    require(trainingData != null, "EstimatorTest tried to run without trainingData." +
+      "  Data should be prepared in beforeBenchmark() method.")
+    require(estimator != null, "EstimatorTest tried to run without Estimator." +
+      "  Estimator should be prepared in beforeBenchmark() method.")
+    try {
+      var start = System.currentTimeMillis()
+      val model = estimator.fit(trainingData)
+      val trainingTime = (System.currentTimeMillis() - start).toDouble / 1000.0
 
-    start = System.currentTimeMillis()
-    val trainingMetric = validate(model, ds)
-    val testTime = (System.currentTimeMillis() - start).toDouble / 1000.0
+      start = System.currentTimeMillis()
+      val trainingPredictions = model.transform(trainingData)
+      val trainingMetric = evaluator.evaluate(trainingPredictions)
+      val trainingTransformTime = (System.currentTimeMillis() - start).toDouble / 1000.0
 
-    val testMetric = validate(model, testDs)
+      start = System.currentTimeMillis()
+      val testPredictions = model.transform(testData)
+      val testMetric = evaluator.evaluate(testPredictions)
+      val testTime = (System.currentTimeMillis() - start).toDouble / 1000.0
 
-    val mlRes = MLResult(trainingTime = Some(trainingTime), testTime = Some(testTime),
-      trainingMetric = Some(trainingMetric), testMetric = Some(testMetric))
-    BenchmarkResult(name, executionMode.toString, ml = Some(mlRes))
-  }
-
-  /**
-   * For classification
-   *
-   * @param predictions RDD over (prediction, truth) for each instance
-   * @return Percent correctly classified
-   */
-  def calculateAccuracy(predictions: RDD[(Double, Double)], numExamples: Long): Double = {
-    predictions.map{case (pred, label) =>
-      if (pred == label) 1.0 else 0.0
-    }.sum() * 100.0 / numExamples
-  }
-
-  /**
-   * For regression
-   *
-   * @param predictions RDD over (prediction, truth) for each instance
-   * @return Root mean squared error (RMSE)
-   */
-  def calculateRMSE(predictions: Dataset[_], numExamples: Long): Double = {
-    val error = predictions.rdd.map { case Row(pred: Double, label: Double) =>
-      (pred - label) * (pred - label)
-    } .sum()
-    math.sqrt(error / numExamples)
+      val mlRes = MLResult(trainingTime = Some(trainingTime),
+        trainingTransformTime = Some(trainingTransformTime), testTime = Some(testTime),
+        trainingMetric = Some(trainingMetric), testMetric = Some(testMetric))
+      BenchmarkResult(name, executionMode.toString, mlParameters = Some(configuration),
+        mlResult = Some(mlRes))
+    } catch {
+      case e: Exception =>
+        BenchmarkResult(
+          name = name,
+          mode = executionMode.toString,
+          mlParameters = Some(configuration),
+          failure = Some(Failure(e.getClass.getSimpleName, e.getMessage)))
+    }
   }
 }
 
-class LogisticRegressionTest(sc: SparkContext, conf: MLTestParameters, mode: ExecutionMode)
-  extends RegressionAndClassificationTests[LogisticRegressionModel](sc, "logistic_regression",
-    conf, mode) {
+
+abstract class ClassificationTest(configuration: MLTestParameters)
+  extends EstimatorTest(configuration) {
+
+  override protected def getData: (DataFrame, Option[DataFrame]) = {
+
+  }
+
+  override protected def getEvaluator: Evaluator = new RegressionEvaluator
+}
+
+class LogisticRegressionTest(configuration: MLTestParameters)
+  extends ClassificationTest(configuration) {
+
+  override protected def getEstimator: Estimator = new LogisticRegression().
 
   override def runTest(rdd: DataFrame): LogisticRegressionModel = {
     val lr = new LogisticRegression()
@@ -109,5 +130,3 @@ class LogisticRegressionTest(sc: SparkContext, conf: MLTestParameters, mode: Exe
 //    DataGenerator.generateBinaryLabeledPoints(session, conf)
 
 }
-
-

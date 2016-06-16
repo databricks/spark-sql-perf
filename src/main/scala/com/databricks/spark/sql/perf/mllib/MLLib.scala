@@ -118,8 +118,15 @@ class MLlibSparkPerfExecution(
     prepare: () => Unit,
     train: () => Unit,
     evaluateTrain: () => Option[Double],
-    evaluateTest: () => Option[Double])
+    evaluateTest: () => Option[Double],
+    description: String = "")
   extends Benchmarkable with Serializable {
+
+  override def toString: String =
+    s"""
+       |== $name ==
+       |$description
+     """.stripMargin
 
   protected override val executionMode: ExecutionMode = ExecutionMode.SparkPerfResults
 
@@ -130,26 +137,26 @@ class MLlibSparkPerfExecution(
       description: String = "",
       messages: ArrayBuffer[String]): BenchmarkResult = {
     try {
-      val trainingTimeMs = measureTimeMs(train())
+      val trainingTime = measureTimeMs(train()) / 1e3
       val trainingMetric = evaluateTrain()
-      val (testMetric, testTimeMs) = {
+      val (testMetric, testTime) = {
         val startTime = System.nanoTime()
         val metric = evaluateTest()
         val endTime = System.nanoTime()
-        (metric, (endTime - startTime).toDouble / 1000000)
+        (metric, (endTime - startTime).toDouble / 1e9)
       }
 
       val ml = MLResult(
-        trainingTime = Some(trainingTimeMs),
+        trainingTime = Some(trainingTime),
         trainingMetric = trainingMetric,
-        testTime = Some(testTimeMs),
+        testTime = Some(testTime),
         testMetric = testMetric)
 
       BenchmarkResult(
         name = name,
         mode = executionMode.toString,
         parameters = parameters,
-        executionTime = Some(trainingTimeMs),
+        executionTime = Some(trainingTime),
         ml = Some(ml))
     } catch {
       case e: Exception =>
