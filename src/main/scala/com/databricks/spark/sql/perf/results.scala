@@ -105,13 +105,13 @@ case class Failure(className: String, message: String)
  * @param numFeatures
  * @param numExamples
  * @param numTestExamples  If not set, then defaults to numExamples
- * @param randomSeed
+ * @param seed
  */
 case class MLTestParameters(
     numFeatures: Option[Int] = None,
     numExamples: Option[Long] = None,
     numTestExamples: Option[Long] = None,
-    randomSeed: Option[Int] = None) {
+    seed: Option[Int] = None) {
   def getNumTestExamples: Long = numTestExamples.getOrElse {
     numExamples match {
       case Some(n) => n

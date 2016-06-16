@@ -48,13 +48,6 @@ abstract class EstimatorTest(
     testData.map(_.cache().count())
     estimator = getEstimator
     evaluator = getEvaluator
-
-    // Process parameters
-    setTestParameters(estimator)
-  }
-
-  protected def setTestParameters(estimator: Estimator): Unit = {
-
   }
 
   // includeBreakdown is not used by MLlib
@@ -111,7 +104,8 @@ abstract class ClassificationTest(configuration: MLTestParameters)
 class LogisticRegressionTest(configuration: MLTestParameters)
   extends ClassificationTest(configuration) {
 
-  override protected def getEstimator: Estimator = new LogisticRegression().
+  override protected def getEstimator: Estimator = new LogisticRegression()
+    .set
 
   override def runTest(rdd: DataFrame): LogisticRegressionModel = {
     val lr = new LogisticRegression()
