@@ -1,11 +1,12 @@
 package com.databricks.spark.sql.perf.mllib.classification
 
+/*
+
 import com.databricks.spark.sql.perf.mllib.data.DataGenerator
 import com.databricks.spark.sql.perf.mllib.{ClassificationContext, ClassificationPipelineDescription}
 import org.apache.spark.ml.classification.LogisticRegressionModel
 import org.apache.spark.sql.{Row, DataFrame}
 import org.apache.spark.ml.classification.LogisticRegression
-
 
 case class LogisticRegressionTest(regParam: Double, tol: Double)
 
@@ -59,3 +60,4 @@ object Utils {
     100.0 * counts / set.count()
   }
 }
+*/

@@ -112,7 +112,7 @@ case class MLTestParameters(
     numExamples: Option[Long] = None,
     numPartitions: Option[Int] = None,
     numTestExamples: Option[Long] = None,
-    seed: Option[Int] = None) {
+    seed: Option[Long] = None) {
   def getNumTestExamples: Long = numTestExamples.getOrElse {
     numExamples match {
       case Some(n) => n

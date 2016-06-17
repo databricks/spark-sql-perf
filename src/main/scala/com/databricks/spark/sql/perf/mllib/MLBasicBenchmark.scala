@@ -1,19 +1,34 @@
 package com.databricks.spark.sql.perf.mllib
 
-import com.databricks.spark.sql.perf._
+import scala.collection.mutable.ArrayBuffer
+import scala.util.Try
+
 import org.apache.spark.SparkContext
 import org.apache.spark.ml.classification.{ClassificationModel, RandomForestClassificationModel}
 import org.apache.spark.sql.{DataFrame, SQLContext}
 
-import scala.collection.mutable.ArrayBuffer
-import scala.util.Try
+import com.databricks.spark.sql.perf._
 
-class MLLib(@transient sqlContext: SQLContext)
-  extends Benchmark(sqlContext) with Serializable {
 
-  def this() = this(SQLContext.getOrCreate(SparkContext.getOrCreate()))
+class MLBasicBenchmark extends Benchmark {
+
+  val all = classification
+
+  val classification = Seq(
+    LogisticRegressionTest.basic
+  )
 }
 
+class MLMiniBenchmark extends Benchmark {
+
+  val all = classification
+
+  val classification = Seq(
+    LogisticRegressionTest.mini
+  )
+}
+
+/*
 case class ClassificationContext[Param](
     commonParams: MLTestParameters,
     extraParams: Param,
@@ -177,3 +192,4 @@ object ConversionUtils {
     Map.empty
   }
 }
+*/

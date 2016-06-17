@@ -29,6 +29,9 @@ abstract class EstimatorTest(
   protected var estimator: Estimator[_ <: Model[_]] = _
   protected var evaluator: Option[Evaluator] = _
 
+  private def getSeed: Long = conf.seed.getOrElse(new java.util.Random().nextLong())
+  protected val rng = new java.util.Random(getSeed)
+
   /**
    * Prepare the training data.  It does not need to be cached or materialized by this method.
    *
@@ -43,7 +46,9 @@ abstract class EstimatorTest(
   protected def getEvaluator: Option[Evaluator] = None
 
   final override protected def beforeBenchmark(): Unit = {
-    (trainingData, testData) = getData
+    val (training, test) = getData
+    trainingData = training
+    testData = test
     trainingData.cache().count()
     testData.map(_.cache().count())
     estimator = getEstimator
@@ -108,19 +113,23 @@ abstract class EstimatorTest(
 abstract class ClassificationTest(conf: MLTestParameters)
   extends EstimatorTest(conf) {
 
-  override protected def getEvaluator: Evaluator = new MulticlassClassificationEvaluator
+  override protected def getEvaluator: Option[Evaluator] =
+    Some(new MulticlassClassificationEvaluator)
 }
+
 
 class LogisticRegressionTest(conf: MLTestParameters)
   extends ClassificationTest(conf) {
 
-  private val rng = new java.util.Random(conf.seed.get)
-
-  override protected def getData: (DataFrame, Option[DataFrame]) = {
+  private def generateModel(): LogisticRegressionModel = {
     val coefficients =
       Vectors.dense(Array.fill[Double](conf.numFeatures.get)(2 * rng.nextDouble() - 1))
     val intercept = 2 * rng.nextDouble - 1
-    val trueModel = ModelBuilder.newLogisticRegressionModel(coefficients, intercept)
+    ModelBuilder.newLogisticRegressionModel(coefficients, intercept)
+  }
+
+  override protected def getData: (DataFrame, Option[DataFrame]) = {
+    val trueModel = generateModel()
     val trainingData = DataGenerator.generateLabeledPoints(sqlContext, conf.numExamples.get,
       conf, trueModel, rng.nextLong())
     val testData = DataGenerator.generateLabeledPoints(sqlContext, conf.getNumTestExamples,
@@ -128,6 +137,21 @@ class LogisticRegressionTest(conf: MLTestParameters)
     (trainingData, Some(testData))
   }
 
-  override protected def getEstimator: Estimator = new LogisticRegression()
+  override protected def getEstimator: LogisticRegression = new LogisticRegression()
   // TODO: set stuff!
+}
+
+object LogisticRegressionTest {
+
+  def mini: LogisticRegressionTest = {
+    val conf = new MLTestParameters(numFeatures = Some(10), numExamples = Some(100),
+      numPartitions = Some(4), numTestExamples = Some(100))
+    new LogisticRegressionTest(conf)
+  }
+
+  def basic: LogisticRegressionTest = {
+    val conf = new MLTestParameters(numFeatures = Some(10000), numExamples = Some(1000000),
+      numPartitions = Some(128), numTestExamples = Some(1000000))
+    new LogisticRegressionTest(conf)
+  }
 }

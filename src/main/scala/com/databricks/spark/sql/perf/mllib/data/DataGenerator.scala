@@ -29,7 +29,7 @@ object DataGenerator {
     val rdd: RDD[Vector] = RandomRDDs.randomRDD(sql.sparkContext,
       new FeaturesGenerator(categoricalArities, conf.numFeatures.get),
       numExamples, conf.numPartitions.get, seed)
-    sql.createDataFrame(rdd.map((_,))).toDF("features")
+    sql.createDataFrame(rdd.map(Tuple1.apply)).toDF("features")
   }
 
   /**

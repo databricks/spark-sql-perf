@@ -6,6 +6,7 @@ import scala.reflect.runtime.universe._
 
 import com.databricks.spark.sql.perf.MLTestParameters
 
+/*
 case class MLBenchmark[Param, Model](
     common: MLTestParameters,
     extra: Param)
@@ -29,3 +30,4 @@ object MLBenchmarks {
     new MLClassificationBenchmarkable(mlb.extra, mlb.common, d, sqlContext)
   }
 }
+*/
