@@ -110,6 +110,7 @@ case class Failure(className: String, message: String)
 case class MLTestParameters(
     numFeatures: Option[Int] = None,
     numExamples: Option[Long] = None,
+    numPartitions: Option[Int] = None,
     numTestExamples: Option[Long] = None,
     seed: Option[Int] = None) {
   def getNumTestExamples: Long = numTestExamples.getOrElse {
