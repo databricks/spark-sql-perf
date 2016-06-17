@@ -24,6 +24,7 @@ import org.apache.spark.sql.SQLContext
 import org.apache.spark.{SparkEnv, SparkContext}
 
 import scala.collection.mutable.ArrayBuffer
+import scala.util.control.NonFatal
 
 /** A trait to describe things that can be benchmarked. */
 trait Benchmarkable {
@@ -38,7 +39,9 @@ trait Benchmarkable {
       description: String = "",
       messages: ArrayBuffer[String],
       timeout: Long): BenchmarkResult = {
+    println(s"$this: benchmark")
     sparkContext.setJobDescription(s"Execution: $name, $description")
+    println(s"$this: benchmark: sc jd set")
     beforeBenchmark()
     val result = runBenchmark(includeBreakdown, description, messages, timeout)
     afterBenchmark(sqlContext.sparkContext)
@@ -62,11 +65,20 @@ trait Benchmarkable {
       messages: ArrayBuffer[String],
       timeout: Long): BenchmarkResult = {
     val jobgroup = UUID.randomUUID().toString
+    val that = this
+    println(s"$this: runBenchmark")
     var result: BenchmarkResult = null
     val thread = new Thread("benchmark runner") {
       override def run(): Unit = {
+        println(s"$that running $this")
         sparkContext.setJobGroup(jobgroup, s"benchmark $name", true)
-        result = doBenchmark(includeBreakdown, description, messages)
+        try {
+          result = doBenchmark(includeBreakdown, description, messages)
+        } catch {
+          case e: Throwable =>
+            println(s"$that: failure in runBenchmark: $e")
+            throw e
+        }
       }
     }
     thread.setDaemon(true)

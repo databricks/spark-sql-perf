@@ -21,7 +21,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
 import scala.concurrent.duration._
 import scala.language.implicitConversions
-import scala.util.Try
+import scala.util.{Success, Try, Failure => SFailure}
 
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{Dataset, DataFrame, SQLContext}
@@ -371,42 +371,51 @@ object Benchmark {
           }
           currentConfig = currentOptions.map { case (k,v) => s"$k: $v" }.mkString(", ")
 
+          val res = executionsToRun.flatMap { q =>
+            val setup = s"iteration: $i, ${currentOptions.map { case (k, v) => s"$k=$v"}.mkString(", ")}"
+            logMessage(s"Running execution ${q.name} $setup")
+
+            currentExecution = q.name
+            currentPlan = q match {
+              case query: Query =>
+                try {
+                  query.newDataFrame().queryExecution.executedPlan.toString()
+                } catch {
+                  case e: Exception =>
+                    s"failed to parse: $e"
+                }
+              case _ => ""
+            }
+            startTime = System.currentTimeMillis()
+
+            val singleResultT = Try {
+              q.benchmark(includeBreakdown, setup, currentMessages, timeout)
+            }
+
+            singleResultT match {
+              case Success(singleResult) =>
+                singleResult.failure.foreach { f =>
+                  failures += 1
+                  logMessage(s"Execution '${q.name}' failed: ${f.message}")
+                }
+                singleResult.executionTime.foreach { time =>
+                  logMessage(s"Execution time: ${time / 1000}s")
+                }
+                currentResults += singleResult
+                singleResult :: Nil
+              case SFailure(e) =>
+                failures += 1
+                logMessage(s"Execution '${q.name}' failed: ${e}")
+                Nil
+            }
+          }
+
           val result = ExperimentRun(
             timestamp = timestamp,
             iteration = i,
             tags = currentOptions.toMap ++ tags,
             configuration = currentConfiguration,
-
-            executionsToRun.flatMap { q =>
-              val setup = s"iteration: $i, ${currentOptions.map { case (k, v) => s"$k=$v"}.mkString(", ")}"
-              logMessage(s"Running execution ${q.name} $setup")
-
-              currentExecution = q.name
-              currentPlan = q match {
-                case query: Query =>
-                  try {
-                    query.newDataFrame().queryExecution.executedPlan.toString()
-                  } catch {
-                    case e: Exception =>
-                      s"failed to parse: $e"
-                  }
-                case _ => ""
-              }
-              startTime = System.currentTimeMillis()
-
-              val singleResult =
-                q.benchmark(includeBreakdown, setup, currentMessages, timeout)
-
-              singleResult.failure.foreach { f =>
-                failures += 1
-                logMessage(s"Execution '${q.name}' failed: ${f.message}")
-              }
-              singleResult.executionTime.foreach { time =>
-                logMessage(s"Execution time: ${time / 1000}s")
-              }
-              currentResults += singleResult
-              singleResult :: Nil
-            })
+            res)
 
           currentRuns += result
 

@@ -1,17 +1,15 @@
 package com.databricks.spark.sql.perf.mllib.classification
 
-import com.databricks.spark.sql.perf.ExtraMLTestParameters
-import com.databricks.spark.sql.perf.mllib.data.DataGenerator
-import com.databricks.spark.sql.perf.mllib.{ClassificationContext, ClassificationPipelineDescription}
-import org.apache.spark.ml.{ModelBuilder, Transformer}
-import org.apache.spark.ml.classification.LogisticRegressionModel
-import org.apache.spark.ml.evaluation.{MulticlassClassificationEvaluator, Evaluator}
-import org.apache.spark.ml.classification.ClassificationModel
+import org.apache.spark.ml.ModelBuilder
+import org.apache.spark.ml.classification.{LogisticRegression, LogisticRegressionModel}
+import org.apache.spark.ml.evaluation.{Evaluator, MulticlassClassificationEvaluator}
 import org.apache.spark.ml.linalg.Vectors
-import org.apache.spark.sql.{Row, DataFrame}
-import org.apache.spark.ml.classification.LogisticRegression
-import com.databricks.spark.sql.perf.mllib.OptionImplicits._
+import org.apache.spark.sql.{DataFrame, Row}
+import org.apache.spark.sql.functions._
 
+import com.databricks.spark.sql.perf.mllib.{ClassificationContext, ClassificationPipelineDescription}
+import com.databricks.spark.sql.perf.mllib.OptionImplicits._
+import com.databricks.spark.sql.perf.mllib.data.DataGenerator
 
 trait ScoringWithEvaluator {
   self: ClassificationPipelineDescription =>
@@ -37,7 +35,7 @@ trait TrainingSetFromTransformer {
   final override def trainingDataSet(ctx: ClassificationContext): DataFrame = {
     val initial = initialData(ctx)
     val model = initialModel(ctx)
-    model.transform(initial)
+    model.transform(initial).select(col("features"), col("prediction").as("label"))
   }
 }
 
@@ -104,7 +102,11 @@ object LogisticRegressionBenchmark2 extends ClassificationPipelineDescription
   def initialData(ctx: ClassificationContext) = {
     import ctx.commonParams._
     DataGenerator.generateFeatures(
-      ctx.sqlContext, numExamples, ctx.seed(), numPartitions, numFeatures)
+      ctx.sqlContext,
+      numExamples,
+      ctx.seed(),
+      numPartitions,
+      numFeatures)
   }
 
   def initialModel(ctx: ClassificationContext): Model = {
@@ -117,6 +119,7 @@ object LogisticRegressionBenchmark2 extends ClassificationPipelineDescription
 
   def train(ctx: ClassificationContext,
             trainingSet: DataFrame): Model = {
+    println(s"$this: train: trainingSet=${trainingSet.schema}")
     import ctx.extraParams._
     val lr = new LogisticRegression()
       .setTol(tol)

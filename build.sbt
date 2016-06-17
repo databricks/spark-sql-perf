@@ -42,6 +42,8 @@ libraryDependencies += "com.twitter" %% "util-jvm" % "6.23.0" % "provided"
 
 libraryDependencies += "org.scalatest" %% "scalatest" % "2.2.1" % "test"
 
+libraryDependencies += "org.yaml" % "snakeyaml" % "1.17"
+
 fork := true
 
 val x = ""

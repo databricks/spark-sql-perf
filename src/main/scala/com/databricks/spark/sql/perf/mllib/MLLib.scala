@@ -18,12 +18,13 @@ class MLLib(@transient sqlContext: SQLContext)
 }
 
 object MLLib {
-  def runDefault(runConfig: RunConfig): Unit = {
+  def runDefault(runConfig: RunConfig): MLLib = {
     val ml = new MLLib()
     val benchmarks = MLBenchmarks.benchmarkObjects
     ml.runExperiment(
       executionsToRun = benchmarks,
       resultLocation = "/test/results")
+    ml
   }
 }
 
@@ -41,14 +42,14 @@ case class ClassificationContext(
 
   /**
    * A fixed seed for this class. This function will always return the same value.
- *
+   *
    * @return
    */
   def seed(): Int = internalSeed
 
   /**
    * Creates a new generator. The generator will always start with the same state.
- *
+   *
    * @return
    */
   def newGenerator(): Random = new Random((seed()))
@@ -90,23 +91,35 @@ class MLClassificationBenchmarkable(
   override val executionMode: ExecutionMode = ExecutionMode.SparkPerfResults
 
   override def beforeBenchmark(): Unit = {
-    // TODO(?) cache + prewarm the datasets
-    testData = test.testDataSet(param)
-    trainingData = test.trainingDataSet(param)
+    println(s"$this beforeBenchmark")
+    try {
+      // TODO(?) cache + prewarm the datasets
+      testData = test.testDataSet(param)
+      trainingData = test.trainingDataSet(param)
+
+    } catch {
+      case e: Throwable =>
+        println(s"$this error in beforeBenchmark: ${e.getStackTraceString}")
+        throw e
+    }
   }
 
   override def doBenchmark(
       includeBreakdown: Boolean,
       description: String,
       messages: ArrayBuffer[String]): BenchmarkResult = {
+    println(s"entering doBenchmark")
     try {
       val (trainingTime, model) = measureTime(test.train(param, trainingData))
+      println(s"model: $model")
       val (scoreTrainingTime, scoreTraining) = measureTime {
         test.score(param, trainingData, model)
       }
+      println(s"scoreTraining: $scoreTraining")
       val (scoreTestTime, scoreTest) = measureTime {
         test.score(param, testData, model)
       }
+
 
       val ml = MLResult(
         testParameters = Some(commonParam),
@@ -128,7 +141,8 @@ class MLClassificationBenchmarkable(
           name = name,
           mode = executionMode.toString,
           parameters = Map.empty,
-          failure = Some(Failure(e.getClass.getSimpleName, e.getMessage)))
+          failure = Some(Failure(e.getClass.getSimpleName,
+            e.getMessage + ":\n" + e.getStackTraceString)))
     }
   }
 }
