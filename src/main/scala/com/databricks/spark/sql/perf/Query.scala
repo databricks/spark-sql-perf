@@ -127,13 +127,10 @@ class Query(
           case ExecutionMode.WriteParquet(location) =>
             dataFrame.write.parquet(s"$location/$name.parquet")
           case ExecutionMode.HashResults =>
-            val columnStr = dataFrame.schema.map(_.name).mkString(",")
-            // SELECT SUM(HASH(col1, col2, ...)) FROM (benchmark query)
+            // SELECT SUM(CRC32(CONCAT_WS(", ", *))) FROM (benchmark query)
             val row =
               dataFrame
-                .selectExpr(s"hash($columnStr) as hashValue")
-                .groupBy()
-                .sum("hashValue")
+                .selectExpr(s"sum(crc32(concat_ws(',', *)))")
                 .head()
             result = if (row.isNullAt(0)) None else Some(row.getLong(0))
         }
