@@ -1,6 +1,5 @@
 package com.databricks.spark.sql.perf
 
-import com.databricks.spark.sql.perf.{Benchmark, DatasetPerformance}
 import org.apache.spark.sql.hive.test.TestHive
 import org.scalatest.FunSuite
 

@@ -250,7 +250,7 @@ trait Tpcds_1_4_Queries extends Benchmark {
             |    salesreturns, date_dim, store
             |  WHERE date_sk = d_date_sk
             |       and d_date between cast('2000-08-23' as date)
-            |                  and (date_add(cast('2000-08-23' as date), 14))
+            |                  and ((cast('2000-08-23' as date) + interval 14 days))
             |       and store_sk = s_store_sk
             | GROUP BY s_store_id),
             | csr AS
@@ -278,7 +278,7 @@ trait Tpcds_1_4_Queries extends Benchmark {
             |   ) salesreturns, date_dim, catalog_page
             | WHERE date_sk = d_date_sk
             |       and d_date between cast('2000-08-23' as date)
-            |                  and (date_add(cast('2000-08-23' as date), 14))
+            |                  and ((cast('2000-08-23' as date) + interval 14 days))
             |       and page_sk = cp_catalog_page_sk
             | GROUP BY cp_catalog_page_id)
             | ,
@@ -309,7 +309,7 @@ trait Tpcds_1_4_Queries extends Benchmark {
             |   ) salesreturns, date_dim, web_site
             | WHERE date_sk = d_date_sk
             |       and d_date between cast('2000-08-23' as date)
-            |                  and (date_add(cast('2000-08-23' as date), 14))
+            |                  and ((cast('2000-08-23' as date) + interval 14 days))
             |       and wsr_web_site_sk = web_site_sk
             | GROUP BY web_site_id)
             | SELECT channel,
@@ -622,7 +622,7 @@ trait Tpcds_1_4_Queries extends Benchmark {
             |  	and i_category in ('Sports', 'Books', 'Home')
             |  	and ws_sold_date_sk = d_date_sk
             |	and d_date between cast('1999-02-22' as date)
-            |				and date_add(cast('1999-02-22' as date), 30)
+            |				and (cast('1999-02-22' as date) + interval 30 days)
             | group by
             |	i_item_id, i_item_desc, i_category, i_class, i_current_price
             | order by
@@ -848,7 +848,7 @@ trait Tpcds_1_4_Queries extends Benchmark {
             | from
             |   catalog_sales cs1, date_dim, customer_address, call_center
             | where
-            |   d_date between '2002-2-01' and (cast('2002-2-01' as date) + 60)
+            |   d_date between '2002-02-01' and (cast('2002-02-01' as date) + interval 60 days)
             | and cs1.cs_ship_date_sk = d_date_sk
             | and cs1.cs_ship_addr_sk = ca_address_sk
             | and ca_state = 'GA'
@@ -957,7 +957,7 @@ trait Tpcds_1_4_Queries extends Benchmark {
             |   and i_category in ('Sports', 'Books', 'Home')
             |   and cs_sold_date_sk = d_date_sk
             | and d_date between cast('1999-02-22' as date)
-            | 				and date_add(cast('1999-02-22' as date), 30)
+            | 				and (cast('1999-02-22' as date) + interval 30 days)
             | group by i_item_id, i_item_desc, i_category, i_class, i_current_price
             | order by i_category, i_class, i_item_id, i_item_desc, revenueratio
             | limit 100
@@ -977,8 +977,8 @@ trait Tpcds_1_4_Queries extends Benchmark {
             |     and i_item_sk          = inv_item_sk
             |     and inv_warehouse_sk   = w_warehouse_sk
             |     and inv_date_sk        = d_date_sk
-            |     and d_date between date_sub(cast('2000-03-11' as date), 30)
-            |                    and date_add(cast('2000-03-11' as date), 30)
+            |     and d_date between (cast('2000-03-11' as date) - interval 30 days)
+            |                    and (cast('2000-03-11' as date) + interval 30 days)
             |   group by w_warehouse_name, i_item_id) x
             | where (case when inv_before > 0
             |             then inv_after / inv_before
@@ -1038,7 +1038,7 @@ trait Tpcds_1_4_Queries extends Benchmark {
             |         and ws_sold_date_sk = d_date_sk
             |         and ws_item_sk in (select item_sk from frequent_ss_items)
             |         and ws_bill_customer_sk in (select c_customer_sk from best_ss_customer))) y
-            | limit 100;
+            | limit 100
             """.stripMargin),
     ("q23b", """
             |
@@ -1368,13 +1368,13 @@ trait Tpcds_1_4_Queries extends Benchmark {
             | where
             |   i_manufact_id = 977
             |   and i_item_sk = cs_item_sk
-            |   and d_date between '2000-01-27' and (cast('2000-01-27' as date) + 90 days)
+            |   and d_date between '2000-01-27' and (cast('2000-01-27' as date) + interval 90 days)
             |   and d_date_sk = cs_sold_date_sk
             |   and cs_ext_discount_amt > (
             |          select 1.3 * avg(cs_ext_discount_amt)
             |          from catalog_sales, date_dim
             |          where cs_item_sk = i_item_sk
-            |           and d_date between '2000-01-27]' and (cast('2000-01-27' as date) + 90 days)
+            |           and d_date between '2000-01-27]' and (cast('2000-01-27' as date) + interval 90 days)
             |           and d_date_sk = cs_sold_date_sk)
             |limit 100
             """.stripMargin),
@@ -1535,7 +1535,7 @@ trait Tpcds_1_4_Queries extends Benchmark {
             | where i_current_price between 68 and 68 + 30
             |   and inv_item_sk = i_item_sk
             |   and d_date_sk=inv_date_sk
-            |   and d_date between cast('2000-02-01' as date) and date_add(cast('2000-02-01' as date), 60)
+            |   and d_date between cast('2000-02-01' as date) and (cast('2000-02-01' as date) + interval 60 days)
             |   and i_manufact_id in (677,940,694,808)
             |   and inv_quantity_on_hand between 100 and 500
             |   and cs_item_sk = i_item_sk
@@ -1631,8 +1631,8 @@ trait Tpcds_1_4_Queries extends Benchmark {
             | and i_item_sk          = cs_item_sk
             | and cs_warehouse_sk    = w_warehouse_sk
             | and cs_sold_date_sk    = d_date_sk
-            | and d_date between date_sub(cast('2000-03-11' as date), 30)
-            |                and date_add(cast('2000-03-11' as date), 30)
+            | and d_date between (cast('2000-03-11' as date) - interval 30 days)
+            |                and (cast('2000-03-11' as date) + interval 30 days)
             | group by w_state,i_item_id
             | order by w_state,i_item_id
             | limit 100
@@ -2902,7 +2902,7 @@ trait Tpcds_1_4_Queries extends Benchmark {
             | left outer join catalog_returns on (cr_item_sk = cs_item_sk and cr_order_number = cs_order_number)
             | where d1.d_week_seq = d2.d_week_seq
             |   and inv_quantity_on_hand < cs_quantity
-            |   and d3.d_date > date_add(d1.d_date, 5)
+            |   and d3.d_date > (cast(d1.d_date AS DATE) + interval 5 days)
             |   and hd_buy_potential = '>10000'
             |   and d1.d_year = 1999
             |   and hd_buy_potential = '>10000'
@@ -3077,7 +3077,7 @@ trait Tpcds_1_4_Queries extends Benchmark {
             |  from store_sales, date_dim, store
             |  where ss_sold_date_sk = d_date_sk
             |    and d_date between cast('2000-08-03' as date) and
-            |                       date_add(cast('2000-08-03' as date), 30)
+            |                       (cast('2000-08-03' as date) + interval 30 days)
             |    and ss_store_sk = s_store_sk
             |  group by s_store_sk),
             | sr as
@@ -3085,7 +3085,7 @@ trait Tpcds_1_4_Queries extends Benchmark {
             | from store_returns, date_dim, store
             | where sr_returned_date_sk = d_date_sk
             |    and d_date between cast('2000-08-03' as date) and
-            |                       date_add(cast('2000-08-03' as date), 30)
+            |                       (cast('2000-08-03' as date) + interval 30 days)
             |    and sr_store_sk = s_store_sk
             | group by s_store_sk),
             | cs as
@@ -3093,20 +3093,20 @@ trait Tpcds_1_4_Queries extends Benchmark {
             | from catalog_sales, date_dim
             | where cs_sold_date_sk = d_date_sk
             |    and d_date between cast('2000-08-03' as date) and
-            |                       date_add(cast('2000-08-03' as date), 30)
+            |                       (cast('2000-08-03' as date) + interval 30 days)
             | group by cs_call_center_sk),
             | cr as
             | (select sum(cr_return_amount) as returns, sum(cr_net_loss) as profit_loss
             | from catalog_returns, date_dim
             | where cr_returned_date_sk = d_date_sk
             |    and d_date between cast('2000-08-03]' as date) and
-            |                       date_add(cast('2000-08-03' as date), 30)),
+            |                       (cast('2000-08-03' as date) + interval 30 day)),
             | ws as
             | (select wp_web_page_sk, sum(ws_ext_sales_price) as sales, sum(ws_net_profit) as profit
             | from web_sales, date_dim, web_page
             | where ws_sold_date_sk = d_date_sk
             |    and d_date between cast('2000-08-03' as date) and
-            |                       date_add(cast('2000-08-03' as date), 30)
+            |                       (cast('2000-08-03' as date) + interval 30 days)
             |    and ws_web_page_sk = wp_web_page_sk
             | group by wp_web_page_sk),
             | wr as
@@ -3114,7 +3114,7 @@ trait Tpcds_1_4_Queries extends Benchmark {
             | from web_returns, date_dim, web_page
             | where wr_returned_date_sk = d_date_sk
             |       and d_date between cast('2000-08-03' as date) and
-            |                          date_add(cast('2000-08-03' as date), 30)
+            |                          (cast('2000-08-03' as date) + interval 30 days)
             |       and wr_web_page_sk = wp_web_page_sk
             | group by wp_web_page_sk)
             | select channel, id, sum(sales) as sales, sum(returns) as returns, sum(profit) as profit
@@ -3185,7 +3185,7 @@ trait Tpcds_1_4_Queries extends Benchmark {
             |   coalesce(ws_sp,0)+coalesce(cs_sp,0) other_chan_sales_price
             | from ss
             | left join ws on (ws_sold_year=ss_sold_year and ws_item_sk=ss_item_sk and ws_customer_sk=ss_customer_sk)
-            | left join cs on (cs_sold_year=ss_sold_year and cs_item_sk=cs_item_sk and cs_customer_sk=ss_customer_sk)
+            | left join cs on (cs_sold_year=ss_sold_year and ss_item_sk=cs_item_sk and cs_customer_sk=ss_customer_sk)
             | where coalesce(ws_qty,0)>0 and coalesce(cs_qty, 0)>0 and ss_sold_year=2000
             | order by
             |   ratio,
@@ -3232,7 +3232,7 @@ trait Tpcds_1_4_Queries extends Benchmark {
             |     date_dim, store, item, promotion
             | where ss_sold_date_sk = d_date_sk
             |       and d_date between cast('2000-08-23' as date)
-            |                  and date_add(cast('2000-08-23' as date), 30)
+            |                  and (cast('2000-08-23' as date) + interval 30 days)
             |       and ss_store_sk = s_store_sk
             |       and ss_item_sk = i_item_sk
             |       and i_current_price > 50
@@ -3249,7 +3249,7 @@ trait Tpcds_1_4_Queries extends Benchmark {
             |     date_dim, catalog_page, item, promotion
             | where cs_sold_date_sk = d_date_sk
             |       and d_date between cast('2000-08-23' as date)
-            |                  and date_add(cast('2000-08-23' as date), 30)
+            |                  and (cast('2000-08-23' as date) + interval 30 days)
             |        and cs_catalog_page_sk = cp_catalog_page_sk
             |       and cs_item_sk = i_item_sk
             |       and i_current_price > 50
@@ -3266,7 +3266,7 @@ trait Tpcds_1_4_Queries extends Benchmark {
             |     date_dim, web_site, item, promotion
             | where ws_sold_date_sk = d_date_sk
             |       and d_date between cast('2000-08-23' as date)
-            |                  and date_add(cast('2000-08-23' as date), 30)
+            |                  and (cast('2000-08-23' as date) + interval 30 days)
             |        and ws_web_site_sk = web_site_sk
             |       and ws_item_sk = i_item_sk
             |       and i_current_price > 50
@@ -3322,7 +3322,7 @@ trait Tpcds_1_4_Queries extends Benchmark {
             | where i_current_price between 62 and 62+30
             |   and inv_item_sk = i_item_sk
             |   and d_date_sk=inv_date_sk
-            |   and d_date between cast('2000-05-25' as date) and date_add(cast('2000-05-25' as date), 60)
+            |   and d_date between cast('2000-05-25' as date) and (cast('2000-05-25' as date) + interval 60 days)
             |   and i_manufact_id in (129, 270, 821, 423)
             |   and inv_quantity_on_hand between 100 and 500
             |   and ss_item_sk = i_item_sk
@@ -3676,18 +3676,18 @@ trait Tpcds_1_4_Queries extends Benchmark {
     // Modifications: "+ days" -> date_add
     // Modifications: " -> `
     ("q92", """
-            | select sum(ws_ext_discount_amt) as `Excess Discount Amount"
+            | select sum(ws_ext_discount_amt) as `Excess Discount Amount`
             | from web_sales, item, date_dim
             | where i_manufact_id = 350
             | and i_item_sk = ws_item_sk
-            | and d_date between '2000-01-27' and date_add(cast('2000-01-27' as date), 90)
+            | and d_date between '2000-01-27' and (cast('2000-01-27' as date) + interval 90 days)
             | and d_date_sk = ws_sold_date_sk
             | and ws_ext_discount_amt >
             |     (
             |       SELECT 1.3 * avg(ws_ext_discount_amt)
             |       FROM web_sales, date_dim
             |       WHERE ws_item_sk = i_item_sk
-            |         and d_date between '2000-01-27' and date_add(cast('2000-01-27' as date), 90)
+            |         and d_date between '2000-01-27' and (cast('2000-01-27' as date) + interval 90 days)
             |         and d_date_sk = ws_sold_date_sk
             |     )
             | order by sum(ws_ext_discount_amt)
@@ -3719,7 +3719,7 @@ trait Tpcds_1_4_Queries extends Benchmark {
             |    web_sales ws1, date_dim, customer_address, web_site
             | where
             |     d_date between '1999-02-01' and
-            |            date_add(cast('1999-02-01' as date), 60)
+            |            (cast('1999-02-01' as date) + interval 60 days)
             | and ws1.ws_ship_date_sk = d_date_sk
             | and ws1.ws_ship_addr_sk = ca_address_sk
             | and ca_state = 'IL'
@@ -3743,14 +3743,14 @@ trait Tpcds_1_4_Queries extends Benchmark {
             |  where ws1.ws_order_number = ws2.ws_order_number
             |    and ws1.ws_warehouse_sk <> ws2.ws_warehouse_sk)
             | select
-            |    count(distinct ws_order_number) as `order count"
-            |   ,sum(ws_ext_ship_cost) as `total shipping cost"
-            |   ,sum(ws_net_profit) as `total net profit"
+            |    count(distinct ws_order_number) as `order count`
+            |   ,sum(ws_ext_ship_cost) as `total shipping cost`
+            |   ,sum(ws_net_profit) as `total net profit`
             | from
             |    web_sales ws1, date_dim, customer_address, web_site
             | where
             |     d_date between '1999-02-01' and
-            |            date_add(cast('1999-02-01' as date), 60)
+            |            (cast('1999-02-01' as date) + interval 60 days)
             | and ws1.ws_ship_date_sk = d_date_sk
             | and ws1.ws_ship_addr_sk = ca_address_sk
             | and ca_state = 'IL'
@@ -3810,7 +3810,7 @@ trait Tpcds_1_4_Queries extends Benchmark {
             |  	and i_category in ('Sports', 'Books', 'Home')
             |  	and ss_sold_date_sk = d_date_sk
             |	and d_date between cast('1999-02-22' as date)
-            |				and date_add(cast('1999-02-22' as date), 30)
+            |				and (cast('1999-02-22' as date) + interval 30 days)
             |group by
             |	i_item_id, i_item_desc, i_category, i_class, i_current_price
             |order by
@@ -3863,7 +3863,6 @@ trait Tpcds_1_4_Queries extends Benchmark {
   }
   val tpcds1_4QueriesMap = tpcds1_4Queries.map(q => q.name.split("-").get(0) -> q).toMap
 
-  // q72 slow on SC=1
   val runnable: Seq[Query] = Seq(
     "q1", "q2", "q3", "q4", "q5", "q7", "q8", "q9",
     "q11", "q12", "q13", "q15", "q17", "q18", "q19",
@@ -3875,4 +3874,6 @@ trait Tpcds_1_4_Queries extends Benchmark {
     "q71", "q72", "q73", "q74", "q75", "q76", "q77", "q78", "q79",
     "q80", "q82", "q84", "q85", "q86", "q87", "q88", "q89",
     "q90", "q91", "q93", "q96", "q97", "q98", "q99", "qSsMax").map(tpcds1_4QueriesMap)
+
+  val all: Seq[Query] = tpcds1_4QueriesMap.values.toSeq
 }

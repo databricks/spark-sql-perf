@@ -112,6 +112,10 @@ class DatasetPerformance extends Benchmark {
       b
     }
 
+    override def bufferEncoder = implicitly[Encoder[SumAndCount]]
+
+    override def outputEncoder = implicitly[Encoder[Double]]
+
     override def finish(reduction: SumAndCount): Double = reduction.sum.toDouble / reduction.count
 
     override def merge(b1: SumAndCount, b2: SumAndCount): SumAndCount = {
