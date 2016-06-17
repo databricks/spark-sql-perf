@@ -14,38 +14,6 @@ import scala.reflect._
 import scala.reflect.runtime.universe._
 
 
-object YamlCommon {
-  def empty[T]: AL[T] = new AL[T]()
-  type ALI = AL[Int]
-  type ALL = AL[Long]
-  type ALD = AL[Double]
-}
-
-import com.databricks.spark.sql.perf.mllib.YamlCommon._
-
-case class YamlMLTestParameters(
-    @BeanProperty var numFeatures: ALI = empty,
-    @BeanProperty var numExamples: ALL = empty,
-    @BeanProperty var numTestExamples: ALL = empty,
-    @BeanProperty var numPartitions: ALI = empty,
-    @BeanProperty var randomSeed: ALI = empty)
-
-case class YamlExtraMLTestParameters(
-    @BeanProperty var regParam: ALD = empty,
-    @BeanProperty var tol: ALD = empty)
-
-case class MLYamlExperimentConfig(
-    @BeanProperty var benchmark: String = null,
-    @BeanProperty var config: YamlMLTestParameters = null,
-    @BeanProperty var extra: YamlExtraMLTestParameters = null)
-
-case class MLYamlConfig(
-    @BeanProperty var numRetries: Int = 3,
-    @BeanProperty var output: String = "/tmp/results",
-    @BeanProperty var commonConfig: YamlMLTestParameters = null,
-    @BeanProperty var experiments: AL[MLYamlExperimentConfig] = empty
-)
-
 case class YamlConfig(
  output: String = "/tmp/result",
  timeout: Duration = 20.minutes,
@@ -63,7 +31,11 @@ package object ccFromMap {
 
     val constructorArgs = constructor.paramss.flatten.map( (param: Symbol) => {
       val paramName = param.name.toString
-      if(param.typeSignature <:< typeOf[Option[Any]])
+      if(param.typeSignature <:< typeOf[Option[Long]])
+        OptionImplicits.checkLong(m.get(paramName).asInstanceOf[Option[Long]])
+      else if(param.typeSignature <:< typeOf[Option[Double]])
+        OptionImplicits.checkDouble(m.get(paramName).asInstanceOf[Option[Double]])
+      else if(param.typeSignature <:< typeOf[Option[Any]])
         m.get(paramName)
       else
         m.get(paramName).getOrElse(throw new IllegalArgumentException("Map is missing required parameter named " + paramName))
