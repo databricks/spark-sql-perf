@@ -8,16 +8,16 @@ import com.databricks.spark.sql.perf.{ExtraMLTestParameters, MLTestParameters}
 import OptionImplicits._
 
 case class MLBenchmark(
-    benchmark: ClassificationPipelineDescription[_],
+    benchmark: ClassificationPipelineDescription,
     common: MLTestParameters,
     extra: ExtraMLTestParameters)
 
 object MLBenchmarkRegister {
-  var tests: Map[String, ClassificationPipelineDescription[Any]] = Map.empty
+  var tests: Map[String, ClassificationPipelineDescription] = Map.empty
 
-  def register[Model](c: ClassificationPipelineDescription[Model]): Unit = {
+  def register[Model](c: ClassificationPipelineDescription): Unit = {
     val n = c.getClass.getCanonicalName
-    tests += n -> c.asInstanceOf[ClassificationPipelineDescription[Any]]
+    tests += n -> c.asInstanceOf[ClassificationPipelineDescription]
   }
 }
 
@@ -38,7 +38,7 @@ object MLBenchmarks {
   val context = SparkContext.getOrCreate()
   val sqlContext: SQLContext = SQLContext.getOrCreate(context)
 
-  def benchmarkObjects: Seq[MLClassificationBenchmarkable[_]] = benchmarks.map { mlb =>
+  def benchmarkObjects: Seq[MLClassificationBenchmarkable] = benchmarks.map { mlb =>
     new MLClassificationBenchmarkable(mlb.extra, mlb.common, mlb.benchmark, sqlContext)
   }
 

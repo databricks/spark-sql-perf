@@ -1,7 +1,10 @@
 package com.databricks.spark.sql.perf.mllib
 
+import java.util.Random
+
 import com.databricks.spark.sql.perf._
 import org.apache.spark.SparkContext
+import org.apache.spark.ml.Transformer
 import org.apache.spark.ml.classification.{ClassificationModel, RandomForestClassificationModel}
 import org.apache.spark.sql.{DataFrame, SQLContext}
 
@@ -27,13 +30,36 @@ object MLLib {
 case class ClassificationContext(
     commonParams: MLTestParameters,
     extraParams: ExtraMLTestParameters,
-    sqlContext: SQLContext)
+    sqlContext: SQLContext) {
+
+  // Some seed fixed for the context.
+  private val internalSeed: Int  = {
+    commonParams.randomSeed.getOrElse {
+      new java.util.Random().nextInt()
+    }
+  }
+
+  /**
+   * A fixed seed for this class. This function will always return the same value.
+ *
+   * @return
+   */
+  def seed(): Int = internalSeed
+
+  /**
+   * Creates a new generator. The generator will always start with the same state.
+ *
+   * @return
+   */
+  def newGenerator(): Random = new Random((seed()))
+}
 
 /**
  * The description of a benchmark for doing classification using the pipeline API.
- * @tparam Model a model that is being trained on
  */
-trait ClassificationPipelineDescription[Model] {
+trait ClassificationPipelineDescription {
+
+  type Model <: Transformer
 
   def trainingDataSet(ctx: ClassificationContext): DataFrame
 
@@ -48,10 +74,10 @@ trait ClassificationPipelineDescription[Model] {
                 testSet: DataFrame, model: Model): Double
 }
 
-class MLClassificationBenchmarkable[Model](
+class MLClassificationBenchmarkable(
     extraParam: ExtraMLTestParameters,
     commonParam: MLTestParameters,
-    test: ClassificationPipelineDescription[Model],
+    test: ClassificationPipelineDescription,
     sqlContext: SQLContext)
   extends Benchmarkable with Serializable {
 

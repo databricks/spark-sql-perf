@@ -103,6 +103,7 @@ case class MLTestParameters(
     numFeatures: Option[Int] = None,
     numExamples: Option[Long] = None,
     numTestExamples: Option[Long] = None,
+    numPartitions: Option[Int] = None,
     randomSeed: Option[Int] = None)
 
 object MLTestParameters {

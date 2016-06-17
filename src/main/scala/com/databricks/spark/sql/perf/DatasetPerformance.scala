@@ -102,10 +102,6 @@ class DatasetPerformance extends Benchmark {
   val average = new Aggregator[Long, SumAndCount, Double] {
     override def zero: SumAndCount = SumAndCount(0, 0)
 
-    override def bufferEncoder = implicitly[Encoder[SumAndCount]]
-
-    override def outputEncoder = implicitly[Encoder[Double]]
-
     override def reduce(b: SumAndCount, a: Long): SumAndCount = {
       b.count += 1
       b.sum += a
