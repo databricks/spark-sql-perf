@@ -6,7 +6,7 @@ import org.apache.spark.ml.classification.{ClassificationModel, RandomForestClas
 import org.apache.spark.sql.{DataFrame, SQLContext}
 
 import scala.collection.mutable.ArrayBuffer
-import scala.util.Try
+import scala.language.implicitConversions
 
 class MLLib(@transient sqlContext: SQLContext)
   extends Benchmark(sqlContext) with Serializable {
@@ -14,36 +14,44 @@ class MLLib(@transient sqlContext: SQLContext)
   def this() = this(SQLContext.getOrCreate(SparkContext.getOrCreate()))
 }
 
-case class ClassificationContext[Param](
+object MLLib {
+  def runDefault(runConfig: RunConfig): Unit = {
+    val ml = new MLLib()
+    val benchmarks = MLBenchmarks.benchmarkObjects
+    ml.runExperiment(
+      executionsToRun = benchmarks,
+      resultLocation = "/test/results")
+  }
+}
+
+case class ClassificationContext(
     commonParams: MLTestParameters,
-    extraParams: Param,
+    extraParams: ExtraMLTestParameters,
     sqlContext: SQLContext)
 
 /**
  * The description of a benchmark for doing classification using the pipeline API.
- *
- * @tparam Param some parameters that describe a full experiment
  * @tparam Model a model that is being trained on
  */
-trait ClassificationPipelineDescription[Param, Model] {
+trait ClassificationPipelineDescription[Model] {
 
-  def trainingDataSet(ctx: ClassificationContext[Param]): DataFrame
+  def trainingDataSet(ctx: ClassificationContext): DataFrame
 
-  def testDataSet(ctx: ClassificationContext[Param]): DataFrame
+  def testDataSet(ctx: ClassificationContext): DataFrame
 
   @throws[Exception]("if training fails")
-  def train(ctx: ClassificationContext[Param],
+  def train(ctx: ClassificationContext,
             trainingSet: DataFrame): Model
 
   @throws[Exception]("if scoring fails")
-  def score(ctx: ClassificationContext[Param],
+  def score(ctx: ClassificationContext,
                 testSet: DataFrame, model: Model): Double
 }
 
-class MLClassificationBenchmarkable[Param, Model](
-    extraParam: Param,
+class MLClassificationBenchmarkable[Model](
+    extraParam: ExtraMLTestParameters,
     commonParam: MLTestParameters,
-    test: ClassificationPipelineDescription[Param, Model],
+    test: ClassificationPipelineDescription[Model],
     sqlContext: SQLContext)
   extends Benchmarkable with Serializable {
 
@@ -76,7 +84,7 @@ class MLClassificationBenchmarkable[Param, Model](
 
       val ml = MLResult(
         testParameters = Some(commonParam),
-        extraTestParameters = ConversionUtils.caseClassToMap(extraParam),
+        extraTestParameters = Some(extraParam),
         trainingTime = Some(trainingTime.toMillis),
         trainingMetric = Some(scoreTraining),
         testTime = Some(scoreTestTime.toMillis),
@@ -101,71 +109,22 @@ class MLClassificationBenchmarkable[Param, Model](
 
 
 
-/**
- * A class for benchmarking MLlib Spark perf results.
- *
- * @param name  Test name
- * @param parameters  Parameters for test.  These are recorded here but set beforehand
- *                    (contained within the prepare, train, and test methods).
- * @param prepare  Prepare data.  Not timed.
- * @param train  Train the model.  Timed.
- * @param evaluateTrain  Compute training metric
- * @param evaluateTest  Compute test metric
- */
-class MLlibSparkPerfExecution(
-    override val name: String,
-    parameters: Map[String, String],
-    prepare: () => Unit,
-    train: () => Unit,
-    evaluateTrain: () => Option[Double],
-    evaluateTest: () => Option[Double])
-  extends Benchmarkable with Serializable {
-
-  protected override val executionMode: ExecutionMode = ExecutionMode.SparkPerfResults
-
-  protected override def beforeBenchmark(): Unit = { prepare() }
-
-  protected override def doBenchmark(
-      includeBreakdown: Boolean,
-      description: String = "",
-      messages: ArrayBuffer[String]): BenchmarkResult = {
-    try {
-      val trainingTimeMs = measureTimeMs(train())
-      val trainingMetric = evaluateTrain()
-      val (testMetric, testTimeMs) = {
-        val startTime = System.nanoTime()
-        val metric = evaluateTest()
-        val endTime = System.nanoTime()
-        (metric, (endTime - startTime).toDouble / 1000000)
-      }
-
-      val ml = MLResult(
-        trainingTime = Some(trainingTimeMs),
-        trainingMetric = trainingMetric,
-        testTime = Some(testTimeMs),
-        testMetric = testMetric)
-
-      BenchmarkResult(
-        name = name,
-        mode = executionMode.toString,
-        parameters = parameters,
-        executionTime = Some(trainingTimeMs),
-        ml = Some(ml))
-    } catch {
-      case e: Exception =>
-        BenchmarkResult(
-          name = name,
-          mode = executionMode.toString,
-          parameters = parameters,
-          failure = Some(Failure(e.getClass.getSimpleName, e.getMessage)))
-    }
-  }
-}
+object OptionImplicits {
+  // The following implicits are unrolled for safety:
+  private def oX2X[A](x: Option[A]): A = x.get
 
 
-object ConversionUtils {
-  def caseClassToMap[X](cc: X): Map[String, String] = {
-    // TODO(tjh) fix this
-    Map.empty
-  }
+  implicit def oD2D(x: Option[Double]): Double = oX2X(x)
+
+  implicit def oS2S(x: Option[String]): String = oX2X(x)
+
+  implicit def oI2I(x: Option[Int]): Int = oX2X(x)
+
+  implicit def oL2L(x: Option[Long]): Long = oX2X(x)
+
+  implicit def l2lo(x: Long): Option[Long] = Option(x)
+  implicit def i2lo(x: Int): Option[Long] = Option(x.toLong)
+  implicit def i2io(x: Int): Option[Int] = Option(x)
+  implicit def d2do(x: Double): Option[Double] = Option(x)
+  implicit def i2do(x: Int): Option[Double] = Option(x)
 }

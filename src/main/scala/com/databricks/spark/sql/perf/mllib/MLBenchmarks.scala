@@ -1,31 +1,45 @@
 package com.databricks.spark.sql.perf.mllib
 
+import com.databricks.spark.sql.perf.mllib.classification.LogisticRegressionBenchmark
+import org.apache.spark.SparkContext
 import org.apache.spark.sql.SQLContext
 
-import scala.reflect.runtime.universe._
+import com.databricks.spark.sql.perf.{ExtraMLTestParameters, MLTestParameters}
+import OptionImplicits._
 
-import com.databricks.spark.sql.perf.MLTestParameters
-
-case class MLBenchmark[Param, Model](
+case class MLBenchmark(
+    benchmark: ClassificationPipelineDescription[_],
     common: MLTestParameters,
-    extra: Param)
+    extra: ExtraMLTestParameters)
 
 object MLBenchmarkRegister {
-  var tests: Map[String, ClassificationPipelineDescription[Any, Any]] = Map.empty
+  var tests: Map[String, ClassificationPipelineDescription[Any]] = Map.empty
 
-  def register[Param: TypeTag, Model](c: ClassificationPipelineDescription[Param, Model]): Unit = {
-    ???
+  def register[Model](c: ClassificationPipelineDescription[Model]): Unit = {
+    val n = c.getClass.getCanonicalName
+    tests += n -> c.asInstanceOf[ClassificationPipelineDescription[Any]]
   }
-
 }
 
 object MLBenchmarks {
-  val benchmarks: List[MLBenchmark[_, _]] = Nil
+  // The list of standard benchmarks that we are going to run for ML.
+  val benchmarks: Seq[MLBenchmark] = List(
+    MLBenchmark(
+      LogisticRegressionBenchmark,
+      MLTestParameters(
+        numFeatures = 100,
+        numExamples = 10,
+        numTestExamples = 100),
+      ExtraMLTestParameters(
+        regParam = 1,
+        tol = 0.1))
+  )
 
-  val sqlContext: SQLContext = ???
+  val context = SparkContext.getOrCreate()
+  val sqlContext: SQLContext = SQLContext.getOrCreate(context)
 
-  val benchmarkObjects: List[MLClassificationBenchmarkable[Any, Any]] = benchmarks.map { mlb =>
-    val d = MLBenchmarkRegister.tests.get(mlb.extra.getClass.getCanonicalName).get
-    new MLClassificationBenchmarkable(mlb.extra, mlb.common, d, sqlContext)
+  def benchmarkObjects: Seq[MLClassificationBenchmarkable[_]] = benchmarks.map { mlb =>
+    new MLClassificationBenchmarkable(mlb.extra, mlb.common, mlb.benchmark, sqlContext)
   }
+
 }

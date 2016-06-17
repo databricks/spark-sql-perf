@@ -105,6 +105,19 @@ case class MLTestParameters(
     numTestExamples: Option[Long] = None,
     randomSeed: Option[Int] = None)
 
+object MLTestParameters {
+
+  val empty = MLTestParameters()
+}
+
+case class ExtraMLTestParameters(
+    regParam: Option[Double] = None,
+    tol: Option[Double] = None)
+
+object ExtraMLTestParameters {
+  val empty = ExtraMLTestParameters()
+}
+
 /**
  * Result information specific to MLlib.
  *
@@ -117,7 +130,7 @@ case class MLTestParameters(
  */
 case class MLResult(
     testParameters: Option[MLTestParameters] = None,
-    extraTestParameters: Map[String, String] = Map.empty,
+    extraTestParameters: Option[ExtraMLTestParameters] = None,
     trainingTime: Option[Double] = None,
     trainingMetric: Option[Double] = None,
     testTime: Option[Double] = None,

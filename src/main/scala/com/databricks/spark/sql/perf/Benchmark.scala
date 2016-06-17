@@ -103,10 +103,11 @@ abstract class Benchmark(
       iterations: Int = 3,
       variations: Seq[Variation[_]] = Seq(Variation("StandardRun", Seq("true")) { _ => {} }),
       tags: Map[String, String] = Map.empty,
-      timeout: Long = 0L) = {
+      timeout: Long = 0L,
+      resultLocation: String = resultsLocation) = {
 
     new ExperimentStatus(executionsToRun, includeBreakdown, iterations, variations, tags,
-      timeout, resultsLocation, sqlContext, allTables, currentConfiguration)
+      timeout, resultLocation, sqlContext, allTables, currentConfiguration)
   }
 
 

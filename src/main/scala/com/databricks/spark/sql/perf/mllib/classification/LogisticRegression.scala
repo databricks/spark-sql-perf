@@ -1,36 +1,35 @@
 package com.databricks.spark.sql.perf.mllib.classification
 
+import com.databricks.spark.sql.perf.ExtraMLTestParameters
 import com.databricks.spark.sql.perf.mllib.data.DataGenerator
 import com.databricks.spark.sql.perf.mllib.{ClassificationContext, ClassificationPipelineDescription}
 import org.apache.spark.ml.classification.LogisticRegressionModel
 import org.apache.spark.sql.{Row, DataFrame}
 import org.apache.spark.ml.classification.LogisticRegression
+import com.databricks.spark.sql.perf.mllib.OptionImplicits._
 
-
-case class LogisticRegressionTest(regParam: Double, tol: Double)
 
 object LogisticRegressionBenchmark
-  extends ClassificationPipelineDescription[LogisticRegressionTest, LogisticRegressionModel] {
+  extends ClassificationPipelineDescription[LogisticRegressionModel] {
 
-  type Param = LogisticRegressionTest
+  type Param = ExtraMLTestParameters
   type Model = LogisticRegressionModel
 
-  def trainingDataSet(ctx: ClassificationContext[Param]): DataFrame = {
+  def trainingDataSet(ctx: ClassificationContext): DataFrame = {
     DataGenerator.generateBinaryLabeledPoints(
       ctx.sqlContext,
       ctx.commonParams.numExamples.get,
       ctx.commonParams)
   }
 
-  def testDataSet(ctx: ClassificationContext[Param]): DataFrame = {
+  def testDataSet(ctx: ClassificationContext): DataFrame = {
     DataGenerator.generateBinaryLabeledPoints(
       ctx.sqlContext,
       ctx.commonParams.numTestExamples.get,
       ctx.commonParams)
   }
 
-  @throws[Exception]("if training fails")
-  def train(ctx: ClassificationContext[Param],
+  def train(ctx: ClassificationContext,
             trainingSet: DataFrame): Model = {
     import ctx.extraParams._
     val lr = new LogisticRegression()
@@ -39,9 +38,9 @@ object LogisticRegressionBenchmark
     lr.fit(trainingSet)
   }
 
-  @throws[Exception]("if scoring fails")
-  def score(ctx: ClassificationContext[Param],
-            testSet: DataFrame, model: Model): Double = {
+  def score(ctx: ClassificationContext,
+            testSet: DataFrame,
+            model: Model): Double = {
     val eval = model.evaluate(testSet)
     Utils.accuracy(eval.predictions)
   }
