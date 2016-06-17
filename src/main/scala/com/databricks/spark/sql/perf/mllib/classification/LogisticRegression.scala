@@ -9,6 +9,7 @@ import org.apache.spark.ml.classification.LogisticRegression
 
 case class LogisticRegressionTest(regParam: Double, tol: Double)
 
+// TODO: Do we need this?  I'm not sure what this does beyond what is already done in MLAlgorithmTests.
 object LogisticRegressionBenchmark
   extends ClassificationPipelineDescription[LogisticRegressionTest, LogisticRegressionModel] {
 

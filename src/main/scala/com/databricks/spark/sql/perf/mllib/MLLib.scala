@@ -40,6 +40,7 @@ trait ClassificationPipelineDescription[Param, Model] {
                 testSet: DataFrame, model: Model): Double
 }
 
+// TODO: Can we use what is in MLAlgorithmTests instead?
 class MLClassificationBenchmarkable[Param, Model](
     extraParam: Param,
     commonParam: MLTestParameters,

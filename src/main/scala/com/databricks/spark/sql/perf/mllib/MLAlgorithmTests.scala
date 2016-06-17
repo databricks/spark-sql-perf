@@ -2,16 +2,14 @@ package com.databricks.spark.sql.perf.mllib
 
 import scala.collection.mutable.ArrayBuffer
 
-import org.apache.spark.SparkContext
 import org.apache.spark.ml.{Estimator, Model, ModelBuilder}
 import org.apache.spark.ml.classification._
 import org.apache.spark.ml.evaluation._
-import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.{DataFrame, Dataset, Row, SQLContext}
+import org.apache.spark.ml.linalg.Vectors
+import org.apache.spark.sql.DataFrame
+
 import com.databricks.spark.sql.perf._
 import com.databricks.spark.sql.perf.mllib.data.DataGenerator
-
-import org.apache.spark.ml.linalg.Vectors
 
 
 /**
