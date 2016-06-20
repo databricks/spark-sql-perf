@@ -2,10 +2,6 @@ package com.databricks.spark.sql.perf.mllib
 
 import java.util.{ArrayList => AL}
 
-import com.databricks.spark.sql.perf.{ExtraMLTestParameters, MLTestParameters}
-import org.yaml.snakeyaml.Yaml
-
-import scala.beans.BeanProperty
 import scala.concurrent.duration._
 import scala.collection.JavaConverters._
 import scala.io.Source
@@ -13,6 +9,11 @@ import scala.io.Source
 import scala.reflect._
 import scala.reflect.runtime.universe._
 import scala.util.{Try => STry, Success, Failure}
+
+import org.yaml.snakeyaml.Yaml
+
+import com.databricks.spark.sql.perf.{ExtraMLTestParameters, MLTestParameters}
+
 
 /**
  * The configuration information generated from reading a YAML file.
@@ -155,12 +156,12 @@ package object ccFromMap {
   }
 
   // TODO: handle scala.reflect.internal.MissingRequirementError
-  private def load(name: String): STry[ClassificationPipelineDescription] = {
+  private def load(name: String): STry[BenchmarkAlgorithm] = {
     val rm = runtimeMirror(getClass.getClassLoader)
     try {
       val module = rm.staticModule("com.databricks.spark.sql.perf.mllib." + name)
       val obj = rm.reflectModule(module)
-      Success(obj.instance.asInstanceOf[ClassificationPipelineDescription])
+      Success(obj.instance.asInstanceOf[BenchmarkAlgorithm])
     } catch {
       case x: scala.reflect.internal.MissingRequirementError =>
         Failure(x)
@@ -173,8 +174,8 @@ package object ccFromMap {
   )
 
   def loadExperiment(
-                      name: String,
-                      searchPackages: Seq[String] = defaultPackages): Option[ClassificationPipelineDescription] = {
+      name: String,
+      searchPackages: Seq[String] = defaultPackages): Option[BenchmarkAlgorithm] = {
     searchPackages.view.flatMap { p =>
       val n = if (p.isEmpty) name else s"$p.$name"
       load(n).toOption

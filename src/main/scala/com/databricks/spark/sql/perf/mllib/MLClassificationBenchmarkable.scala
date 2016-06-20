@@ -6,11 +6,11 @@ import org.apache.spark.sql._
 
 import scala.collection.mutable.ArrayBuffer
 
-
+// TODO(tjh) rename, this is not only about classification
 class MLClassificationBenchmarkable(
     extraParam: ExtraMLTestParameters,
     commonParam: MLTestParameters,
-    test: ClassificationPipelineDescription,
+    test: BenchmarkAlgorithm,
     sqlContext: SQLContext)
   extends Benchmarkable with Serializable with Logging {
 
@@ -27,7 +27,6 @@ class MLClassificationBenchmarkable(
   override def beforeBenchmark(): Unit = {
     logger.info(s"$this beforeBenchmark")
     try {
-      // TODO(?) cache + prewarm the datasets
       testData = test.testDataSet(param)
       testData.cache()
       testData.count()

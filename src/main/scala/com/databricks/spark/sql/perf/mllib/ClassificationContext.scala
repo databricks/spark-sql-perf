@@ -6,6 +6,13 @@ import com.databricks.spark.sql.perf.{ExtraMLTestParameters, MLTestParameters}
 import org.apache.spark.sql.SQLContext
 
 
+/**
+ * All the information required to run a test.
+ * @param commonParams
+ * @param extraParams
+ * @param sqlContext
+ */
+// TODO(tjh) rename, this is not only about classification
 case class ClassificationContext(
     commonParams: MLTestParameters,
     extraParams: ExtraMLTestParameters,

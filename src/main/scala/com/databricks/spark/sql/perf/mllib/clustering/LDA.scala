@@ -1,6 +1,6 @@
 package com.databricks.spark.sql.perf.mllib.clustering
 
-import com.databricks.spark.sql.perf.mllib.{ClassificationContext, TestFromTraining, ClassificationPipelineDescription}
+import com.databricks.spark.sql.perf.mllib.{ClassificationContext, TestFromTraining, BenchmarkAlgorithm}
 import com.databricks.spark.sql.perf.mllib.OptionImplicits._
 import org.apache.commons.math3.random.Well19937c
 import org.apache.spark.ml.Transformer
@@ -10,7 +10,7 @@ import org.apache.spark.sql._
 import org.apache.spark.ml.linalg.{Vectors, Vector}
 import scala.collection.mutable.{HashMap => MHashMap}
 
-object LDA extends ClassificationPipelineDescription with TestFromTraining {
+object LDA extends BenchmarkAlgorithm with TestFromTraining {
   // The LDA model is package private, no need to expose it.
   override type Model = Transformer
 

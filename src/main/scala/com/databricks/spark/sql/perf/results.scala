@@ -16,8 +16,6 @@
 
 package com.databricks.spark.sql.perf
 
-import org.apache.spark.mllib.clustering.LDAOptimizer
-
 /**
  * The performance results of all given queries for a single iteration.
  *

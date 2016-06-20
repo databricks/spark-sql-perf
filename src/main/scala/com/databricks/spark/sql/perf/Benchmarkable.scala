@@ -18,16 +18,17 @@ package com.databricks.spark.sql.perf
 
 import java.util.UUID
 
+import com.typesafe.scalalogging.slf4j.Logging
+
 import scala.concurrent.duration._
+import scala.collection.mutable.ArrayBuffer
 
 import org.apache.spark.sql.SQLContext
 import org.apache.spark.{SparkEnv, SparkContext}
 
-import scala.collection.mutable.ArrayBuffer
-import scala.util.control.NonFatal
 
 /** A trait to describe things that can be benchmarked. */
-trait Benchmarkable {
+trait Benchmarkable extends Logging {
   @transient protected[this] val sqlContext = SQLContext.getOrCreate(SparkContext.getOrCreate())
   @transient protected[this] val sparkContext = sqlContext.sparkContext
 
@@ -40,9 +41,8 @@ trait Benchmarkable {
       messages: ArrayBuffer[String],
       timeout: Long,
       forkThread: Boolean = true): BenchmarkResult = {
-    println(s"$this: benchmark")
+    logger.info(s"$this: benchmark")
     sparkContext.setJobDescription(s"Execution: $name, $description")
-    println(s"$this: benchmark: sc jd set")
     beforeBenchmark()
     val result = if (forkThread) {
       doBenchmark(includeBreakdown, description, messages)
@@ -74,13 +74,13 @@ trait Benchmarkable {
     var result: BenchmarkResult = null
     val thread = new Thread("benchmark runner") {
       override def run(): Unit = {
-        println(s"$that running $this")
+        logger.info(s"$that running $this")
         sparkContext.setJobGroup(jobgroup, s"benchmark $name", true)
         try {
           result = doBenchmark(includeBreakdown, description, messages)
         } catch {
           case e: Throwable =>
-            println(s"$that: failure in runBenchmark: $e")
+            logger.info(s"$that: failure in runBenchmark: $e")
             throw e
         }
       }

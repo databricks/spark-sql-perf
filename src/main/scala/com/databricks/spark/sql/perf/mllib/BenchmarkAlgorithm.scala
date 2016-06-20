@@ -8,10 +8,20 @@ import org.apache.spark.sql._
 import org.apache.spark.sql.functions._
 
 /**
- * The description of a benchmark for doing classification using the pipeline API.
+ * The description of a benchmark for an ML algorithm. It follows a simple, standard proceduce:
+ *  - generate some test and training data
+ *  - generate a model against the training data
+ *  - score the model against the training data
+ *  - score the model against the test data
+ *
+ * You should not assume that your implementation can carry state around. If some state is needed,
+ * consider adding it to the context.
+ *
+ * It is assumed that the implementation is going to be an object.
  */
-trait ClassificationPipelineDescription extends Logging {
+trait BenchmarkAlgorithm extends Logging {
 
+  // This is internal to the implementation of the benchmark.
   type Model <: Transformer
 
   def trainingDataSet(ctx: ClassificationContext): DataFrame
@@ -27,8 +37,11 @@ trait ClassificationPipelineDescription extends Logging {
             testSet: DataFrame, model: Model): Double
 }
 
+/**
+ * Uses an evaluator to perform the scoring.
+ */
 trait ScoringWithEvaluator {
-  self: ClassificationPipelineDescription =>
+  self: BenchmarkAlgorithm =>
 
   protected def evaluator(ctx: ClassificationContext): Evaluator
 
@@ -41,8 +54,12 @@ trait ScoringWithEvaluator {
   }
 }
 
+/**
+ * Builds the training set for an initial dataset and an initial model. Useful for validating a
+ * trained model against a given model.
+ */
 trait TrainingSetFromTransformer {
-  self: ClassificationPipelineDescription =>
+  self: BenchmarkAlgorithm =>
 
   protected def initialData(ctx: ClassificationContext): DataFrame
 
@@ -55,8 +72,11 @@ trait TrainingSetFromTransformer {
   }
 }
 
+/**
+ * The test data is the same as the training data.
+ */
 trait TestFromTraining {
-  self: ClassificationPipelineDescription =>
+  self: BenchmarkAlgorithm =>
 
   final override def testDataSet(ctx: ClassificationContext): DataFrame = {
     // Copy the context with a new seed.

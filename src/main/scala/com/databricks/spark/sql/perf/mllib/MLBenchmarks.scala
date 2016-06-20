@@ -1,6 +1,6 @@
 package com.databricks.spark.sql.perf.mllib
 
-import com.databricks.spark.sql.perf.mllib.classification.{LogisticRegression}
+import com.databricks.spark.sql.perf.mllib.classification.LogisticRegression
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SQLContext
 
@@ -8,19 +8,11 @@ import com.databricks.spark.sql.perf.{ExtraMLTestParameters, MLTestParameters}
 import OptionImplicits._
 
 case class MLBenchmark(
-    benchmark: ClassificationPipelineDescription,
+    benchmark: BenchmarkAlgorithm,
     common: MLTestParameters,
     extra: ExtraMLTestParameters)
 
-object MLBenchmarkRegister {
-  var tests: Map[String, ClassificationPipelineDescription] = Map.empty
-
-  def register[Model](c: ClassificationPipelineDescription): Unit = {
-    val n = c.getClass.getCanonicalName
-    tests += n -> c.asInstanceOf[ClassificationPipelineDescription]
-  }
-}
-
+// Example on how to create benchmarks using the API.
 object MLBenchmarks {
   // The list of standard benchmarks that we are going to run for ML.
   val benchmarks: Seq[MLBenchmark] = List(

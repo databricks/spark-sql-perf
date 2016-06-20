@@ -10,7 +10,7 @@ import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.ml.linalg.Vectors
 import org.apache.spark.sql.{DataFrame}
 
-object LogisticRegression extends ClassificationPipelineDescription
+object LogisticRegression extends BenchmarkAlgorithm
   with TestFromTraining with TrainingSetFromTransformer with ScoringWithEvaluator {
 
   override type Model = LogisticRegressionModel
