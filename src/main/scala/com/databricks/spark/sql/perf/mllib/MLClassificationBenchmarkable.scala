@@ -1,17 +1,20 @@
 package com.databricks.spark.sql.perf.mllib
 
 import com.databricks.spark.sql.perf._
+import com.typesafe.scalalogging.slf4j.Logging
 import org.apache.spark.sql._
 
 import scala.collection.mutable.ArrayBuffer
 
 
 class MLClassificationBenchmarkable(
-                                     extraParam: ExtraMLTestParameters,
-                                     commonParam: MLTestParameters,
-                                     test: ClassificationPipelineDescription,
-                                     sqlContext: SQLContext)
-  extends Benchmarkable with Serializable {
+    extraParam: ExtraMLTestParameters,
+    commonParam: MLTestParameters,
+    test: ClassificationPipelineDescription,
+    sqlContext: SQLContext)
+  extends Benchmarkable with Serializable with Logging {
+
+  import MLClassificationBenchmarkable._
 
   private var testData: DataFrame = null
   private var trainingData: DataFrame = null
@@ -22,7 +25,7 @@ class MLClassificationBenchmarkable(
   override val executionMode: ExecutionMode = ExecutionMode.SparkPerfResults
 
   override def beforeBenchmark(): Unit = {
-    println(s"$this beforeBenchmark")
+    logger.info(s"$this beforeBenchmark")
     try {
       // TODO(?) cache + prewarm the datasets
       testData = test.testDataSet(param)
@@ -36,17 +39,15 @@ class MLClassificationBenchmarkable(
   }
 
   override def doBenchmark(
-                            includeBreakdown: Boolean,
-                            description: String,
-                            messages: ArrayBuffer[String]): BenchmarkResult = {
-    println(s"entering doBenchmark")
+    includeBreakdown: Boolean,
+    description: String,
+    messages: ArrayBuffer[String]): BenchmarkResult = {
     try {
       val (trainingTime, model) = measureTime(test.train(param, trainingData))
-      println(s"model: $model")
+      logger.info(s"model: $model")
       val (_, scoreTraining) = measureTime {
         test.score(param, trainingData, model)
       }
-      println(s"scoreTraining: $scoreTraining")
       val (scoreTestTime, scoreTest) = measureTime {
         test.score(param, testData, model)
       }
@@ -76,5 +77,29 @@ class MLClassificationBenchmarkable(
             e.getMessage + ":\n" + e.getStackTraceString)))
     }
   }
+
+  def prettyPrint: String = {
+    val params = (pprint(commonParam) ++ pprint(extraParam)).mkString("\n")
+    s"$test\n$params"
+  }
+
+
+}
+
+object MLClassificationBenchmarkable {
+  private def pprint(p: AnyRef): Seq[String] = {
+    val m = getCCParams(p)
+    m.flatMap {
+      case (key, Some(value: Any)) => Some(s"  $key=$value")
+      case _ => None
+    } .toSeq
+  }
+
+  // From http://stackoverflow.com/questions/1226555/case-class-to-map-in-scala
+  private def getCCParams(cc: AnyRef) =
+    (Map[String, Any]() /: cc.getClass.getDeclaredFields) {(a, f) =>
+      f.setAccessible(true)
+      a + (f.getName -> f.get(cc))
+    }
 }
 

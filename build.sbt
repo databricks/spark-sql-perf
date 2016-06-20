@@ -44,6 +44,8 @@ libraryDependencies += "org.scalatest" %% "scalatest" % "2.2.1" % "test"
 
 libraryDependencies += "org.yaml" % "snakeyaml" % "1.17"
 
+libraryDependencies += "com.typesafe" %% "scalalogging-slf4j" % "1.1.0"
+
 fork := true
 
 val x = ""

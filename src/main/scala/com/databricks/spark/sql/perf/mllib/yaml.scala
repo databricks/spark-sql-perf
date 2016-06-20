@@ -12,73 +12,24 @@ import scala.io.Source
 
 import scala.reflect._
 import scala.reflect.runtime.universe._
+import scala.util.{Try => STry}
 
-
+/**
+ * The configuration information generated from reading a YAML file.
+ * @param output the output direct
+ * @param timeout
+ * @param runnableBenchmarks
+ */
 case class YamlConfig(
  output: String = "/tmp/result",
  timeout: Duration = 20.minutes,
  runnableBenchmarks: Seq[MLBenchmark])
 
-package object ccFromMap {
-  def fromMap[T: TypeTag: ClassTag](m: Map[String,_]) = {
-
-    scala.reflect.runtime.universe
-    val rm = runtimeMirror(classTag[T].runtimeClass.getClassLoader)
-    val classTest = typeOf[T].typeSymbol.asClass
-    val classMirror = rm.reflectClass(classTest)
-    val constructor = typeOf[T].declaration(nme.CONSTRUCTOR).asMethod
-    val constructorMirror = classMirror.reflectConstructor(constructor)
-
-    val constructorArgs = constructor.paramss.flatten.map( (param: Symbol) => {
-      val paramName = param.name.toString
-      if(param.typeSignature <:< typeOf[Option[Long]])
-        OptionImplicits.checkLong(m.get(paramName).asInstanceOf[Option[Long]])
-      else if(param.typeSignature <:< typeOf[Option[Double]])
-        OptionImplicits.checkDouble(m.get(paramName).asInstanceOf[Option[Double]])
-      else if(param.typeSignature <:< typeOf[Option[Any]])
-        m.get(paramName)
-      else
-        m.get(paramName).getOrElse(throw new IllegalArgumentException("Map is missing required parameter named " + paramName))
-    })
-
-    constructorMirror(constructorArgs:_*).asInstanceOf[T]
-  }
-
-  // TODO: handle scala.reflect.internal.MissingRequirementError
-  def loadExperiment(name: String): ClassificationPipelineDescription = {
-    val rm = runtimeMirror(getClass.getClassLoader)
-    val module = rm.staticModule("com.databricks.spark.sql.perf.mllib." + name)
-    val obj = rm.reflectModule(module)
-    obj.instance.asInstanceOf[ClassificationPipelineDescription]
-  }
-}
-
 object YamlConfig {
 
-  def dict[T](d: T): Map[String, Any] = d.asInstanceOf[java.util.Map[String, Any]].asScala.toMap
-
-  def cartesian(m: Map[String, Any]): Seq[Map[String, Any]] = {
-    if (m.isEmpty) {
-      Seq(m)
-    } else {
-      val k = m.keys.head
-      val sub = m - k
-      val l = cartesian(sub)
-      m(k) match {
-        case a: AL[_] =>
-          for {
-            x <- a.asScala.toSeq
-            m2 <- l
-          } yield {
-            m2 ++ Map(k -> x.asInstanceOf[Any])
-          }
-        case _ =>
-          val v = m(k)
-          l.map { m => m ++ Map(k -> v) }
-      }
-    }
-  }
-
+  /**
+   * Reads a string (assumed to contain a yaml description) and returns the configuration.
+   */
   def readString(s: String): YamlConfig = {
     println(s)
     val yaml = new Yaml()
@@ -106,7 +57,9 @@ object YamlConfig {
     val e2 = experiments.map { case (n, c, e) =>
       val c2 = ccFromMap.fromMap[MLTestParameters](c)
       val e2 = ccFromMap.fromMap[ExtraMLTestParameters](e)
-      val s = ccFromMap.loadExperiment(n)
+      val s = ccFromMap.loadExperiment(n).getOrElse {
+        throw new Exception(s"Cannot find algorithm $n in the standard benchmark algorithms")
+      }
       MLBenchmark(s, c2, e2)
     }
     var c = YamlConfig(runnableBenchmarks = e2)
@@ -119,7 +72,99 @@ object YamlConfig {
     c
   }
 
+  /**
+   * Reads a file (assumed to contain a yaml config).
+   */
   def readFile(filename: String): YamlConfig = {
     readString(Source.fromFile(filename).mkString)
+  }
+
+  // Converts a java dictionary to a scala map.
+  private def dict[T](d: T): Map[String, Any] = {
+    d.asInstanceOf[java.util.Map[String, Any]].asScala.toMap
+  }
+
+  /**
+   * Given keys that may be lists, builds the cartesian product of all the values into defined
+   * options.
+   *
+   * For example: {a: [1,2], b: [3,4]} -> {a: 1, b: 3}, {a: 1, b:4}, {a:2, b:3}, ...
+   *
+   * @return
+   */
+  private def cartesian(m: Map[String, Any]): Seq[Map[String, Any]] = {
+    if (m.isEmpty) {
+      Seq(m)
+    } else {
+      val k = m.keys.head
+      val sub = m - k
+      val l = cartesian(sub)
+      m(k) match {
+        case a: AL[_] =>
+          for {
+            x <- a.asScala.toSeq
+            m2 <- l
+          } yield {
+            m2 ++ Map(k -> x.asInstanceOf[Any])
+          }
+        case _ =>
+          val v = m(k)
+          l.map { m => m ++ Map(k -> v) }
+      }
+    }
+  }
+
+}
+
+// Some ugly internals to make simple constructs
+package object ccFromMap {
+  // Builds a case class from a map.
+  // (taken from stack overflow)
+  def fromMap[T: TypeTag: ClassTag](m: Map[String,_]) = {
+
+    scala.reflect.runtime.universe
+    val rm = runtimeMirror(classTag[T].runtimeClass.getClassLoader)
+    val classTest = typeOf[T].typeSymbol.asClass
+    val classMirror = rm.reflectClass(classTest)
+    val constructor = typeOf[T].declaration(nme.CONSTRUCTOR).asMethod
+    val constructorMirror = classMirror.reflectConstructor(constructor)
+
+    val constructorArgs = constructor.paramss.flatten.map( (param: Symbol) => {
+      val paramName = param.name.toString
+      if(param.typeSignature <:< typeOf[Option[Long]])
+        OptionImplicits.checkLong(m.get(paramName).asInstanceOf[Option[Long]])
+      else if(param.typeSignature <:< typeOf[Option[Double]])
+        OptionImplicits.checkDouble(m.get(paramName).asInstanceOf[Option[Double]])
+      else if(param.typeSignature <:< typeOf[Option[Any]])
+        m.get(paramName)
+      else
+        m.get(paramName).getOrElse(throw new IllegalArgumentException("Map is missing required parameter named " + paramName))
+    })
+
+    constructorMirror(constructorArgs:_*).asInstanceOf[T]
+  }
+
+  // TODO: handle scala.reflect.internal.MissingRequirementError
+  private def load(name: String): STry[ClassificationPipelineDescription] = {
+    val rm = runtimeMirror(getClass.getClassLoader)
+    val module = rm.staticModule("com.databricks.spark.sql.perf.mllib." + name)
+    STry {
+      val obj = rm.reflectModule(module)
+      obj.instance.asInstanceOf[ClassificationPipelineDescription]
+    }
+  }
+
+  val defaultPackages = Seq(
+    "",
+    "com.databricks.spark.sql.perf.mllib"
+  )
+
+  def loadExperiment(
+                      name: String,
+                      searchPackages: Seq[String] = defaultPackages): Option[ClassificationPipelineDescription] = {
+    searchPackages.view.flatMap { p =>
+      val n = if (p.isEmpty) name else s"$p.$name"
+      load(n).toOption
+    } .headOption
   }
 }

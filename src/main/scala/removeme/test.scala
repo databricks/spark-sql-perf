@@ -1,6 +1,6 @@
 package removeme
 
-import com.databricks.spark.sql.perf.mllib.{MLClassificationBenchmarkable, YamlConfig}
+import com.databricks.spark.sql.perf.mllib.MLLib
 import org.apache.spark.SparkContext
 
 object Test {
@@ -15,7 +15,6 @@ object Test {
 
   removeme.Do.f()
 
-
   val b = new com.databricks.spark.sql.perf.mllib.MLLib()
   val benchmarks = com.databricks.spark.sql.perf.mllib.MLBenchmarks.benchmarkObjects
   val e = b.runExperiment(
@@ -27,22 +26,7 @@ object Test {
 
 object Do {
   def f(): Unit = {
-    val sc = SparkContext.getOrCreate()
-    sc.setLogLevel("INFO")
-    val b = new com.databricks.spark.sql.perf.mllib.MLLib()
-    val conf = g()
-    val sqlContext = com.databricks.spark.sql.perf.mllib.MLBenchmarks.sqlContext
-    val benchmarksDescriptions = conf.runnableBenchmarks
-    val benchmarks = benchmarksDescriptions.map { mlb =>
-      new MLClassificationBenchmarkable(mlb.extra, mlb.common, mlb.benchmark, sqlContext)
-    }
-
-    //    val benchmarks = com.databricks.spark.sql.perf.mllib.MLBenchmarks.benchmarkObjects
-    val e = b.runExperiment(
-      executionsToRun = benchmarks,
-      resultLocation = conf.output)
-    e.waitForFinish(conf.timeout.toSeconds.toInt)
-    e.getCurrentResults()
+    MLLib.run(yamlFile = "/Users/tjhunter/work/spark-sql-perf/config.yaml")
   }
 
   def printErrors(): Unit = {
@@ -68,7 +52,4 @@ object Do {
     ds.show()
   }
 
-  def g() = {
-    YamlConfig.readFile("/Users/tjhunter/work/spark-sql-perf/config.yaml")
-  }
 }
