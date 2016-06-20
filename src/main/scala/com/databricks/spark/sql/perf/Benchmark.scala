@@ -104,7 +104,8 @@ abstract class Benchmark(
       variations: Seq[Variation[_]] = Seq(Variation("StandardRun", Seq("true")) { _ => {} }),
       tags: Map[String, String] = Map.empty,
       timeout: Long = 0L,
-      resultLocation: String = resultsLocation) = {
+      resultLocation: String = resultsLocation,
+      forkThread: Boolean = true) = {
 
     new ExperimentStatus(executionsToRun, includeBreakdown, iterations, variations, tags,
       timeout, resultLocation, sqlContext, allTables, currentConfiguration)
@@ -296,7 +297,7 @@ object Benchmark {
       sqlContext: SQLContext,
       allTables: Seq[Table],
       currentConfiguration: BenchmarkConfiguration,
-      setJobGroup: Boolean = true) {
+      forkThread: Boolean = true) {
     val currentResults = new collection.mutable.ArrayBuffer[BenchmarkResult]()
     val currentRuns = new collection.mutable.ArrayBuffer[ExperimentRun]()
     val currentMessages = new collection.mutable.ArrayBuffer[String]()
@@ -391,7 +392,7 @@ object Benchmark {
 
             val singleResultT = Try {
               q.benchmark(includeBreakdown, setup, currentMessages, timeout,
-                setJobGroup=setJobGroup)
+                forkThread=forkThread)
             }
 
             singleResultT match {

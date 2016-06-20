@@ -39,12 +39,16 @@ trait Benchmarkable {
       description: String = "",
       messages: ArrayBuffer[String],
       timeout: Long,
-      setJobGroup: Boolean = true): BenchmarkResult = {
+      forkThread: Boolean = true): BenchmarkResult = {
     println(s"$this: benchmark")
     sparkContext.setJobDescription(s"Execution: $name, $description")
     println(s"$this: benchmark: sc jd set")
     beforeBenchmark()
-    val result = runBenchmark(includeBreakdown, description, messages, timeout)
+    val result = if (forkThread) {
+      doBenchmark(includeBreakdown, description, messages)
+    } else {
+      runBenchmarkForked(includeBreakdown, description, messages, timeout)
+    }
     afterBenchmark(sqlContext.sparkContext)
     result
   }
@@ -60,22 +64,18 @@ trait Benchmarkable {
         .foreach { bid => SparkEnv.get.blockManager.master.removeBlock(bid) }
   }
 
-  private def runBenchmark(
+  private def runBenchmarkForked(
       includeBreakdown: Boolean,
       description: String = "",
       messages: ArrayBuffer[String],
-      timeout: Long,
-      setJobGroup: Boolean = true): BenchmarkResult = {
+      timeout: Long): BenchmarkResult = {
     val jobgroup = UUID.randomUUID().toString
     val that = this
-    println(s"$this: runBenchmark")
     var result: BenchmarkResult = null
     val thread = new Thread("benchmark runner") {
       override def run(): Unit = {
         println(s"$that running $this")
-        if (setJobGroup) {
-          sparkContext.setJobGroup(jobgroup, s"benchmark $name", true)
-        }
+        sparkContext.setJobGroup(jobgroup, s"benchmark $name", true)
         try {
           result = doBenchmark(includeBreakdown, description, messages)
         } catch {
@@ -89,9 +89,7 @@ trait Benchmarkable {
     thread.start()
     thread.join(timeout)
     if (thread.isAlive) {
-      if (setJobGroup) {
-        sparkContext.cancelJobGroup(jobgroup)
-      }
+      sparkContext.cancelJobGroup(jobgroup)
       thread.interrupt()
       result = BenchmarkResult(
         name = name,
