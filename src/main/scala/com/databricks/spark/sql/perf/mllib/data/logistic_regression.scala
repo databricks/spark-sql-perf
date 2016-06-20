@@ -92,7 +92,8 @@ class FeaturesGenerator(val categoricalArities: Array[Int], val numContinuous: I
       j += 1
     }
     while (j < numFeatures) {
-      arr(j) = rng.nextDouble()
+      // Generating some centered data
+      arr(j) = 2 * rng.nextDouble() - 1
       j += 1
     }
     Vectors.dense(arr)

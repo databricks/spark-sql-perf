@@ -31,7 +31,8 @@ object LogisticRegression extends ClassificationPipelineDescription
     val rng = ctx.newGenerator()
     val coefficients =
       Vectors.dense(Array.fill[Double](ctx.commonParams.numFeatures)(2 * rng.nextDouble() - 1))
-    val intercept = 2 * rng.nextDouble - 1
+    // Small intercept to prevent some skew in the data.
+    val intercept = 0.01 * (2 * rng.nextDouble - 1)
     ModelBuilder.newLogisticRegressionModel(coefficients, intercept)
   }
 

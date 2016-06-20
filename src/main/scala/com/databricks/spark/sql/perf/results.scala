@@ -112,8 +112,13 @@ object MLTestParameters {
 }
 
 case class ExtraMLTestParameters(
+    ldaDocLength: OInt = None,
+    ldaNumVocabulary: OInt = None,
+    ldaNumTopics: OInt = None,
+    numIterations: OInt = None,
     regParam: Option[Double] = None,
-    tol: Option[Double] = None)
+    tol: Option[Double] = None
+    )
 
 object ExtraMLTestParameters {
   val empty = ExtraMLTestParameters()

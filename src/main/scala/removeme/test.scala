@@ -51,5 +51,4 @@ object Do {
     val ds = sql.sql("select * from currentResults")
     ds.show()
   }
-
 }

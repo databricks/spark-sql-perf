@@ -29,8 +29,11 @@ class MLClassificationBenchmarkable(
     try {
       // TODO(?) cache + prewarm the datasets
       testData = test.testDataSet(param)
+      testData.cache()
+      testData.count()
       trainingData = test.trainingDataSet(param)
-
+      trainingData.cache()
+      trainingData.count()
     } catch {
       case e: Throwable =>
         println(s"$this error in beforeBenchmark: ${e.getStackTraceString}")
@@ -75,6 +78,9 @@ class MLClassificationBenchmarkable(
           parameters = Map.empty,
           failure = Some(Failure(e.getClass.getSimpleName,
             e.getMessage + ":\n" + e.getStackTraceString)))
+    } finally {
+      Option(testData).map(_.unpersist())
+      Option(trainingData).map(_.unpersist())
     }
   }
 

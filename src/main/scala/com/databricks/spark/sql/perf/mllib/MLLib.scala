@@ -52,6 +52,7 @@ object MLLib extends Logging {
     logger.info("Starting experiments")
     val e = b.runExperiment(
       executionsToRun = benchmarks,
+      iterations = 1, // If you want to increase the number of iterations, add more seeds
       resultLocation = conf.output)
     e.waitForFinish(conf.timeout.toSeconds.toInt)
     logger.info("Run finished")
