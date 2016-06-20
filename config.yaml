@@ -6,7 +6,7 @@ common:
   numPartitions: 3
   randomSeed: [1, 2]
 benchmarks:
-  - name: classification.LogisticRegressionBenchmark2
+  - name: classification.LogisticRegression
     common:
       numFeatures: 100
     extra:

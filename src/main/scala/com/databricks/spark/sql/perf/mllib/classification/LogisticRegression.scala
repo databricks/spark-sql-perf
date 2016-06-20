@@ -8,9 +8,9 @@ import org.apache.spark.ml.ModelBuilder
 import org.apache.spark.ml.classification.{LogisticRegression, LogisticRegressionModel}
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.ml.linalg.Vectors
-import org.apache.spark.sql.{DataFrame, Row}
+import org.apache.spark.sql.{DataFrame}
 
-object LogisticRegressionBenchmark2 extends ClassificationPipelineDescription
+object LogisticRegression extends ClassificationPipelineDescription
   with TestFromTraining with TrainingSetFromTransformer with ScoringWithEvaluator {
 
   override type Model = LogisticRegressionModel
@@ -37,7 +37,7 @@ object LogisticRegressionBenchmark2 extends ClassificationPipelineDescription
 
   def train(ctx: ClassificationContext,
             trainingSet: DataFrame): Model = {
-    println(s"$this: train: trainingSet=${trainingSet.schema}")
+    logger.info(s"$this: train: trainingSet=${trainingSet.schema}")
     import ctx.extraParams._
     val lr = new LogisticRegression()
       .setTol(tol)
@@ -46,14 +46,3 @@ object LogisticRegressionBenchmark2 extends ClassificationPipelineDescription
   }
 }
 
-
-object Utils {
-  def accuracy(set: DataFrame): Double = {
-    val session = set.sqlContext.sparkSession
-    import session.implicits._
-    val counts = set.map { case Row(pred: Double, label: Double) =>
-      if (pred == label) 1.0 else 0.0
-    } .rdd.sum()
-    100.0 * counts / set.count()
-  }
-}

@@ -12,10 +12,11 @@ import scala.io.Source
 
 import scala.reflect._
 import scala.reflect.runtime.universe._
-import scala.util.{Try => STry}
+import scala.util.{Try => STry, Success, Failure}
 
 /**
  * The configuration information generated from reading a YAML file.
+ *
  * @param output the output direct
  * @param timeout
  * @param runnableBenchmarks
@@ -147,10 +148,13 @@ package object ccFromMap {
   // TODO: handle scala.reflect.internal.MissingRequirementError
   private def load(name: String): STry[ClassificationPipelineDescription] = {
     val rm = runtimeMirror(getClass.getClassLoader)
-    val module = rm.staticModule("com.databricks.spark.sql.perf.mllib." + name)
-    STry {
+    try {
+      val module = rm.staticModule("com.databricks.spark.sql.perf.mllib." + name)
       val obj = rm.reflectModule(module)
-      obj.instance.asInstanceOf[ClassificationPipelineDescription]
+      Success(obj.instance.asInstanceOf[ClassificationPipelineDescription])
+    } catch {
+      case x: scala.reflect.internal.MissingRequirementError =>
+        Failure(x)
     }
   }
 

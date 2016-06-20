@@ -1,6 +1,6 @@
 package com.databricks.spark.sql.perf.mllib
 
-import com.databricks.spark.sql.perf.mllib.classification.{LogisticRegressionBenchmark2}
+import com.databricks.spark.sql.perf.mllib.classification.{LogisticRegression}
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SQLContext
 
@@ -25,7 +25,7 @@ object MLBenchmarks {
   // The list of standard benchmarks that we are going to run for ML.
   val benchmarks: Seq[MLBenchmark] = List(
       MLBenchmark(
-        LogisticRegressionBenchmark2,
+        LogisticRegression,
         MLTestParameters(
           numFeatures = 10,
           numExamples = 10,

@@ -1,5 +1,7 @@
 package com.databricks.spark.sql.perf.mllib
 
+import com.typesafe.scalalogging.slf4j.Logging
+
 import org.apache.spark.ml.Transformer
 import org.apache.spark.ml.evaluation.Evaluator
 import org.apache.spark.sql._
@@ -8,7 +10,7 @@ import org.apache.spark.sql.functions._
 /**
  * The description of a benchmark for doing classification using the pipeline API.
  */
-trait ClassificationPipelineDescription {
+trait ClassificationPipelineDescription extends Logging {
 
   type Model <: Transformer
 
