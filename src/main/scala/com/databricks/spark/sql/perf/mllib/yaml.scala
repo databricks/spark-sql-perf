@@ -56,8 +56,8 @@ object YamlConfig {
     println("exp parsed")
     println(experiments)
     val e2 = experiments.map { case (n, c, e) =>
-      val c2 = ccFromMap.fromMap[MLTestParameters](c)
-      val e2 = ccFromMap.fromMap[ExtraMLTestParameters](e)
+      val c2 = ccFromMap.fromMap[MLTestParameters](c, strict=false)
+      val e2 = ccFromMap.fromMap[ExtraMLTestParameters](e, strict=true)
       val s = ccFromMap.loadExperiment(n).getOrElse {
         throw new Exception(s"Cannot find algorithm $n in the standard benchmark algorithms")
       }
@@ -121,7 +121,8 @@ object YamlConfig {
 package object ccFromMap {
   // Builds a case class from a map.
   // (taken from stack overflow)
-  def fromMap[T: TypeTag: ClassTag](m: Map[String,_]) = {
+  // if strict, will report an error if some unknown arguments are passed to the constructor
+  def fromMap[T: TypeTag: ClassTag](m: Map[String,_], strict: Boolean) = {
 
     scala.reflect.runtime.universe
     val rm = runtimeMirror(classTag[T].runtimeClass.getClassLoader)
@@ -129,6 +130,14 @@ package object ccFromMap {
     val classMirror = rm.reflectClass(classTest)
     val constructor = typeOf[T].declaration(nme.CONSTRUCTOR).asMethod
     val constructorMirror = classMirror.reflectConstructor(constructor)
+
+    val constructorArgNames = constructor.paramss.flatten.map(_.name.toString).toSet
+    val extraElements = m.keySet -- constructorArgNames
+    if (extraElements.nonEmpty) {
+      throw new Exception(s"Found extra arguments when instantiating an object of " +
+        s"class ${classTest.asClass.toString}:" +
+        s" ${extraElements.toSeq.sorted}")
+    }
 
     val constructorArgs = constructor.paramss.flatten.map( (param: Symbol) => {
       val paramName = param.name.toString

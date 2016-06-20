@@ -295,7 +295,8 @@ object Benchmark {
       resultsLocation: String,
       sqlContext: SQLContext,
       allTables: Seq[Table],
-      currentConfiguration: BenchmarkConfiguration) {
+      currentConfiguration: BenchmarkConfiguration,
+      setJobGroup: Boolean = true) {
     val currentResults = new collection.mutable.ArrayBuffer[BenchmarkResult]()
     val currentRuns = new collection.mutable.ArrayBuffer[ExperimentRun]()
     val currentMessages = new collection.mutable.ArrayBuffer[String]()
@@ -389,7 +390,8 @@ object Benchmark {
             startTime = System.currentTimeMillis()
 
             val singleResultT = Try {
-              q.benchmark(includeBreakdown, setup, currentMessages, timeout)
+              q.benchmark(includeBreakdown, setup, currentMessages, timeout,
+                setJobGroup=setJobGroup)
             }
 
             singleResultT match {

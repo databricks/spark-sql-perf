@@ -6,12 +6,12 @@ common:
   numPartitions: 3
   randomSeed: [1, 2, 3]
 benchmarks:
-#  - name: classification.LogisticRegression
-#    common:
-#      numFeatures: 100
-#    extra:
-#      regParam: 0.1
-#      tol: [0.2, 0.1]
+  - name: classification.LogisticRegression
+    common:
+      numFeatures: 100
+    extra:
+      regParam: 0.1
+      tol: [0.2, 0.1]
   - name: clustering.LDA
     common:
       numExamples: 10

@@ -38,7 +38,8 @@ trait Benchmarkable {
       includeBreakdown: Boolean,
       description: String = "",
       messages: ArrayBuffer[String],
-      timeout: Long): BenchmarkResult = {
+      timeout: Long,
+      setJobGroup: Boolean = true): BenchmarkResult = {
     println(s"$this: benchmark")
     sparkContext.setJobDescription(s"Execution: $name, $description")
     println(s"$this: benchmark: sc jd set")
@@ -63,7 +64,8 @@ trait Benchmarkable {
       includeBreakdown: Boolean,
       description: String = "",
       messages: ArrayBuffer[String],
-      timeout: Long): BenchmarkResult = {
+      timeout: Long,
+      setJobGroup: Boolean = true): BenchmarkResult = {
     val jobgroup = UUID.randomUUID().toString
     val that = this
     println(s"$this: runBenchmark")
@@ -71,7 +73,9 @@ trait Benchmarkable {
     val thread = new Thread("benchmark runner") {
       override def run(): Unit = {
         println(s"$that running $this")
-        sparkContext.setJobGroup(jobgroup, s"benchmark $name", true)
+        if (setJobGroup) {
+          sparkContext.setJobGroup(jobgroup, s"benchmark $name", true)
+        }
         try {
           result = doBenchmark(includeBreakdown, description, messages)
         } catch {
@@ -85,7 +89,9 @@ trait Benchmarkable {
     thread.start()
     thread.join(timeout)
     if (thread.isAlive) {
-      sparkContext.cancelJobGroup(jobgroup)
+      if (setJobGroup) {
+        sparkContext.cancelJobGroup(jobgroup)
+      }
       thread.interrupt()
       result = BenchmarkResult(
         name = name,

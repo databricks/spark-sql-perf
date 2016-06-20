@@ -16,8 +16,11 @@
 
 package com.databricks.spark.sql.perf
 
+import org.apache.spark.mllib.clustering.LDAOptimizer
+
 /**
  * The performance results of all given queries for a single iteration.
+ *
  * @param timestamp The timestamp indicates when the entire experiment is started.
  * @param iteration The index number of the current iteration.
  * @param tags Tags of this iteration (variations are stored at here).
@@ -33,6 +36,7 @@ case class ExperimentRun(
 
 /**
  * The configuration used for an iteration of an experiment.
+ *
  * @param sparkVersion The version of Spark.
  * @param sqlConf All configuration properties related to Spark SQL.
  * @param sparkConf All configuration properties of Spark.
@@ -48,6 +52,7 @@ case class BenchmarkConfiguration(
 
 /**
  * The result of a query.
+ *
  * @param name The name of the query.
  * @param mode The ExecutionMode of this run.
  * @param parameters Additional parameters that describe this query.
@@ -82,6 +87,7 @@ case class BenchmarkResult(
 
 /**
  * The execution time of a subtree of the query plan tree of a specific query.
+ *
  * @param nodeName The name of the top physical operator of the subtree.
  * @param nodeNameWithArgs The name and arguments of the top physical operator of the subtree.
  * @param index The index of the top physical operator of the subtree
@@ -111,11 +117,13 @@ object MLTestParameters {
   val empty = MLTestParameters()
 }
 
+// KEEP ARGUMENTS SORTED BY NAME
 case class ExtraMLTestParameters(
-    ldaDocLength: OInt = None,
-    ldaNumVocabulary: OInt = None,
-    ldaNumTopics: OInt = None,
-    numIterations: OInt = None,
+    ldaDocLength: Option[Int] = None,
+    ldaNumVocabulary: Option[Int] = None,
+    ldaNumTopics: Option[Int] = None,
+    ldaOptimizer: Option[String] = None,
+    numIterations: Option[Int] = None,
     regParam: Option[Double] = None,
     tol: Option[Double] = None
     )

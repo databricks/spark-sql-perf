@@ -50,6 +50,7 @@ object LDA extends ClassificationPipelineDescription with TestFromTraining {
         .setK(ldaNumTopics)
         .setSeed(randomSeed.toLong)
         .setMaxIter(numIterations)
+        .setOptimizer(ldaOptimizer)
         .fit(trainingSet)
   }
 
