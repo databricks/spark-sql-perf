@@ -18,6 +18,8 @@ package com.databricks.spark.sql.perf
 
 import java.util.UUID
 
+import scala.concurrent.duration._
+
 import org.apache.spark.sql.SQLContext
 import org.apache.spark.{SparkEnv, SparkContext}
 
@@ -92,5 +94,12 @@ trait Benchmarkable {
     f
     val endTime = System.nanoTime()
     (endTime - startTime).toDouble / 1000000
+  }
+
+  protected def measureTime[A](f: => A): (Duration, A) = {
+    val startTime = System.nanoTime()
+    val res = f
+    val endTime = System.nanoTime()
+    (endTime - startTime).nanos -> res
   }
 }

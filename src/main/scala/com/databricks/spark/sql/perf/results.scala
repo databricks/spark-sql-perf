@@ -77,7 +77,9 @@ case class BenchmarkResult(
     result: Option[Long] = None,
     breakDown: Seq[BreakdownResult] = Nil,
     queryExecution: Option[String] = None,
-    failure: Option[Failure] = None)
+    failure: Option[Failure] = None,
+    mlParameters: Option[MLTestParameters] = None,
+    mlResult: Option[MLResult] = None)
 
 /**
  * The execution time of a subtree of the query plan tree of a specific query.
@@ -97,3 +99,45 @@ case class BreakdownResult(
     delta: Double)
 
 case class Failure(className: String, message: String)
+
+/**
+ * MLlib test settings
+ * @param numFeatures
+ * @param numExamples
+ * @param numTestExamples  If not set, then defaults to numExamples
+ * @param seed
+ */
+case class MLTestParameters(
+    numFeatures: Option[Int] = None,
+    numExamples: Option[Long] = None,
+    numPartitions: Option[Int] = None,
+    numTestExamples: Option[Long] = None,
+    seed: Option[Long] = None) {
+  def getNumTestExamples: Long = numTestExamples.getOrElse {
+    numExamples match {
+      case Some(n) => n
+      case None => throw new RuntimeException("getNumTestExamples requires at least one of" +
+        " numExamples, numTestExamples to be set, but neither were.")
+    }
+  }
+}
+
+/**
+ * Result information specific to MLlib.
+ *
+ * All timing results use seconds.
+ *
+ * TODO: Set [[BenchmarkResult.executionTime]] to something to match Spark Core tests?
+ *
+ * @param trainingTime  (MLlib) Training time, or time to call `fit()`.
+ * @param trainingTransformTime  (MLlib) Time to call `transform()` on training data.
+ * @param trainingMetric  (MLlib) Training metric, such as accuracy
+ * @param testTime  (MLlib) Test time
+ * @param testMetric  (MLlib) Test metric, such as accuracy
+ */
+case class MLResult(
+    trainingTime: Option[Double] = None,
+    trainingTransformTime: Option[Double] = None,
+    trainingMetric: Option[Double] = None,
+    testTime: Option[Double] = None,
+    testMetric: Option[Double] = None)
