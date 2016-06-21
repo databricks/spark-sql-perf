@@ -5,14 +5,14 @@ name := "spark-sql-perf"
 
 organization := "com.databricks"
 
-scalaVersion := "2.10.4"
+scalaVersion := "2.10.6"
 
 sparkPackageName := "databricks/spark-sql-perf"
 
 // All Spark Packages need a license
 licenses := Seq("Apache-2.0" -> url("http://opensource.org/licenses/Apache-2.0"))
 
-sparkVersion := "v1.6.0-preview"
+sparkVersion := "1.6.1"
 
 resolvers += "Apache Preview Repo" at "https://repository.apache.org/content/repositories/orgapachespark-1156/"
 
