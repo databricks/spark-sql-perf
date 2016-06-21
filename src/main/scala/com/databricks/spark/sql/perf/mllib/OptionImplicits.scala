@@ -2,6 +2,12 @@ package com.databricks.spark.sql.perf.mllib
 
 import scala.language.implicitConversions
 
+/**
+ * Implicits to transparently convert some Option[X] to X and vice-versa.
+ *
+ * This is usually dangerous to do, but in our case, the config is expressed through Options and
+ * it alleviates the need to manually box values.
+ */
 object OptionImplicits {
   // The following implicits are unrolled for safety:
   private def oX2X[A](x: Option[A]): A = x.get

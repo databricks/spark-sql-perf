@@ -2,26 +2,24 @@ package com.databricks.spark.sql.perf.mllib
 
 import java.util.Random
 
-import com.databricks.spark.sql.perf.{ExtraMLTestParameters, MLTestParameters}
+import com.databricks.spark.sql.perf.{MLParams}
 import org.apache.spark.sql.SQLContext
 
 
 /**
  * All the information required to run a test.
- * @param commonParams
+ *
  * @param extraParams
  * @param sqlContext
  */
-// TODO(tjh) rename, this is not only about classification
-case class ClassificationContext(
-    commonParams: MLTestParameters,
-    extraParams: ExtraMLTestParameters,
+case class MLBenchContext(
+    extraParams: MLParams,
     sqlContext: SQLContext) {
 
   // Some seed fixed for the context.
-  private val internalSeed: Int  = {
-    commonParams.randomSeed.getOrElse {
-      new java.util.Random().nextInt()
+  private val internalSeed: Long  = {
+    extraParams.randomSeed.map(_.toLong).getOrElse {
+      new java.util.Random().nextLong()
     }
   }
 
@@ -30,12 +28,12 @@ case class ClassificationContext(
    *
    * @return
    */
-  def seed(): Int = internalSeed
+  def seed(): Long = internalSeed
 
   /**
    * Creates a new generator. The generator will always start with the same state.
    *
    * @return
    */
-  def newGenerator(): Random = new Random((seed()))
+  def newGenerator(): Random = new Random(seed())
 }

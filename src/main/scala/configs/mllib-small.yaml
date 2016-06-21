@@ -7,15 +7,13 @@ common:
   randomSeed: [1, 2, 3]
 benchmarks:
   - name: classification.LogisticRegression
-    common:
+    params:
       numFeatures: 100
-    extra:
       regParam: 0.1
       tol: [0.2, 0.1]
   - name: clustering.LDA
-    common:
+    params:
       numExamples: 10
-    extra:
       ldaDocLength: 20
       ldaNumTopics: 5
       ldaNumVocabulary: 4

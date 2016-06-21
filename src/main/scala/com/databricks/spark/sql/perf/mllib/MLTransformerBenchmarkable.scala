@@ -6,25 +6,23 @@ import org.apache.spark.sql._
 
 import scala.collection.mutable.ArrayBuffer
 
-// TODO(tjh) rename, this is not only about classification
-class MLClassificationBenchmarkable(
-    extraParam: ExtraMLTestParameters,
-    commonParam: MLTestParameters,
-    test: BenchmarkAlgorithm,
-    sqlContext: SQLContext)
+class MLTransformerBenchmarkable(
+                                  extraParam: MLParams,
+                                  test: BenchmarkAlgorithm,
+                                  sqlContext: SQLContext)
   extends Benchmarkable with Serializable with Logging {
 
-  import MLClassificationBenchmarkable._
+  import MLTransformerBenchmarkable._
 
   private var testData: DataFrame = null
   private var trainingData: DataFrame = null
-  val param = ClassificationContext(commonParam, extraParam, sqlContext)
+  private val param = MLBenchContext(extraParam, sqlContext)
 
   override val name = test.getClass.getCanonicalName
 
-  override val executionMode: ExecutionMode = ExecutionMode.SparkPerfResults
+  override protected val executionMode: ExecutionMode = ExecutionMode.SparkPerfResults
 
-  override def beforeBenchmark(): Unit = {
+  override protected def beforeBenchmark(): Unit = {
     logger.info(s"$this beforeBenchmark")
     try {
       testData = test.testDataSet(param)
@@ -40,7 +38,7 @@ class MLClassificationBenchmarkable(
     }
   }
 
-  override def doBenchmark(
+  override protected def doBenchmark(
     includeBreakdown: Boolean,
     description: String,
     messages: ArrayBuffer[String]): BenchmarkResult = {
@@ -56,7 +54,6 @@ class MLClassificationBenchmarkable(
 
 
       val ml = MLResult(
-        testParameters = Some(commonParam),
         extraTestParameters = Some(extraParam),
         trainingTime = Some(trainingTime.toMillis),
         trainingMetric = Some(scoreTraining),
@@ -84,14 +81,14 @@ class MLClassificationBenchmarkable(
   }
 
   def prettyPrint: String = {
-    val params = (pprint(commonParam) ++ pprint(extraParam)).mkString("\n")
+    val params = pprint(extraParam).mkString("\n")
     s"$test\n$params"
   }
 
 
 }
 
-object MLClassificationBenchmarkable {
+object MLTransformerBenchmarkable {
   private def pprint(p: AnyRef): Seq[String] = {
     val m = getCCParams(p)
     m.flatMap {

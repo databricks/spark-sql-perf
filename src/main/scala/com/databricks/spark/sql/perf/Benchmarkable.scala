@@ -45,9 +45,9 @@ trait Benchmarkable extends Logging {
     sparkContext.setJobDescription(s"Execution: $name, $description")
     beforeBenchmark()
     val result = if (forkThread) {
-      doBenchmark(includeBreakdown, description, messages)
-    } else {
       runBenchmarkForked(includeBreakdown, description, messages, timeout)
+    } else {
+      doBenchmark(includeBreakdown, description, messages)
     }
     afterBenchmark(sqlContext.sparkContext)
     result

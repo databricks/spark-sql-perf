@@ -12,20 +12,18 @@ import scala.util.{Try => STry, Success, Failure}
 
 import org.yaml.snakeyaml.Yaml
 
-import com.databricks.spark.sql.perf.{ExtraMLTestParameters, MLTestParameters}
+import com.databricks.spark.sql.perf.{MLParams}
 
 
 /**
  * The configuration information generated from reading a YAML file.
  *
  * @param output the output direct
- * @param timeout
- * @param runnableBenchmarks
  */
 case class YamlConfig(
  output: String = "/tmp/result",
  timeout: Duration = 20.minutes,
- runnableBenchmarks: Seq[MLBenchmark])
+ runnableBenchmarks: Seq[MLTest])
 
 object YamlConfig {
 
@@ -45,24 +43,18 @@ object YamlConfig {
     println(exps)
     val experiments = exps.flatMap { sd =>
       val name = sd("name").toString
-      val com = sd.get("common").map(dict).getOrElse(Map.empty)
-      val extra = sd.get("extra").map(dict).getOrElse(Map.empty)
-      val allCommons = cartesian(common ++ com)
-      val allExtra = cartesian(extra)
-      for {
-        c <- allCommons
-        e <- allExtra
-      } yield (name, c, e)
+      val params = sd.get("params").map(dict).getOrElse(Map.empty)
+      val expParams = cartesian(common ++ params)
+      for (c <- expParams) yield name -> c
     }
     println("exp parsed")
     println(experiments)
-    val e2 = experiments.map { case (n, c, e) =>
-      val c2 = ccFromMap.fromMap[MLTestParameters](c, strict=false)
-      val e2 = ccFromMap.fromMap[ExtraMLTestParameters](e, strict=true)
+    val e2 = experiments.map { case (n, e) =>
+      val e2 = ccFromMap.fromMap[MLParams](e, strict=true)
       val s = ccFromMap.loadExperiment(n).getOrElse {
         throw new Exception(s"Cannot find algorithm $n in the standard benchmark algorithms")
       }
-      MLBenchmark(s, c2, e2)
+      MLTest(s, e2)
     }
     var c = YamlConfig(runnableBenchmarks = e2)
     for (output <- m.get("output")) {

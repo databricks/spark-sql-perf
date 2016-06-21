@@ -1,10 +1,10 @@
 package com.databricks.spark.sql.perf.mllib.clustering
 
-import com.databricks.spark.sql.perf.mllib.{ClassificationContext, TestFromTraining, BenchmarkAlgorithm}
+import com.databricks.spark.sql.perf.mllib.{MLBenchContext, TestFromTraining, BenchmarkAlgorithm}
 import com.databricks.spark.sql.perf.mllib.OptionImplicits._
 import org.apache.commons.math3.random.Well19937c
 import org.apache.spark.ml.Transformer
-import org.apache.spark.ml.clustering.{LDA => ML_LDA}
+import org.apache.spark.ml
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
 import org.apache.spark.ml.linalg.{Vectors, Vector}
@@ -12,10 +12,8 @@ import scala.collection.mutable.{HashMap => MHashMap}
 
 object LDA extends BenchmarkAlgorithm with TestFromTraining {
   // The LDA model is package private, no need to expose it.
-  override type Model = Transformer
 
-  def trainingDataSet(ctx: ClassificationContext): DataFrame = {
-    import ctx.commonParams._
+  override def trainingDataSet(ctx: MLBenchContext): DataFrame = {
     import ctx.extraParams._
     val rdd = ctx.sqlContext.sparkContext.parallelize(
       0L until numExamples,
@@ -42,19 +40,16 @@ object LDA extends BenchmarkAlgorithm with TestFromTraining {
     ctx.sqlContext.createDataFrame(data).toDF("docIndex", "features")
   }
 
-  def train(ctx: ClassificationContext,
-            trainingSet: DataFrame): Model = {
-    import ctx.commonParams._
+  override def train(ctx: MLBenchContext,
+            trainingSet: DataFrame): Transformer = {
     import ctx.extraParams._
-    new ML_LDA()
+    new ml.clustering.LDA()
         .setK(ldaNumTopics)
         .setSeed(randomSeed.toLong)
         .setMaxIter(numIterations)
-        .setOptimizer(ldaOptimizer)
+        .setOptimizer(optimizer)
         .fit(trainingSet)
   }
 
-  def score(
-      ctx: ClassificationContext,
-      testSet: DataFrame, model: Model): Double = -1.0
+  // TODO(?) add a scoring method here.
 }

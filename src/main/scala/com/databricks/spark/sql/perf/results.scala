@@ -103,31 +103,26 @@ case class BreakdownResult(
 
 case class Failure(className: String, message: String)
 
-case class MLTestParameters(
-    numFeatures: Option[Int] = None,
+// KEEP ARGUMENTS SORTED BY NAME
+case class MLParams(
+    // *** Common to all algorithms ***
+    randomSeed: Option[Int] = None,
     numExamples: Option[Long] = None,
     numTestExamples: Option[Long] = None,
     numPartitions: Option[Int] = None,
-    randomSeed: Option[Int] = None)
-
-object MLTestParameters {
-
-  val empty = MLTestParameters()
-}
-
-// KEEP ARGUMENTS SORTED BY NAME
-case class ExtraMLTestParameters(
+    // *** Specialized and sorted by name ***
     ldaDocLength: Option[Int] = None,
     ldaNumVocabulary: Option[Int] = None,
     ldaNumTopics: Option[Int] = None,
-    ldaOptimizer: Option[String] = None,
+    numFeatures: Option[Int] = None,
     numIterations: Option[Int] = None,
+    optimizer: Option[String] = None,
     regParam: Option[Double] = None,
     tol: Option[Double] = None
-    )
+)
 
-object ExtraMLTestParameters {
-  val empty = ExtraMLTestParameters()
+object MLParams {
+  val empty = MLParams()
 }
 
 /**
@@ -141,8 +136,7 @@ object ExtraMLTestParameters {
  * @param testMetric  (MLlib) Test metric, such as accuracy
  */
 case class MLResult(
-    testParameters: Option[MLTestParameters] = None,
-    extraTestParameters: Option[ExtraMLTestParameters] = None,
+    extraTestParameters: Option[MLParams] = None,
     trainingTime: Option[Double] = None,
     trainingMetric: Option[Double] = None,
     testTime: Option[Double] = None,

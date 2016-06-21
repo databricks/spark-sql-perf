@@ -17,13 +17,21 @@ class MLLib(@transient sqlContext: SQLContext)
 }
 
 object MLLib extends Logging {
-  def runDefault(runConfig: RunConfig): MLLib = {
+
+  /**
+   * Runs a set of preprogrammed experiments and blocks on completion.
+   *
+   * @param runConfig a configuration that is av
+   * @return
+   */
+  def runDefault(runConfig: RunConfig): DataFrame = {
     val ml = new MLLib()
     val benchmarks = MLBenchmarks.benchmarkObjects
-    ml.runExperiment(
-      executionsToRun = benchmarks,
-      resultLocation = "/test/results")
-    ml
+    val e = ml.runExperiment(
+      executionsToRun = benchmarks)
+    e.waitForFinish(1000 * 60 * 30)
+    logger.info("Run finished")
+    e.getCurrentResults()
   }
 
   /**
@@ -44,7 +52,7 @@ object MLLib extends Logging {
     val sqlContext = com.databricks.spark.sql.perf.mllib.MLBenchmarks.sqlContext
     val benchmarksDescriptions = conf.runnableBenchmarks
     val benchmarks = benchmarksDescriptions.map { mlb =>
-      new MLClassificationBenchmarkable(mlb.extra, mlb.common, mlb.benchmark, sqlContext)
+      new MLTransformerBenchmarkable(mlb.extra, mlb.benchmark, sqlContext)
     }
     logger.info(s"${benchmarks.size} benchmarks identified:")
     val str = benchmarks.map(_.prettyPrint).mkString("\n")
