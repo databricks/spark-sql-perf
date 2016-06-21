@@ -18,6 +18,6 @@ benchmarks:
       ldaNumTopics: 5
       ldaNumVocabulary: 4
       numIterations: 10
-      ldaOptimizer:
+      optimizer:
         - em
         - online

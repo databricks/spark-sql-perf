@@ -13,5 +13,4 @@ object ModelBuilder {
       intercept: Double): LogisticRegressionModel = {
     new LogisticRegressionModel("lr", coefficients, intercept)
   }
-
 }

@@ -103,7 +103,8 @@ case class BreakdownResult(
 
 case class Failure(className: String, message: String)
 
-// KEEP ARGUMENTS SORTED BY NAME
+// KEEP ARGUMENTS SORTED BY NAME.
+// It simplifies lookup when checking if a parameter is here already.
 case class MLParams(
     // *** Common to all algorithms ***
     randomSeed: Option[Int] = None,
