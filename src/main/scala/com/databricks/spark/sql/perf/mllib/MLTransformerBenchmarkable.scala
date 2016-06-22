@@ -64,8 +64,8 @@ class MLTransformerBenchmarkable(
         mode = executionMode.toString,
         parameters = Map.empty,
         executionTime = Some(trainingTime.toMillis),
-        mlParameters = Some(params),
-        ml = Some(ml))
+        mlParams = Some(params),
+        mlResult = Some(ml))
     } catch {
       case e: Exception =>
         BenchmarkResult(

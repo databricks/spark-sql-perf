@@ -44,9 +44,9 @@ object LDA extends BenchmarkAlgorithm with TestFromTraining {
             trainingSet: DataFrame): Transformer = {
     import ctx.params._
     new ml.clustering.LDA()
-        .setK(ldaNumTopics)
+        .setK(k)
         .setSeed(randomSeed.toLong)
-        .setMaxIter(numIterations)
+        .setMaxIter(maxIter)
         .setOptimizer(optimizer)
         .fit(trainingSet)
   }

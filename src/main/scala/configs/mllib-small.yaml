@@ -15,9 +15,9 @@ benchmarks:
     params:
       numExamples: 10
       ldaDocLength: 20
-      ldaNumTopics: 5
       ldaNumVocabulary: 4
-      numIterations: 10
+      k: 5
+      maxIter: 10
       optimizer:
         - em
         - online

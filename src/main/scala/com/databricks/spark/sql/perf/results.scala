@@ -81,8 +81,8 @@ case class BenchmarkResult(
     breakDown: Seq[BreakdownResult] = Nil,
     queryExecution: Option[String] = None,
     failure: Option[Failure] = None,
-    mlParameters: Option[MLParams] = None,
-    ml: Option[MLResult] = None)
+    mlParams: Option[MLParams] = None,
+    mlResult: Option[MLResult] = None)
 
 /**
  * The execution time of a subtree of the query plan tree of a specific query.
@@ -108,16 +108,16 @@ case class Failure(className: String, message: String)
 // It simplifies lookup when checking if a parameter is here already.
 case class MLParams(
     // *** Common to all algorithms ***
-    randomSeed: Option[Int] = Some(0),
+    randomSeed: Option[Int] = Some(42),
     numExamples: Option[Long] = None,
     numTestExamples: Option[Long] = None,
     numPartitions: Option[Int] = None,
     // *** Specialized and sorted by name ***
     ldaDocLength: Option[Int] = None,
     ldaNumVocabulary: Option[Int] = None,
-    ldaNumTopics: Option[Int] = None,
+    k: Option[Int] = None,
+    maxIter: Option[Int] = None,
     numFeatures: Option[Int] = None,
-    numIterations: Option[Int] = None,
     optimizer: Option[String] = None,
     regParam: Option[Double] = None,
     tol: Option[Double] = None
