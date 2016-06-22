@@ -14,7 +14,8 @@ licenses := Seq("Apache-2.0" -> url("http://opensource.org/licenses/Apache-2.0")
 
 sparkVersion := "2.0.0-SNAPSHOT"
 
-sparkComponents ++= Seq("sql", "hive")
+sparkComponents ++= Seq("sql", "hive", "mllib")
+
 
 initialCommands in console :=
   """
@@ -40,22 +41,26 @@ libraryDependencies += "com.twitter" %% "util-jvm" % "6.23.0" % "provided"
 
 libraryDependencies += "org.scalatest" %% "scalatest" % "2.2.1" % "test"
 
+libraryDependencies += "org.yaml" % "snakeyaml" % "1.17"
+
+libraryDependencies += "com.typesafe" %% "scalalogging-slf4j" % "1.1.0"
+
 fork := true
 
 // Your username to login to Databricks Cloud
-dbcUsername := sys.env.getOrElse("DBC_USERNAME", sys.error("Please set DBC_USERNAME"))
+dbcUsername := sys.env.getOrElse("DBC_USERNAME", "")
 
 // Your password (Can be set as an environment variable)
-dbcPassword := sys.env.getOrElse("DBC_PASSWORD", sys.error("Please set DBC_PASSWORD"))
+dbcPassword := sys.env.getOrElse("DBC_PASSWORD", "")
 
 // The URL to the Databricks Cloud DB Api. Don't forget to set the port number to 34563!
 dbcApiUrl := sys.env.getOrElse ("DBC_URL", sys.error("Please set DBC_URL"))
 
 // Add any clusters that you would like to deploy your work to. e.g. "My Cluster"
 // or run dbcExecuteCommand
-dbcClusters += sys.env.getOrElse("DBC_USERNAME", sys.error("Please set DBC_USERNAME"))
+dbcClusters += sys.env.getOrElse("DBC_USERNAME", "")
 
-dbcLibraryPath := s"/Users/${sys.env.getOrElse("DBC_USERNAME", sys.error("Please set DBC_USERNAME"))}/lib"
+dbcLibraryPath := s"/Users/${sys.env.getOrElse("DBC_USERNAME", "")}/lib"
 
 val runBenchmark = inputKey[Unit]("runs a benchmark")
 
@@ -64,7 +69,8 @@ runBenchmark := {
   val args = spaceDelimited("[args]").parsed
   val scalaRun = (runner in run).value
   val classpath = (fullClasspath in Compile).value
-  scalaRun.run("com.databricks.spark.sql.perf.RunBenchmark", classpath.map(_.data), args, streams.value.log)
+  scalaRun.run("com.databricks.spark.sql.perf.RunBenchmark", classpath.map(_.data), args,
+    streams.value.log)
 }
 
 import ReleaseTransformations._

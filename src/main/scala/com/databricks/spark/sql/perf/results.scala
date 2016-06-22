@@ -18,6 +18,7 @@ package com.databricks.spark.sql.perf
 
 /**
  * The performance results of all given queries for a single iteration.
+ *
  * @param timestamp The timestamp indicates when the entire experiment is started.
  * @param iteration The index number of the current iteration.
  * @param tags Tags of this iteration (variations are stored at here).
@@ -33,6 +34,7 @@ case class ExperimentRun(
 
 /**
  * The configuration used for an iteration of an experiment.
+ *
  * @param sparkVersion The version of Spark.
  * @param sqlConf All configuration properties related to Spark SQL.
  * @param sparkConf All configuration properties of Spark.
@@ -48,6 +50,7 @@ case class BenchmarkConfiguration(
 
 /**
  * The result of a query.
+ *
  * @param name The name of the query.
  * @param mode The ExecutionMode of this run.
  * @param parameters Additional parameters that describe this query.
@@ -77,10 +80,13 @@ case class BenchmarkResult(
     result: Option[Long] = None,
     breakDown: Seq[BreakdownResult] = Nil,
     queryExecution: Option[String] = None,
-    failure: Option[Failure] = None)
+    failure: Option[Failure] = None,
+    mlParams: Option[MLParams] = None,
+    mlResult: Option[MLResult] = None)
 
 /**
  * The execution time of a subtree of the query plan tree of a specific query.
+ *
  * @param nodeName The name of the top physical operator of the subtree.
  * @param nodeNameWithArgs The name and arguments of the top physical operator of the subtree.
  * @param index The index of the top physical operator of the subtree
@@ -97,3 +103,42 @@ case class BreakdownResult(
     delta: Double)
 
 case class Failure(className: String, message: String)
+
+// KEEP ARGUMENTS SORTED BY NAME.
+// It simplifies lookup when checking if a parameter is here already.
+case class MLParams(
+    // *** Common to all algorithms ***
+    randomSeed: Option[Int] = Some(42),
+    numExamples: Option[Long] = None,
+    numTestExamples: Option[Long] = None,
+    numPartitions: Option[Int] = None,
+    // *** Specialized and sorted by name ***
+    ldaDocLength: Option[Int] = None,
+    ldaNumVocabulary: Option[Int] = None,
+    k: Option[Int] = None,
+    maxIter: Option[Int] = None,
+    numFeatures: Option[Int] = None,
+    optimizer: Option[String] = None,
+    regParam: Option[Double] = None,
+    tol: Option[Double] = None
+)
+
+object MLParams {
+  val empty = MLParams()
+}
+
+/**
+ * Result information specific to MLlib.
+ *
+ * @param trainingTime  (MLlib) Training time.
+ *                      executionTime is set to the same value to match Spark Core tests.
+ * @param trainingMetric  (MLlib) Training metric, such as accuracy
+ * @param testTime  (MLlib) Test time (for prediction on test set, or on training set if there
+ *                  is no test set).
+ * @param testMetric  (MLlib) Test metric, such as accuracy
+ */
+case class MLResult(
+    trainingTime: Option[Double] = None,
+    trainingMetric: Option[Double] = None,
+    testTime: Option[Double] = None,
+    testMetric: Option[Double] = None)
