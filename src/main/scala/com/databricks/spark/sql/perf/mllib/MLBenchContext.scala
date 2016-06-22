@@ -19,7 +19,7 @@ case class MLBenchContext(
   // Some seed fixed for the context.
   private val internalSeed: Long  = {
     params.randomSeed.map(_.toLong).getOrElse {
-      new java.util.Random().nextLong()
+      throw new Exception("You need te specify the random seed")
     }
   }
 
