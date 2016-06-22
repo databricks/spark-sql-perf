@@ -7,16 +7,16 @@ import org.apache.spark.sql._
 import scala.collection.mutable.ArrayBuffer
 
 class MLTransformerBenchmarkable(
-                                  extraParam: MLParams,
-                                  test: BenchmarkAlgorithm,
-                                  sqlContext: SQLContext)
+    params: MLParams,
+    test: BenchmarkAlgorithm,
+    sqlContext: SQLContext)
   extends Benchmarkable with Serializable with Logging {
 
   import MLTransformerBenchmarkable._
 
   private var testData: DataFrame = null
   private var trainingData: DataFrame = null
-  private val param = MLBenchContext(extraParam, sqlContext)
+  private val param = MLBenchContext(params, sqlContext)
 
   override val name = test.getClass.getCanonicalName
 
@@ -54,7 +54,6 @@ class MLTransformerBenchmarkable(
 
 
       val ml = MLResult(
-        extraTestParameters = Some(extraParam),
         trainingTime = Some(trainingTime.toMillis),
         trainingMetric = Some(scoreTraining),
         testTime = Some(scoreTestTime.toMillis),
@@ -65,6 +64,7 @@ class MLTransformerBenchmarkable(
         mode = executionMode.toString,
         parameters = Map.empty,
         executionTime = Some(trainingTime.toMillis),
+        mlParameters = Some(params),
         ml = Some(ml))
     } catch {
       case e: Exception =>
@@ -81,8 +81,8 @@ class MLTransformerBenchmarkable(
   }
 
   def prettyPrint: String = {
-    val params = pprint(extraParam).mkString("\n")
-    s"$test\n$params"
+    val paramString = pprint(params).mkString("\n")
+    s"$test\n$paramString"
   }
 
 

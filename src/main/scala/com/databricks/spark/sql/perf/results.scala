@@ -81,6 +81,7 @@ case class BenchmarkResult(
     breakDown: Seq[BreakdownResult] = Nil,
     queryExecution: Option[String] = None,
     failure: Option[Failure] = None,
+    mlParameters: Option[MLParams] = None,
     ml: Option[MLResult] = None)
 
 /**
@@ -107,7 +108,7 @@ case class Failure(className: String, message: String)
 // It simplifies lookup when checking if a parameter is here already.
 case class MLParams(
     // *** Common to all algorithms ***
-    randomSeed: Option[Int] = None,
+    randomSeed: Option[Int] = Some(0),
     numExamples: Option[Long] = None,
     numTestExamples: Option[Long] = None,
     numPartitions: Option[Int] = None,
@@ -137,7 +138,6 @@ object MLParams {
  * @param testMetric  (MLlib) Test metric, such as accuracy
  */
 case class MLResult(
-    extraTestParameters: Option[MLParams] = None,
     trainingTime: Option[Double] = None,
     trainingMetric: Option[Double] = None,
     testTime: Option[Double] = None,

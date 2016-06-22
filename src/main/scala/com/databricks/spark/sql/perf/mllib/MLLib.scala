@@ -52,7 +52,7 @@ object MLLib extends Logging {
     val sqlContext = com.databricks.spark.sql.perf.mllib.MLBenchmarks.sqlContext
     val benchmarksDescriptions = conf.runnableBenchmarks
     val benchmarks = benchmarksDescriptions.map { mlb =>
-      new MLTransformerBenchmarkable(mlb.extra, mlb.benchmark, sqlContext)
+      new MLTransformerBenchmarkable(mlb.params, mlb.benchmark, sqlContext)
     }
     logger.info(s"${benchmarks.size} benchmarks identified:")
     val str = benchmarks.map(_.prettyPrint).mkString("\n")

@@ -43,7 +43,7 @@ trait BenchmarkAlgorithm extends Logging {
 trait ScoringWithEvaluator {
   self: BenchmarkAlgorithm =>
 
-  protected def evaluator(ctx: MLBenchContext): Evaluator = new MulticlassClassificationEvaluator()
+  protected def evaluator(ctx: MLBenchContext): Evaluator
 
   final override def score(
       ctx: MLBenchContext,
@@ -80,10 +80,10 @@ trait TestFromTraining {
 
   final override def testDataSet(ctx: MLBenchContext): DataFrame = {
     // Copy the context with a new seed.
-    val ctx2 = ctx.extraParams.randomSeed match {
+    val ctx2 = ctx.params.randomSeed match {
       case Some(x) =>
-        val p = ctx.extraParams.copy(randomSeed = Some(x + 1))
-        ctx.copy(extraParams = p)
+        val p = ctx.params.copy(randomSeed = Some(x + 1))
+        ctx.copy(params = p)
       case None =>
         // Making a full copy to reset the internal seed.
         ctx.copy()

@@ -14,7 +14,7 @@ object LDA extends BenchmarkAlgorithm with TestFromTraining {
   // The LDA model is package private, no need to expose it.
 
   override def trainingDataSet(ctx: MLBenchContext): DataFrame = {
-    import ctx.extraParams._
+    import ctx.params._
     val rdd = ctx.sqlContext.sparkContext.parallelize(
       0L until numExamples,
       numPartitions
@@ -42,7 +42,7 @@ object LDA extends BenchmarkAlgorithm with TestFromTraining {
 
   override def train(ctx: MLBenchContext,
             trainingSet: DataFrame): Transformer = {
-    import ctx.extraParams._
+    import ctx.params._
     new ml.clustering.LDA()
         .setK(ldaNumTopics)
         .setSeed(randomSeed.toLong)

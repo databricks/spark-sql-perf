@@ -8,8 +8,8 @@ import com.databricks.spark.sql.perf.{MLParams}
 import OptionImplicits._
 
 case class MLTest(
-    benchmark: BenchmarkAlgorithm,
-    extra: MLParams)
+                   benchmark: BenchmarkAlgorithm,
+                   params: MLParams)
 
 // Example on how to create benchmarks using the API.
 object MLBenchmarks {
@@ -31,7 +31,7 @@ object MLBenchmarks {
   val sqlContext: SQLContext = SQLContext.getOrCreate(context)
 
   def benchmarkObjects: Seq[MLTransformerBenchmarkable] = benchmarks.map { mlb =>
-    new MLTransformerBenchmarkable(mlb.extra, mlb.benchmark, sqlContext)
+    new MLTransformerBenchmarkable(mlb.params, mlb.benchmark, sqlContext)
   }
 
 }

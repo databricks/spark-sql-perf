@@ -9,16 +9,16 @@ import org.apache.spark.sql.SQLContext
 /**
  * All the information required to run a test.
  *
- * @param extraParams
+ * @param params
  * @param sqlContext
  */
 case class MLBenchContext(
-    extraParams: MLParams,
+    params: MLParams,
     sqlContext: SQLContext) {
 
   // Some seed fixed for the context.
   private val internalSeed: Long  = {
-    extraParams.randomSeed.map(_.toLong).getOrElse {
+    params.randomSeed.map(_.toLong).getOrElse {
       new java.util.Random().nextLong()
     }
   }
