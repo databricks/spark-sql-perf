@@ -35,6 +35,10 @@ trait BenchmarkAlgorithm extends Logging {
       ctx: MLBenchContext,
       testSet: DataFrame,
       model: Transformer): Double = -1.0 // Not putting NaN because it is not valid JSON.
+
+  def name: String = {
+    this.getClass.getCanonicalName.replace("$", "")
+  }
 }
 
 /**
@@ -82,7 +86,9 @@ trait TestFromTraining {
     // Copy the context with a new seed.
     val ctx2 = ctx.params.randomSeed match {
       case Some(x) =>
-        val p = ctx.params.copy(randomSeed = Some(x + 1))
+        // Also set the number of examples to the number of test examples.
+        assert(ctx.params.numTestExamples.nonEmpty, "You must specify test examples")
+        val p = ctx.params.copy(randomSeed = Some(x + 1), numExamples = ctx.params.numTestExamples)
         ctx.copy(params = p)
       case None =>
         // Making a full copy to reset the internal seed.

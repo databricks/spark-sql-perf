@@ -54,9 +54,9 @@ object MLLib extends Logging {
     val benchmarks = benchmarksDescriptions.map { mlb =>
       new MLTransformerBenchmarkable(mlb.params, mlb.benchmark, sqlContext)
     }
-    logger.info(s"${benchmarks.size} benchmarks identified:")
+    println(s"${benchmarks.size} benchmarks identified:")
     val str = benchmarks.map(_.prettyPrint).mkString("\n")
-    logger.info(str)
+    println(str)
     logger.info("Starting experiments")
     val e = b.runExperiment(
       executionsToRun = benchmarks,

@@ -18,7 +18,7 @@ class MLTransformerBenchmarkable(
   private var trainingData: DataFrame = null
   private val param = MLBenchContext(params, sqlContext)
 
-  override val name = test.getClass.getCanonicalName
+  override val name = test.name
 
   override protected val executionMode: ExecutionMode = ExecutionMode.SparkPerfResults
 

@@ -113,9 +113,12 @@ case class MLParams(
     numTestExamples: Option[Long] = None,
     numPartitions: Option[Int] = None,
     // *** Specialized and sorted by name ***
+    elasticNetParam: Option[Double] = None,
+    family: Option[String] = None,
+    link: Option[String] = None,
+    k: Option[Int] = None,
     ldaDocLength: Option[Int] = None,
     ldaNumVocabulary: Option[Int] = None,
-    k: Option[Int] = None,
     maxIter: Option[Int] = None,
     numFeatures: Option[Int] = None,
     optimizer: Option[String] = None,
