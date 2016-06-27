@@ -38,6 +38,7 @@ object LogisticRegression extends BenchmarkAlgorithm
     import ctx.params._
     val lr = new ml.classification.LogisticRegression()
       .setTol(tol)
+      .setMaxIter(maxIter)
       .setRegParam(regParam)
     lr.fit(trainingSet)
   }

@@ -30,6 +30,10 @@ trait BenchmarkAlgorithm extends Logging {
       ctx: MLBenchContext,
       trainingSet: DataFrame): Transformer
 
+  /**
+   * The unnormalized score of the training procedure on a dataset. The normalization is
+   * performed by the caller.
+   */
   @throws[Exception]("if scoring fails")
   def score(
       ctx: MLBenchContext,
