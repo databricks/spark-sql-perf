@@ -7,7 +7,7 @@ import org.apache.spark.ml.evaluation.{MulticlassClassificationEvaluator, Evalua
 
 import org.apache.spark.ml.{Transformer, ModelBuilder}
 import org.apache.spark.ml
-import org.apache.spark.ml.linalg.Vectors
+import org.apache.spark.mllib.linalg.Vectors
 import org.apache.spark.sql.DataFrame
 
 object LogisticRegression extends BenchmarkAlgorithm

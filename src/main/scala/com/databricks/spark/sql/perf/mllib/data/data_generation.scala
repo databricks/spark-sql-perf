@@ -1,7 +1,7 @@
 package com.databricks.spark.sql.perf.mllib.data
 
-import org.apache.spark.ml.linalg.Vectors
-import org.apache.spark.ml.linalg.Vector
+import org.apache.spark.mllib.linalg.Vectors
+import org.apache.spark.mllib.linalg.Vector
 import org.apache.spark.mllib.random._
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.rdd.RDD

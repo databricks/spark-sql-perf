@@ -352,10 +352,7 @@ object Benchmark {
                 .find(_.name == name)
               if (table.isDefined) {
                 logMessage(s"Creating table: $name")
-                table.get.data
-                  .write
-                  .mode("overwrite")
-                  .saveAsTable(name)
+                ???
               } else {
                 // the table could be subquery
                 logMessage(s"Couldn't read table $name and its not defined as a Benchmark.Table.")

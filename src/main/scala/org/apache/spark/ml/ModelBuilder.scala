@@ -1,7 +1,7 @@
 package org.apache.spark.ml
 
 import org.apache.spark.ml.classification.LogisticRegressionModel
-import org.apache.spark.ml.linalg.Vector
+import org.apache.spark.mllib.linalg.Vector
 
 /**
  * Helper for creating MLlib models which have private constructors.

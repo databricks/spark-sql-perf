@@ -7,7 +7,7 @@ import org.apache.spark.ml.Transformer
 import org.apache.spark.ml
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
-import org.apache.spark.ml.linalg.{Vectors, Vector}
+import org.apache.spark.mllib.linalg.{Vectors, Vector}
 import scala.collection.mutable.{HashMap => MHashMap}
 
 object LDA extends BenchmarkAlgorithm with TestFromTraining {
