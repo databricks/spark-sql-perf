@@ -18,19 +18,21 @@ package com.databricks.spark.sql.perf
 
 import java.util.UUID
 
-import com.typesafe.scalalogging.slf4j.Logging
+import com.typesafe.scalalogging.Logger
 
 import scala.concurrent.duration._
 import scala.collection.mutable.ArrayBuffer
-
 import org.apache.spark.sql.SQLContext
-import org.apache.spark.{SparkEnv, SparkContext}
+import org.apache.spark.{SparkContext, SparkEnv}
+import org.slf4j.LoggerFactory
 
 
 /** A trait to describe things that can be benchmarked. */
-trait Benchmarkable extends Logging {
+trait Benchmarkable extends {
   @transient protected[this] val sqlContext = SQLContext.getOrCreate(SparkContext.getOrCreate())
   @transient protected[this] val sparkContext = sqlContext.sparkContext
+
+  val logger = Logger(LoggerFactory.getLogger("MASTER_LOGGER"))
 
   val name: String
   protected val executionMode: ExecutionMode

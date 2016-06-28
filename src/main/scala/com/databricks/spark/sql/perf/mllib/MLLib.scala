@@ -1,13 +1,12 @@
 package com.databricks.spark.sql.perf.mllib
 
-import scala.language.implicitConversions
-
 import com.databricks.spark.sql.perf._
-
-import com.typesafe.scalalogging.slf4j.Logging
-
+import com.typesafe.scalalogging.Logger
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.{DataFrame, SQLContext}
+import org.slf4j.LoggerFactory
+
+import scala.language.implicitConversions
 
 
 class MLLib(@transient sqlContext: SQLContext)
@@ -16,7 +15,9 @@ class MLLib(@transient sqlContext: SQLContext)
   def this() = this(SQLContext.getOrCreate(SparkContext.getOrCreate()))
 }
 
-object MLLib extends Logging {
+object MLLib {
+  val logger = Logger(LoggerFactory.getLogger("MASTER_LOGGER"))
+
 
   /**
    * Runs a set of preprogrammed experiments and blocks on completion.

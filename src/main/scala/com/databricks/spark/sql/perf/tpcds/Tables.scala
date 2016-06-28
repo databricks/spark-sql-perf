@@ -209,7 +209,7 @@ class Tables(sqlContext: SQLContext, dsdgenDir: String, scaleFactor: Int) extend
     }
 
     if (!tableFilter.isEmpty) {
-      tablesToBeGenerated = tablesToBeGenerated.filter(_.name == tableFilter)
+      tablesToBeGenerated = tablesToBeGenerated.filter(_.name contains tableFilter)
       if (tablesToBeGenerated.isEmpty) {
         throw new RuntimeException("Bad table name filter: " + tableFilter)
       }

@@ -1,7 +1,6 @@
 package com.databricks.spark.sql.perf.mllib
 
 import com.databricks.spark.sql.perf._
-import com.typesafe.scalalogging.slf4j.Logging
 import org.apache.spark.sql._
 
 import scala.collection.mutable.ArrayBuffer
@@ -10,7 +9,7 @@ class MLTransformerBenchmarkable(
     params: MLParams,
     test: BenchmarkAlgorithm,
     sqlContext: SQLContext)
-  extends Benchmarkable with Serializable with Logging {
+  extends Benchmarkable with Serializable {
 
   import MLTransformerBenchmarkable._
 
