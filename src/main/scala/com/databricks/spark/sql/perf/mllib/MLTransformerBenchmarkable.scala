@@ -16,9 +16,10 @@ class MLTransformerBenchmarkable(
 
   private var testData: DataFrame = null
   private var trainingData: DataFrame = null
+  private var testDataCount: Option[Long] = None
   private val param = MLBenchContext(params, sqlContext)
 
-  override val name = test.getClass.getCanonicalName
+  override val name = test.name
 
   override protected val executionMode: ExecutionMode = ExecutionMode.SparkPerfResults
 
@@ -27,7 +28,7 @@ class MLTransformerBenchmarkable(
     try {
       testData = test.testDataSet(param)
       testData.cache()
-      testData.count()
+      testDataCount = Some(testData.count())
       trainingData = test.trainingDataSet(param)
       trainingData.cache()
       trainingData.count()
@@ -57,7 +58,7 @@ class MLTransformerBenchmarkable(
         trainingTime = Some(trainingTime.toMillis),
         trainingMetric = Some(scoreTraining),
         testTime = Some(scoreTestTime.toMillis),
-        testMetric = Some(scoreTest))
+        testMetric = Some(scoreTest / testDataCount.get))
 
       BenchmarkResult(
         name = name,

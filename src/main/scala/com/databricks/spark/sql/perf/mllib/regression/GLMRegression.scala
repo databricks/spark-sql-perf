@@ -1,17 +1,17 @@
-package com.databricks.spark.sql.perf.mllib.classification
+package com.databricks.spark.sql.perf.mllib.regression
 
 import com.databricks.spark.sql.perf.mllib.OptionImplicits._
 import com.databricks.spark.sql.perf.mllib._
 import com.databricks.spark.sql.perf.mllib.data.DataGenerator
-import org.apache.spark.ml.evaluation.{MulticlassClassificationEvaluator, Evaluator}
-
-import org.apache.spark.ml.{Transformer, ModelBuilder}
-import org.apache.spark.ml
+import org.apache.spark.ml.evaluation.{Evaluator, RegressionEvaluator}
 import org.apache.spark.ml.linalg.Vectors
-import org.apache.spark.sql.DataFrame
+import org.apache.spark.ml.regression.GeneralizedLinearRegression
+import org.apache.spark.ml.{ModelBuilder, Transformer}
+import org.apache.spark.sql._
 
-object LogisticRegression extends BenchmarkAlgorithm
-  with TestFromTraining with TrainingSetFromTransformer with ScoringWithEvaluator {
+
+object GLMRegression extends BenchmarkAlgorithm with TestFromTraining with
+  TrainingSetFromTransformer with ScoringWithEvaluator {
 
   override protected def initialData(ctx: MLBenchContext) = {
     import ctx.params._
@@ -24,26 +24,32 @@ object LogisticRegression extends BenchmarkAlgorithm
   }
 
   override protected def trueModel(ctx: MLBenchContext): Transformer = {
+    import ctx.params._
     val rng = ctx.newGenerator()
     val coefficients =
       Vectors.dense(Array.fill[Double](ctx.params.numFeatures)(2 * rng.nextDouble() - 1))
     // Small intercept to prevent some skew in the data.
     val intercept = 0.01 * (2 * rng.nextDouble - 1)
-    ModelBuilder.newLogisticRegressionModel(coefficients, intercept)
+    val m = ModelBuilder.newGLR(coefficients, intercept)
+    m.set(m.link, link.get)
+    m.set(m.family, family.get)
+    m
   }
 
-  override def train(ctx: MLBenchContext,
-            trainingSet: DataFrame): Transformer = {
+  override def train(
+      ctx: MLBenchContext,
+      trainingSet: DataFrame): Transformer = {
     logger.info(s"$this: train: trainingSet=${trainingSet.schema}")
     import ctx.params._
-    val lr = new ml.classification.LogisticRegression()
-      .setTol(tol)
-      .setMaxIter(maxIter)
+    val glr = new GeneralizedLinearRegression()
+      .setLink(link)
+      .setFamily(family)
       .setRegParam(regParam)
-    lr.fit(trainingSet)
+      .setMaxIter(maxIter)
+      .setTol(tol)
+    glr.fit(trainingSet)
   }
 
   override protected def evaluator(ctx: MLBenchContext): Evaluator =
-    new MulticlassClassificationEvaluator()
+    new RegressionEvaluator()
 }
-

@@ -81,7 +81,13 @@ trait Benchmarkable extends Logging {
         } catch {
           case e: Throwable =>
             logger.info(s"$that: failure in runBenchmark: $e")
-            throw e
+            println(s"$that: failure in runBenchmark: $e")
+            result = BenchmarkResult(
+              name = name,
+              mode = executionMode.toString,
+              parameters = Map.empty,
+              failure = Some(Failure(e.getClass.getSimpleName,
+                e.getMessage + ":\n" + e.getStackTraceString)))
         }
       }
     }
