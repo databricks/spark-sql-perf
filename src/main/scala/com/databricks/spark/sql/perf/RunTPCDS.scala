@@ -23,24 +23,20 @@ import org.apache.spark.{SparkConf, SparkContext}
 
 
 case class RunTPCDSConfig(
-                           // For table generation.
-                           generateInput: Boolean = true,
-                           dsdgenDir: String = "",
-                           scaleFactor: Int = 1,
-                           inputDir: String = "",
-                           tableFilter: String = "",
-
-                           databaseName: String = "",
-                           format: String = "parquet",
-                           partitionTables: Boolean = false,
-                           clusterByPartitionColumns: Boolean = false,
-
-                           filter: Option[String] = None,
-                           iterations: Int = 3)
-
+    generateInput: Boolean = true,
+    dsdgenDir: String = "",
+    scaleFactor: Int = 1,
+    inputDir: String = "",
+    tableFilter: String = "",
+    databaseName: String = "",
+    format: String = "parquet",
+    partitionTables: Boolean = false,
+    clusterByPartitionColumns: Boolean = false,
+    filter: Option[String] = None,
+    iterations: Int = 3)
 
 /**
-  * Runs a benchmark locally and prints the results to the screen.
+  * Runs a benchmark and prints the results to the screen.
   * Configs:
   * spark.sql.perf.results
   *
