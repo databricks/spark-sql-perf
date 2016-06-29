@@ -1,11 +1,11 @@
 package com.databricks.spark.sql.perf.mllib
 
-import com.typesafe.scalalogging.slf4j.Logging
-
+import com.typesafe.scalalogging.Logger
 import org.apache.spark.ml.Transformer
-import org.apache.spark.ml.evaluation.{MulticlassClassificationEvaluator, Evaluator}
+import org.apache.spark.ml.evaluation.Evaluator
 import org.apache.spark.sql._
 import org.apache.spark.sql.functions._
+import org.slf4j.LoggerFactory
 
 /**
  * The description of a benchmark for an ML algorithm. It follows a simple, standard proceduce:
@@ -19,7 +19,9 @@ import org.apache.spark.sql.functions._
  *
  * It is assumed that the implementation is going to be an object.
  */
-trait BenchmarkAlgorithm extends Logging {
+trait BenchmarkAlgorithm {
+
+  val logger = Logger(LoggerFactory.getLogger("MASTER_LOGGER"))
 
   def trainingDataSet(ctx: MLBenchContext): DataFrame
 
