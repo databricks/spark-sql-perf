@@ -2,9 +2,11 @@ package com.databricks.spark.sql.perf.mllib
 
 import com.databricks.spark.sql.perf._
 import com.typesafe.scalalogging.slf4j.Logging
-import org.apache.spark.sql._
 
+import org.apache.spark.sql._
 import scala.collection.mutable.ArrayBuffer
+
+import org.apache.spark.ml.Transformer
 
 class MLTransformerBenchmarkable(
     params: MLParams,
@@ -44,7 +46,12 @@ class MLTransformerBenchmarkable(
     description: String,
     messages: ArrayBuffer[String]): BenchmarkResult = {
     try {
-      val (trainingTime, model) = measureTime(test.train(param, trainingData))
+      val (trainingTime, model: Transformer) = measureTime {
+        logger.info(s"$this: train: trainingSet=${trainingData.schema}")
+        val estimator = test.getEstimator(param)
+        estimator.fit(trainingData)
+        //test.train(param, trainingData)
+      }
       logger.info(s"model: $model")
       val (_, scoreTraining) = measureTime {
         test.score(param, trainingData, model)

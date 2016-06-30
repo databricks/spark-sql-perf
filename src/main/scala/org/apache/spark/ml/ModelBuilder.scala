@@ -190,7 +190,7 @@ object TreeBuilder {
       // nCatsSplit is in {1,...,arity-1}.
       val nCatsSplit = rng.nextInt(featureArity(feature) - 1) + 1
       val splitCategories: Array[Double] =
-        rng.shuffle(Range(0,featureArity(feature))).map(_.toDouble).toArray.take(nCatsSplit)
+        rng.shuffle(Range(0,featureArity(feature)).toList).toArray.map(_.toDouble).take(nCatsSplit)
       new CategoricalSplit(featureIndex = feature,
         _leftCategories = splitCategories, numCategories = featureArity(feature))
     }

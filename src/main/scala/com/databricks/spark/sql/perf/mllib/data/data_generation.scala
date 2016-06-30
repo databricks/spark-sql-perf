@@ -3,82 +3,65 @@ package com.databricks.spark.sql.perf.mllib.data
 import org.apache.spark.ml.linalg.Vectors
 import org.apache.spark.ml.linalg.Vector
 import org.apache.spark.mllib.random._
-import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{SQLContext, DataFrame}
 
+
 object DataGenerator {
 
-  def generateFeatures(
+  def generateContinuousFeatures(
       sql: SQLContext,
       numExamples: Long,
       seed: Long,
       numPartitions: Int,
       numFeatures: Int): DataFrame = {
-    val categoricalArities = Array.empty[Int]
+    val featureArity = Array.fill[Int](numFeatures)(0)
     val rdd: RDD[Vector] = RandomRDDs.randomRDD(sql.sparkContext,
-            new FeaturesGenerator(categoricalArities, numFeatures),
-           numExamples, numPartitions, seed)
+      new FeaturesGenerator(featureArity), numExamples, numPartitions, seed)
     sql.createDataFrame(rdd.map(Tuple1.apply)).toDF("features")
   }
-}
 
-class BinaryLabeledDataGenerator(
-    private val numFeatures: Int,
-    private val threshold: Double) extends RandomDataGenerator[LabeledPoint] {
-
-  private val rng = new java.util.Random()
-
-  override def nextValue(): LabeledPoint = {
-    val y = if (rng.nextDouble() < threshold) 0.0 else 1.0
-    val x = Array.fill[Double](numFeatures) {
-      if (rng.nextDouble() < threshold) 0.0 else 1.0
-    }
-    ???
-//    LabeledPoint(y, Vectors.dense(x))
+  def generateMixedFeatures(
+      sql: SQLContext,
+      numExamples: Long,
+      seed: Long,
+      numPartitions: Int,
+      featureArity: Array[Int]): DataFrame = {
+    val rdd: RDD[Vector] = RandomRDDs.randomRDD(sql.sparkContext,
+      new FeaturesGenerator(featureArity), numExamples, numPartitions, seed)
+    sql.createDataFrame(rdd.map(Tuple1.apply)).toDF("features")
   }
-
-  override def setSeed(seed: Long) {
-    rng.setSeed(seed)
-  }
-
-  override def copy(): BinaryLabeledDataGenerator =
-    new BinaryLabeledDataGenerator(numFeatures, threshold)
-
 }
 
 
 /**
  * Generator for a feature vector which can include a mix of categorical and continuous features.
- * @param categoricalArities  Specifies the number of categories for each categorical feature.
- * @param numContinuous  Number of continuous features.  Feature values are in range [0,1].
+ * @param featureArity  Length numFeatures, where 0 indicates continuous feature and > 0
+ *                      indicates a categorical feature of that arity.
  */
-class FeaturesGenerator(val categoricalArities: Array[Int], val numContinuous: Int)
+class FeaturesGenerator(val featureArity: Array[Int])
   extends RandomDataGenerator[Vector] {
 
-  categoricalArities.foreach { arity =>
-    require(arity >= 2, s"FeaturesGenerator given categorical arity = $arity, " +
-      s"but arity should be >= 2.")
+  featureArity.foreach { arity =>
+    require(arity >= 0, s"FeaturesGenerator given categorical arity = $arity, " +
+      s"but arity should be >= 0.")
   }
 
-  val numFeatures = categoricalArities.length + numContinuous
+  val numFeatures = featureArity.length
 
   private val rng = new java.util.Random()
 
   /**
-   * Generates vector with categorical features first, and continuous features in [0,1] second.
+   * Generates vector with features in the order given by [[featureArity]]
    */
   override def nextValue(): Vector = {
-    // Feature ordering matches getCategoricalFeaturesInfo.
     val arr = new Array[Double](numFeatures)
     var j = 0
-    while (j < categoricalArities.length) {
-      arr(j) = rng.nextInt(categoricalArities(j))
-      j += 1
-    }
-    while (j < numFeatures) {
-      // Generating some centered data
-      arr(j) = 2 * rng.nextDouble() - 1
+    while (j < featureArity.length) {
+      if (featureArity(j) == 0)
+        arr(j) = 2 * rng.nextDouble() - 1 // centered uniform data
+      else
+        arr(j) = rng.nextInt(featureArity(j))
       j += 1
     }
     Vectors.dense(arr)
@@ -88,15 +71,5 @@ class FeaturesGenerator(val categoricalArities: Array[Int], val numContinuous: I
     rng.setSeed(seed)
   }
 
-  override def copy(): FeaturesGenerator = new FeaturesGenerator(categoricalArities, numContinuous)
-
-  /**
-   * @return categoricalFeaturesInfo Map storing arity of categorical features.
-   *                                 E.g., an entry (n -> k) indicates that feature n is categorical
-   *                                 with k categories indexed from 0: {0, 1, ..., k-1}.
-   */
-  def getCategoricalFeaturesInfo: Map[Int, Int] = {
-    // Categorical features are indexed from 0 because of the implementation of nextValue().
-    categoricalArities.zipWithIndex.map(_.swap).toMap
-  }
+  override def copy(): FeaturesGenerator = new FeaturesGenerator(featureArity)
 }
