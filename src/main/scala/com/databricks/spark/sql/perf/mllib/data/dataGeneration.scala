@@ -21,6 +21,11 @@ object DataGenerator {
     sql.createDataFrame(rdd.map(Tuple1.apply)).toDF("features")
   }
 
+  /**
+   * Generate a mix of continuous and categorical features.
+   * @param featureArity  Array of length numFeatures, where 0 indicates a continuous feature and
+   *                      a value > 0 indicates a categorical feature with that arity.
+   */
   def generateMixedFeatures(
       sql: SQLContext,
       numExamples: Long,

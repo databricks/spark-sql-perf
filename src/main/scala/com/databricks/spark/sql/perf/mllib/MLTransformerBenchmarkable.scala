@@ -50,7 +50,6 @@ class MLTransformerBenchmarkable(
         logger.info(s"$this: train: trainingSet=${trainingData.schema}")
         val estimator = test.getEstimator(param)
         estimator.fit(trainingData)
-        //test.train(param, trainingData)
       }
       logger.info(s"model: $model")
       val (_, scoreTraining) = measureTime {
