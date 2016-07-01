@@ -33,3 +33,25 @@ benchmarks:
       tol: 0.0
       maxIter: 10
       regParam: 0.1
+  - name: classification.DecisionTreeClassification
+    params:
+      numExamples: 100
+      numTestExamples: 10
+      depth: 3
+      numClasses: 4
+      numFeatures: 5
+  - name: classification.RandomForestClassification
+    params:
+      numExamples: 100
+      numTestExamples: 10
+      depth: 3
+      numClasses: 4
+      numFeatures: 5
+  - name: classification.GBTClassification
+    params:
+      numExamples: 100
+      numTestExamples: 10
+      depth: 3
+      numClasses: 4
+      numFeatures: 5
+      maxIter: 3
