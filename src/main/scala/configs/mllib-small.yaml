@@ -12,6 +12,7 @@ benchmarks:
       numFeatures: 100
       regParam: 0.1
       tol: [0.2, 0.1]
+      maxIter: 10
   - name: clustering.LDA
     params:
       numExamples: 10
@@ -23,6 +24,12 @@ benchmarks:
       optimizer:
         - em
         - online
+  - name: clustering.KMeans
+    params:
+      numExamples: 10
+      numTestExamples: 10
+      k: 5
+      maxIter: 10
   - name: regression.GLMRegression
     params:
       numExamples: 100
