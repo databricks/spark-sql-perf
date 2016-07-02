@@ -4,6 +4,7 @@ import org.apache.spark.ml.Estimator
 import org.apache.spark.ml.classification.RandomForestClassifier
 
 import com.databricks.spark.sql.perf.mllib._
+import com.databricks.spark.sql.perf.mllib.OptionImplicits._
 
 
 object RandomForestClassification extends TreeOrForestClassification {
@@ -13,8 +14,8 @@ object RandomForestClassification extends TreeOrForestClassification {
     // TODO: subsamplingRate, featureSubsetStrategy
     // TODO: cacheNodeIds, checkpoint?
     new RandomForestClassifier()
-      .setMaxDepth(depth.get)
-      .setNumTrees(maxIter.get)
+      .setMaxDepth(depth)
+      .setNumTrees(maxIter)
       .setSeed(ctx.seed())
   }
 }

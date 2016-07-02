@@ -75,7 +75,7 @@ object TreeBuilder {
       new Pair[Double, Double](left, right)
     }
 
-    override def setSeed(seed: Long) {
+    override def setSeed(seed: Long): Unit = {
       rng.setSeed(seed)
     }
 
@@ -94,7 +94,7 @@ object TreeBuilder {
     override def nextValue(): Pair[Double, Double] =
       new Pair[Double, Double](rng.nextDouble(), rng.nextDouble())
 
-    override def setSeed(seed: Long) {
+    override def setSeed(seed: Long): Unit = {
       rng.setSeed(seed)
     }
 
@@ -135,6 +135,7 @@ object TreeBuilder {
     } else {
       new ClassLabelPairGenerator(labelType)
     }
+    labelGenerator.setSeed(rng.nextLong)
     // We use a dummy impurityCalculator for all nodes.
     val impurityCalculator = if (isRegression) {
       ImpurityCalculator.getCalculator("variance", Array.fill[Double](3)(0.0))

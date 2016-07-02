@@ -47,6 +47,7 @@ benchmarks:
       depth: 3
       numClasses: 4
       numFeatures: 5
+      maxIter: 3
   - name: classification.GBTClassification
     params:
       numExamples: 100
