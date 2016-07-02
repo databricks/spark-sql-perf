@@ -1,13 +1,13 @@
 package com.databricks.spark.sql.perf.mllib.regression
 
-import com.databricks.spark.sql.perf.mllib.OptionImplicits._
-import com.databricks.spark.sql.perf.mllib._
-import com.databricks.spark.sql.perf.mllib.data.DataGenerator
 import org.apache.spark.ml.evaluation.{Evaluator, RegressionEvaluator}
 import org.apache.spark.ml.linalg.Vectors
 import org.apache.spark.ml.regression.GeneralizedLinearRegression
-import org.apache.spark.ml.{ModelBuilder, Transformer}
-import org.apache.spark.sql._
+import org.apache.spark.ml.{Estimator, ModelBuilder, Transformer}
+
+import com.databricks.spark.sql.perf.mllib.OptionImplicits._
+import com.databricks.spark.sql.perf.mllib._
+import com.databricks.spark.sql.perf.mllib.data.DataGenerator
 
 
 object GLMRegression extends BenchmarkAlgorithm with TestFromTraining with
@@ -15,7 +15,7 @@ object GLMRegression extends BenchmarkAlgorithm with TestFromTraining with
 
   override protected def initialData(ctx: MLBenchContext) = {
     import ctx.params._
-    DataGenerator.generateFeatures(
+    DataGenerator.generateContinuousFeatures(
       ctx.sqlContext,
       numExamples,
       ctx.seed(),
@@ -36,18 +36,14 @@ object GLMRegression extends BenchmarkAlgorithm with TestFromTraining with
     m
   }
 
-  override def train(
-      ctx: MLBenchContext,
-      trainingSet: DataFrame): Transformer = {
-    logger.info(s"$this: train: trainingSet=${trainingSet.schema}")
+  override def getEstimator(ctx: MLBenchContext): Estimator[_] = {
     import ctx.params._
-    val glr = new GeneralizedLinearRegression()
+    new GeneralizedLinearRegression()
       .setLink(link)
       .setFamily(family)
       .setRegParam(regParam)
       .setMaxIter(maxIter)
       .setTol(tol)
-    glr.fit(trainingSet)
   }
 
   override protected def evaluator(ctx: MLBenchContext): Evaluator =
