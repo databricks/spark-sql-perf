@@ -2,8 +2,8 @@ package com.databricks.spark.sql.perf.mllib
 
 import com.typesafe.scalalogging.slf4j.Logging
 
-import org.apache.spark.ml.Transformer
-import org.apache.spark.ml.evaluation.{MulticlassClassificationEvaluator, Evaluator}
+import org.apache.spark.ml.{Estimator, Transformer}
+import org.apache.spark.ml.evaluation.Evaluator
 import org.apache.spark.sql._
 import org.apache.spark.sql.functions._
 
@@ -25,16 +25,24 @@ trait BenchmarkAlgorithm extends Logging {
 
   def testDataSet(ctx: MLBenchContext): DataFrame
 
-  @throws[Exception]("if training fails")
-  def train(
-      ctx: MLBenchContext,
-      trainingSet: DataFrame): Transformer
+  /**
+   * Create an [[Estimator]] with params set from the given [[MLBenchContext]].
+   */
+  def getEstimator(ctx: MLBenchContext): Estimator[_]
 
+  /**
+   * The unnormalized score of the training procedure on a dataset. The normalization is
+   * performed by the caller.
+   */
   @throws[Exception]("if scoring fails")
   def score(
       ctx: MLBenchContext,
       testSet: DataFrame,
       model: Transformer): Double = -1.0 // Not putting NaN because it is not valid JSON.
+
+  def name: String = {
+    this.getClass.getCanonicalName.replace("$", "")
+  }
 }
 
 /**
@@ -82,7 +90,9 @@ trait TestFromTraining {
     // Copy the context with a new seed.
     val ctx2 = ctx.params.randomSeed match {
       case Some(x) =>
-        val p = ctx.params.copy(randomSeed = Some(x + 1))
+        // Also set the number of examples to the number of test examples.
+        assert(ctx.params.numTestExamples.nonEmpty, "You must specify test examples")
+        val p = ctx.params.copy(randomSeed = Some(x + 1), numExamples = ctx.params.numTestExamples)
         ctx.copy(params = p)
       case None =>
         // Making a full copy to reset the internal seed.

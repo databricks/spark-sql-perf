@@ -111,12 +111,11 @@ object YamlConfig {
 }
 
 // Some ugly internals to make simple constructs
-package object ccFromMap {
+object ccFromMap {
   // Builds a case class from a map.
   // (taken from stack overflow)
   // if strict, will report an error if some unknown arguments are passed to the constructor
   def fromMap[T: TypeTag: ClassTag](m: Map[String,_], strict: Boolean) = {
-
     scala.reflect.runtime.universe
     val rm = runtimeMirror(classTag[T].runtimeClass.getClassLoader)
     val classTest = typeOf[T].typeSymbol.asClass
@@ -144,7 +143,8 @@ package object ccFromMap {
         m.get(paramName).getOrElse(throw new IllegalArgumentException("Map is missing required parameter named " + paramName))
     })
 
-    constructorMirror(constructorArgs:_*).asInstanceOf[T]
+    val res = constructorMirror(constructorArgs:_*).asInstanceOf[T]
+    res
   }
 
   // TODO: handle scala.reflect.internal.MissingRequirementError

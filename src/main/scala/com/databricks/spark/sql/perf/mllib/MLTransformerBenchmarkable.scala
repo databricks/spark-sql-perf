@@ -2,9 +2,11 @@ package com.databricks.spark.sql.perf.mllib
 
 import com.databricks.spark.sql.perf._
 import com.typesafe.scalalogging.slf4j.Logging
-import org.apache.spark.sql._
 
+import org.apache.spark.sql._
 import scala.collection.mutable.ArrayBuffer
+
+import org.apache.spark.ml.Transformer
 
 class MLTransformerBenchmarkable(
     params: MLParams,
@@ -16,9 +18,10 @@ class MLTransformerBenchmarkable(
 
   private var testData: DataFrame = null
   private var trainingData: DataFrame = null
+  private var testDataCount: Option[Long] = None
   private val param = MLBenchContext(params, sqlContext)
 
-  override val name = test.getClass.getCanonicalName
+  override val name = test.name
 
   override protected val executionMode: ExecutionMode = ExecutionMode.SparkPerfResults
 
@@ -27,7 +30,7 @@ class MLTransformerBenchmarkable(
     try {
       testData = test.testDataSet(param)
       testData.cache()
-      testData.count()
+      testDataCount = Some(testData.count())
       trainingData = test.trainingDataSet(param)
       trainingData.cache()
       trainingData.count()
@@ -43,7 +46,11 @@ class MLTransformerBenchmarkable(
     description: String,
     messages: ArrayBuffer[String]): BenchmarkResult = {
     try {
-      val (trainingTime, model) = measureTime(test.train(param, trainingData))
+      val (trainingTime, model: Transformer) = measureTime {
+        logger.info(s"$this: train: trainingSet=${trainingData.schema}")
+        val estimator = test.getEstimator(param)
+        estimator.fit(trainingData)
+      }
       logger.info(s"model: $model")
       val (_, scoreTraining) = measureTime {
         test.score(param, trainingData, model)
@@ -57,7 +64,7 @@ class MLTransformerBenchmarkable(
         trainingTime = Some(trainingTime.toMillis),
         trainingMetric = Some(scoreTraining),
         testTime = Some(scoreTestTime.toMillis),
-        testMetric = Some(scoreTest))
+        testMetric = Some(scoreTest / testDataCount.get))
 
       BenchmarkResult(
         name = name,

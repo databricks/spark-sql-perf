@@ -108,7 +108,7 @@ abstract class Benchmark(
       forkThread: Boolean = true) = {
 
     new ExperimentStatus(executionsToRun, includeBreakdown, iterations, variations, tags,
-      timeout, resultLocation, sqlContext, allTables, currentConfiguration)
+      timeout, resultLocation, sqlContext, allTables, currentConfiguration, forkThread = forkThread)
   }
 
 

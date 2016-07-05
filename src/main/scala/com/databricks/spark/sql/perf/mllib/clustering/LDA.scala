@@ -1,14 +1,18 @@
 package com.databricks.spark.sql.perf.mllib.clustering
 
-import com.databricks.spark.sql.perf.mllib.{MLBenchContext, TestFromTraining, BenchmarkAlgorithm}
-import com.databricks.spark.sql.perf.mllib.OptionImplicits._
+import scala.collection.mutable.{HashMap => MHashMap}
+
 import org.apache.commons.math3.random.Well19937c
-import org.apache.spark.ml.Transformer
+
+import org.apache.spark.ml.Estimator
 import org.apache.spark.ml
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
-import org.apache.spark.mllib.linalg.{Vectors, Vector}
-import scala.collection.mutable.{HashMap => MHashMap}
+import org.apache.spark.ml.linalg.{Vector, Vectors}
+
+import com.databricks.spark.sql.perf.mllib.{BenchmarkAlgorithm, MLBenchContext, TestFromTraining}
+import com.databricks.spark.sql.perf.mllib.OptionImplicits._
+
 
 object LDA extends BenchmarkAlgorithm with TestFromTraining {
   // The LDA model is package private, no need to expose it.
@@ -40,15 +44,13 @@ object LDA extends BenchmarkAlgorithm with TestFromTraining {
     ctx.sqlContext.createDataFrame(data).toDF("docIndex", "features")
   }
 
-  override def train(ctx: MLBenchContext,
-            trainingSet: DataFrame): Transformer = {
+  override def getEstimator(ctx: MLBenchContext): Estimator[_] = {
     import ctx.params._
     new ml.clustering.LDA()
-        .setK(k)
-        .setSeed(randomSeed.toLong)
-        .setMaxIter(maxIter)
-        .setOptimizer(optimizer)
-        .fit(trainingSet)
+      .setK(k)
+      .setSeed(randomSeed.toLong)
+      .setMaxIter(maxIter)
+      .setOptimizer(optimizer)
   }
 
   // TODO(?) add a scoring method here.
