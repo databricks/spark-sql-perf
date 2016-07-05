@@ -63,3 +63,11 @@ benchmarks:
       numClasses: 4
       numFeatures: 5
       maxIter: 3
+  - name: regression.LinearRegression
+    params:
+      numExamples: 100
+      numTestExamples: 100
+      numFeatures: 100
+      regParam: 0.1
+      tol: [0.0]
+      maxIter: 10
