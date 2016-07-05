@@ -24,7 +24,6 @@ object DataGenerator {
 
   /**
    * Generate a mix of continuous and categorical features.
- *
    * @param featureArity  Array of length numFeatures, where 0 indicates a continuous feature and
    *                      a value > 0 indicates a categorical feature with that arity.
    */
@@ -41,7 +40,6 @@ object DataGenerator {
 
   /**
    * Generate data from a Gaussian mixture model.
- *
    * @param numCenters  Number of clusters in mixture
    */
   def generateGaussianMixtureData(
