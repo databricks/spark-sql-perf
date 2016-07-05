@@ -7,7 +7,7 @@ import com.databricks.spark.sql.perf.mllib.data.DataGenerator
 import org.apache.spark.ml.evaluation.{Evaluator, MulticlassClassificationEvaluator}
 import org.apache.spark.ml.{Estimator, ModelBuilder, Transformer}
 import org.apache.spark.ml
-import org.apache.spark.ml.linalg.Vectors
+import org.apache.spark.mllib.linalg.Vectors
 
 
 object LogisticRegression extends BenchmarkAlgorithm
