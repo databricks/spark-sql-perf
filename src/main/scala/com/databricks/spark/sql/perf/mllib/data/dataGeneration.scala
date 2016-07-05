@@ -59,19 +59,20 @@ object DataGenerator {
       sql: SQLContext,
       numUsers: Int,
       numProducts: Int,
-      numRatings: Long,
+      numExamples: Long,
+      numTestExamples: Long,
       implicitPrefs: Boolean,
       numPartitions: Int,
       seed: Long): (DataFrame, DataFrame) = {
 
     val sc = sql.sparkContext
     val train = RandomRDDs.randomRDD(sc,
-      new RatingGenerator(numUsers, numProducts,implicitPrefs),
-      numRatings, numPartitions, seed).cache()
+      new RatingGenerator(numUsers, numProducts, implicitPrefs),
+      numExamples, numPartitions, seed).cache()
 
     val test = RandomRDDs.randomRDD(sc,
-      new RatingGenerator(numUsers, numProducts,implicitPrefs),
-      math.ceil(numRatings * 0.25).toLong, numPartitions, seed + 24)
+      new RatingGenerator(numUsers, numProducts, implicitPrefs),
+      numTestExamples, numPartitions, seed + 24)
 
     // Now get rid of duplicate ratings and remove non-existant userID's
     // and prodID's from the test set

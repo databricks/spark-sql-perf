@@ -1,15 +1,15 @@
 package com.databricks.spark.sql.perf.mllib.recommendation
 
 import org.apache.spark.ml
+import org.apache.spark.ml.evaluation.{RegressionEvaluator, Evaluator}
 import org.apache.spark.ml.{Transformer, Estimator}
 import org.apache.spark.sql._
-import org.apache.spark.sql.functions._
 
 import com.databricks.spark.sql.perf.mllib.OptionImplicits._
 import com.databricks.spark.sql.perf.mllib.data.DataGenerator
-import com.databricks.spark.sql.perf.mllib.{BenchmarkAlgorithm, MLBenchContext}
+import com.databricks.spark.sql.perf.mllib.{ScoringWithEvaluator, BenchmarkAlgorithm, MLBenchContext}
 
-object ALS extends BenchmarkAlgorithm {
+object ALS extends BenchmarkAlgorithm with ScoringWithEvaluator {
 
   override def trainingDataSet(ctx: MLBenchContext): DataFrame = {
     import ctx.params._
@@ -18,6 +18,7 @@ object ALS extends BenchmarkAlgorithm {
       numUsers,
       numItems,
       numExamples,
+      numTestExamples,
       implicitPrefs = false,
       numPartitions,
       ctx.seed())._1
@@ -29,6 +30,7 @@ object ALS extends BenchmarkAlgorithm {
       ctx.sqlContext,
       numUsers,
       numItems,
+      numExamples,
       numTestExamples,
       implicitPrefs = false,
       numPartitions,
@@ -45,15 +47,7 @@ object ALS extends BenchmarkAlgorithm {
       .setMaxIter(maxIter)
   }
 
-  override def score(
-      ctx: MLBenchContext,
-      testSet: DataFrame,
-      model: Transformer): Double = {
-    val out = model.transform(testSet)
-    val prediction = out("prediction")
-    val rating = out("rating")
-    val squares = (prediction - rating) * (prediction - rating)
-    val Array(Row(rmse: Double)) = out.select(avg(squares)).collect()
-    math.sqrt(rmse)
+  override protected def evaluator(ctx: MLBenchContext): Evaluator = {
+    new RegressionEvaluator().setLabelCol("rating")
   }
 }
