@@ -50,7 +50,7 @@ object ALS extends BenchmarkAlgorithm {
       testSet: DataFrame,
       model: Transformer): Double = {
     val out = model.transform(testSet)
-    val prediction = out("predictionCol")
+    val prediction = out("prediction")
     val rating = out("rating")
     val squares = (prediction - rating) * (prediction - rating)
     val Array(Row(rmse: Double)) = out.select(avg(squares)).collect()
