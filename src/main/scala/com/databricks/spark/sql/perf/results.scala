@@ -123,8 +123,11 @@ case class MLParams(
     maxIter: Option[Int] = None,
     numClasses: Option[Int] = None,
     numFeatures: Option[Int] = None,
+    numItems: Option[Int] = None,
+    numUsers: Option[Int] = None,
     optimizer: Option[String] = None,
     regParam: Option[Double] = None,
+    rank: Option[Int] = None,
     tol: Option[Double] = None
 )
 

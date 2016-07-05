@@ -5,7 +5,7 @@ common:
   numExamples: [1, 3]
   numTestExamples: 100
   numPartitions: 3
-  randomSeed: [1, 2, 3]
+  randomSeed: [1]
 benchmarks:
   - name: classification.LogisticRegression
     params:
@@ -63,3 +63,13 @@ benchmarks:
       numClasses: 4
       numFeatures: 5
       maxIter: 3
+  - name: recommendation.ALS
+    params:
+      numExamples: 100
+      numTestExamples: 100
+      numUsers: 100
+      numItems: 100
+      regParam: 0.1
+      rank: 10
+      maxIter: 6
+
