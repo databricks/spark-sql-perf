@@ -2,8 +2,7 @@ package org.apache.spark.ml
 
 import org.apache.spark.ml.classification.{DecisionTreeClassificationModel, LogisticRegressionModel}
 import org.apache.spark.ml.linalg.Vector
-import org.apache.spark.ml.regression.GeneralizedLinearRegressionModel
-import org.apache.spark.ml.regression.DecisionTreeRegressionModel
+import org.apache.spark.ml.regression.{LinearRegressionModel, GeneralizedLinearRegressionModel, DecisionTreeRegressionModel}
 import org.apache.spark.ml.tree._
 import org.apache.spark.mllib.random.RandomDataGenerator
 import org.apache.spark.mllib.tree.impurity.ImpurityCalculator
@@ -18,6 +17,12 @@ object ModelBuilder {
       coefficients: Vector,
       intercept: Double): LogisticRegressionModel = {
     new LogisticRegressionModel("lr", coefficients, intercept)
+  }
+
+  def newLinearRegressionModel(
+      coefficients: Vector,
+      intercept: Double): LinearRegressionModel = {
+    new LinearRegressionModel("linr", coefficients, intercept)
   }
 
   def newGLR(
