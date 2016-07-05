@@ -7,70 +7,70 @@ common:
   numPartitions: 3
   randomSeed: [1]
 benchmarks:
-#  - name: classification.LogisticRegression
-#    params:
-#      numFeatures: 100
-#      regParam: 0.1
-#      tol: [0.2, 0.1]
-#      maxIter: 10
-#  - name: clustering.LDA
-#    params:
-#      numExamples: 10
-#      numTestExamples: 10
-#      ldaDocLength: 20
-#      ldaNumVocabulary: 4
-#      k: 5
-#      maxIter: 10
-#      optimizer:
-#        - em
-#        - online
-#  - name: clustering.KMeans
-#    params:
-#      numExamples: 10
-#      numTestExamples: 10
-#      k: 5
-#      maxIter: 10
-#  - name: regression.GLMRegression
-#    params:
-#      numExamples: 100
-#      numTestExamples: 10
-#      numFeatures: 5
-#      link: log
-#      family: gaussian
-#      tol: 0.0
-#      maxIter: 10
-#      regParam: 0.1
-#  - name: classification.DecisionTreeClassification
-#    params:
-#      numExamples: 100
-#      numTestExamples: 10
-#      depth: 3
-#      numClasses: 4
-#      numFeatures: 5
-#  - name: classification.RandomForestClassification
-#    params:
-#      numExamples: 100
-#      numTestExamples: 10
-#      depth: 3
-#      numClasses: 4
-#      numFeatures: 5
-#      maxIter: 3
-#  - name: classification.GBTClassification
-#    params:
-#      numExamples: 100
-#      numTestExamples: 10
-#      depth: 3
-#      numClasses: 4
-#      numFeatures: 5
-#      maxIter: 3
-#  - name: regression.LinearRegression
-#    params:
-#      numExamples: 100
-#      numTestExamples: 100
-#      numFeatures: 100
-#      regParam: 0.1
-#      tol: [0.0]
-#      maxIter: 10
+  - name: classification.LogisticRegression
+    params:
+      numFeatures: 100
+      regParam: 0.1
+      tol: [0.2, 0.1]
+      maxIter: 10
+  - name: clustering.LDA
+    params:
+      numExamples: 10
+      numTestExamples: 10
+      ldaDocLength: 20
+      ldaNumVocabulary: 4
+      k: 5
+      maxIter: 10
+      optimizer:
+        - em
+        - online
+  - name: clustering.KMeans
+    params:
+      numExamples: 10
+      numTestExamples: 10
+      k: 5
+      maxIter: 10
+  - name: regression.GLMRegression
+    params:
+      numExamples: 100
+      numTestExamples: 10
+      numFeatures: 5
+      link: log
+      family: gaussian
+      tol: 0.0
+      maxIter: 10
+      regParam: 0.1
+  - name: classification.DecisionTreeClassification
+    params:
+      numExamples: 100
+      numTestExamples: 10
+      depth: 3
+      numClasses: 4
+      numFeatures: 5
+  - name: classification.RandomForestClassification
+    params:
+      numExamples: 100
+      numTestExamples: 10
+      depth: 3
+      numClasses: 4
+      numFeatures: 5
+      maxIter: 3
+  - name: classification.GBTClassification
+    params:
+      numExamples: 100
+      numTestExamples: 10
+      depth: 3
+      numClasses: 4
+      numFeatures: 5
+      maxIter: 3
+  - name: regression.LinearRegression
+    params:
+      numExamples: 100
+      numTestExamples: 100
+      numFeatures: 100
+      regParam: 0.1
+      tol: [0.0]
+      maxIter: 10
   - name: recommendation.ALS
     params:
       numExamples: 100
