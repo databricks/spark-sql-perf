@@ -63,9 +63,9 @@ benchmarks:
       numClasses: 4
       numFeatures: 5
       maxIter: 3
-  - name: classification.LogisticRegression
+  - name: regression.LinearRegression
     params:
       numFeatures: 100
       regParam: 0.1
-      tol: [0.2, 0.1]
+      tol: [0.0]
       maxIter: 10

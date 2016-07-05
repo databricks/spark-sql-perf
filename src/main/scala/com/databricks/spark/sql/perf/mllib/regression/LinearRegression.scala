@@ -1,8 +1,8 @@
 package com.databricks.spark.sql.perf.mllib.regression
 
+import org.apache.spark.ml
 import org.apache.spark.ml.evaluation.{Evaluator, RegressionEvaluator}
 import org.apache.spark.ml.linalg.Vectors
-import org.apache.spark.ml.regression.{LinearRegression, GeneralizedLinearRegression}
 import org.apache.spark.ml.{Estimator, ModelBuilder, Transformer}
 
 import com.databricks.spark.sql.perf.mllib.OptionImplicits._
@@ -34,7 +34,8 @@ object LinearRegression extends BenchmarkAlgorithm with TestFromTraining with
 
   override def getEstimator(ctx: MLBenchContext): Estimator[_] = {
     import ctx.params._
-    new LinearRegression()
+    new ml.regression.LinearRegression()
+      .setSolver("l-bfgs")
       .setRegParam(regParam)
       .setMaxIter(maxIter)
       .setTol(tol)
