@@ -2,8 +2,9 @@ package com.databricks.spark.sql.perf.mllib.data
 
 import org.apache.spark.ml.linalg.Vectors
 import org.apache.spark.ml.linalg.Vector
+import org.apache.spark.ml.recommendation.ALS.Rating
 import org.apache.spark.mllib.random._
-import org.apache.spark.rdd.RDD
+import org.apache.spark.rdd.{PairRDDFunctions, RDD}
 import org.apache.spark.sql.{SQLContext, DataFrame}
 
 
@@ -53,11 +54,61 @@ object DataGenerator {
       seed)
     sql.createDataFrame(rdd.map(Tuple1.apply)).toDF("features")
   }
+
+  def generateRatings(
+      sql: SQLContext,
+      numUsers: Int,
+      numProducts: Int,
+      numExamples: Long,
+      numTestExamples: Long,
+      implicitPrefs: Boolean,
+      numPartitions: Int,
+      seed: Long): (DataFrame, DataFrame) = {
+
+    val sc = sql.sparkContext
+    val train = RandomRDDs.randomRDD(sc,
+      new RatingGenerator(numUsers, numProducts, implicitPrefs),
+      numExamples, numPartitions, seed).cache()
+
+    val test = RandomRDDs.randomRDD(sc,
+      new RatingGenerator(numUsers, numProducts, implicitPrefs),
+      numTestExamples, numPartitions, seed + 24)
+
+    // Now get rid of duplicate ratings and remove non-existant userID's
+    // and prodID's from the test set
+    val commons: PairRDDFunctions[(Int,Int),Rating[Int]] =
+      new PairRDDFunctions(train.keyBy(rating => (rating.user, rating.item)).cache())
+
+    val exact = commons.join(test.keyBy(rating => (rating.user, rating.item)))
+
+    val trainPruned = commons.subtractByKey(exact).map(_._2).cache()
+
+    // Now get rid of users that don't exist in the train set
+    val trainUsers: RDD[(Int,Rating[Int])] = trainPruned.keyBy(rating => rating.user)
+    val testUsers: PairRDDFunctions[Int,Rating[Int]] =
+      new PairRDDFunctions(test.keyBy(rating => rating.user))
+    val testWithAdditionalUsers = testUsers.subtractByKey(trainUsers)
+
+    val userPrunedTestProds: RDD[(Int,Rating[Int])] =
+      testUsers.subtractByKey(testWithAdditionalUsers).map(_._2).keyBy(rating => rating.item)
+
+    val trainProds: RDD[(Int,Rating[Int])] = trainPruned.keyBy(rating => rating.item)
+
+    val testWithAdditionalProds =
+      new PairRDDFunctions[Int, Rating[Int]](userPrunedTestProds).subtractByKey(trainProds)
+    val finalTest =
+      new PairRDDFunctions[Int, Rating[Int]](userPrunedTestProds)
+        .subtractByKey(testWithAdditionalProds)
+        .map(_._2)
+
+    (sql.createDataFrame(trainPruned), sql.createDataFrame(finalTest))
+  }
 }
 
 
 /**
  * Generator for a feature vector which can include a mix of categorical and continuous features.
+ *
  * @param featureArity  Length numFeatures, where 0 indicates continuous feature and > 0
  *                      indicates a categorical feature of that arity.
  */
