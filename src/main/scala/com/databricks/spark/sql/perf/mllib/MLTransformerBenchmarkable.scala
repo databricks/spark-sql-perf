@@ -79,6 +79,7 @@ class MLTransformerBenchmarkable(
           name = name,
           mode = executionMode.toString,
           parameters = Map.empty,
+          mlParams = Some(params),
           failure = Some(Failure(e.getClass.getSimpleName,
             e.getMessage + ":\n" + e.getStackTraceString)))
     } finally {
