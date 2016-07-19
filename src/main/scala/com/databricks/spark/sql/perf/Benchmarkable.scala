@@ -18,7 +18,7 @@ package com.databricks.spark.sql.perf
 
 import java.util.UUID
 
-import com.typesafe.scalalogging.slf4j.Logging
+import com.typesafe.scalalogging.slf4j.{LazyLogging => Logging}
 
 import scala.concurrent.duration._
 import scala.collection.mutable.ArrayBuffer
