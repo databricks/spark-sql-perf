@@ -5,7 +5,7 @@ name := "spark-sql-perf"
 
 organization := "com.databricks"
 
-scalaVersion := "2.10.6"
+scalaVersion := "2.11.6"
 
 sparkPackageName := "databricks/spark-sql-perf"
 
