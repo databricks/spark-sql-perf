@@ -1,7 +1,7 @@
 package com.databricks.spark.sql.perf.mllib
 
 import com.databricks.spark.sql.perf._
-import com.typesafe.scalalogging.slf4j.Logging
+import com.typesafe.scalalogging.slf4j.{LazyLogging => Logging}
 
 import org.apache.spark.sql._
 import scala.collection.mutable.ArrayBuffer

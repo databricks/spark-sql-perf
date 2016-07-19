@@ -5,7 +5,7 @@ name := "spark-sql-perf"
 
 organization := "com.databricks"
 
-scalaVersion := "2.10.4"
+scalaVersion := "2.10.6"
 
 sparkPackageName := "databricks/spark-sql-perf"
 
@@ -43,7 +43,7 @@ libraryDependencies += "org.scalatest" %% "scalatest" % "2.2.1" % "test"
 
 libraryDependencies += "org.yaml" % "snakeyaml" % "1.17"
 
-libraryDependencies += "com.typesafe" %% "scalalogging-slf4j" % "1.1.0"
+libraryDependencies += "com.typesafe.scala-logging" %% "scala-logging-slf4j" % "2.1.2"
 
 fork := true
 

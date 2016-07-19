@@ -4,7 +4,7 @@ import scala.language.implicitConversions
 
 import com.databricks.spark.sql.perf._
 
-import com.typesafe.scalalogging.slf4j.Logging
+import com.typesafe.scalalogging.slf4j.{LazyLogging => Logging}
 
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.{DataFrame, SQLContext}

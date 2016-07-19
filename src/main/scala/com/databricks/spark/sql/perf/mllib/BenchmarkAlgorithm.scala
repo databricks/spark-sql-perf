@@ -1,6 +1,6 @@
 package com.databricks.spark.sql.perf.mllib
 
-import com.typesafe.scalalogging.slf4j.Logging
+import com.typesafe.scalalogging.slf4j.{LazyLogging => Logging}
 
 import org.apache.spark.ml.{Estimator, Transformer}
 import org.apache.spark.ml.evaluation.Evaluator
