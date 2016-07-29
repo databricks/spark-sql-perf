@@ -8,7 +8,7 @@ import org.apache.spark.ml.Estimator
 import org.apache.spark.ml
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
-import org.apache.spark.ml.linalg.{Vector, Vectors}
+import org.apache.spark.mllib.linalg.{Vector, Vectors}
 
 import com.databricks.spark.sql.perf.mllib.{BenchmarkAlgorithm, MLBenchContext, TestFromTraining}
 import com.databricks.spark.sql.perf.mllib.OptionImplicits._

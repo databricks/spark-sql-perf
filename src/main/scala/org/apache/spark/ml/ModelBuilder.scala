@@ -1,11 +1,11 @@
 package org.apache.spark.ml
 
 import org.apache.spark.ml.classification.{DecisionTreeClassificationModel, LogisticRegressionModel}
-import org.apache.spark.ml.linalg.Vector
-import org.apache.spark.ml.regression.{LinearRegressionModel, GeneralizedLinearRegressionModel, DecisionTreeRegressionModel}
+import org.apache.spark.ml.regression.{LinearRegressionModel, DecisionTreeRegressionModel}
 import org.apache.spark.ml.tree._
+import org.apache.spark.mllib.linalg.Vector
 import org.apache.spark.mllib.random.RandomDataGenerator
-import org.apache.spark.mllib.tree.impurity.ImpurityCalculator
+import org.apache.spark.mllib.tree.impurity.{GiniCalculator, VarianceCalculator, ImpurityCalculator}
 
 
 /**
@@ -24,11 +24,6 @@ object ModelBuilder {
       intercept: Double): LinearRegressionModel = {
     new LinearRegressionModel("linr", coefficients, intercept)
   }
-
-  def newGLR(
-      coefficients: Vector,
-      intercept: Double): GeneralizedLinearRegressionModel =
-    new GeneralizedLinearRegressionModel("glr-uid", coefficients, intercept)
 
   def newDecisionTreeClassificationModel(
       depth: Int,
@@ -61,6 +56,7 @@ object TreeBuilder {
   /**
    * Generator for a pair of distinct class labels from the set {0,...,numClasses-1}.
    * Pairs are useful for trees to make sure sibling leaf nodes make different predictions.
+ *
    * @param numClasses  Number of classes.
    */
   private class ClassLabelPairGenerator(val numClasses: Int)
@@ -108,6 +104,7 @@ object TreeBuilder {
 
   /**
    * Creates a random decision tree structure.
+ *
    * @param depth  Depth of tree to build.  Must be <= numFeatures.
    * @param labelType  Value 0 indicates regression.  Integers >= 2 indicate numClasses for
    *                   classification.
@@ -143,9 +140,9 @@ object TreeBuilder {
     labelGenerator.setSeed(rng.nextLong)
     // We use a dummy impurityCalculator for all nodes.
     val impurityCalculator = if (isRegression) {
-      ImpurityCalculator.getCalculator("variance", Array.fill[Double](3)(0.0))
+      new VarianceCalculator(Array.fill[Double](3)(0.0))
     } else {
-      ImpurityCalculator.getCalculator("gini", Array.fill[Double](labelType)(0.0))
+      new GiniCalculator(Array.fill[Double](labelType)(0.0))
     }
 
     randomBalancedDecisionTreeHelper(depth, featureArity, impurityCalculator,
@@ -154,6 +151,7 @@ object TreeBuilder {
 
   /**
    * Create an internal node.  Either create the leaf nodes beneath it, or recurse as needed.
+ *
    * @param subtreeDepth  Depth of subtree to build.  Depth 0 means this is a leaf node.
    * @param featureArity  Indicates feature type.  Value 0 indicates continuous feature.
    *                      Other values >= 2 indicate a categorical feature,

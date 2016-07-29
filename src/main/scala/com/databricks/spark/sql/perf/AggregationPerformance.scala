@@ -2,6 +2,8 @@ package com.databricks.spark.sql.perf
 
 import org.apache.spark.sql.{Row, SQLContext}
 
+case class X(a: Int, b: Int)
+
 trait AggregationPerformance extends Benchmark {
 
   import sqlContext.implicits._
@@ -14,14 +16,14 @@ trait AggregationPerformance extends Benchmark {
     Table(s"ints$size",
       sparkContext.parallelize(1 to size).flatMap { group =>
         (1 to 10000).map(i => (group, i))
-      }.toDF("a", "b"))
+      }.toDF("a", "b").as[X])
   }
 
   val lowCardinality = sizes.map { size =>
     val fullSize = size * 10000L
     Table(
       s"twoGroups$fullSize",
-      sqlContext.range(0, fullSize).select($"id" % 2 as 'a, $"id" as 'b))
+      sqlContext.range(0, fullSize).select($"id" % 2 as 'a, $"id" as 'b).as[X])
   }
 
   val newAggreation = Variation("aggregationType", Seq("new", "old")) {

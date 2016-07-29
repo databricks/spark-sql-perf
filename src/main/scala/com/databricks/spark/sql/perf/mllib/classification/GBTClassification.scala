@@ -20,7 +20,7 @@ object GBTClassification extends BenchmarkAlgorithm
     val featureArity: Array[Int] = getFeatureArity(ctx)
     val data: DataFrame = DataGenerator.generateMixedFeatures(ctx.sqlContext, numExamples,
       ctx.seed(), numPartitions, featureArity)
-    TreeUtils.setMetadata(data, "label", numClasses, "features", featureArity)
+    TreeUtils.setMetadata(data, None, "features", featureArity)
   }
 
   override protected def trueModel(ctx: MLBenchContext): Transformer = {

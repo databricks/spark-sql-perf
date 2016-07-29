@@ -12,22 +12,16 @@ trait JoinPerformance extends Benchmark {
   private val table = sqlContext.table _
 
   val x = Table(
-    "1milints",
-    sqlContext.range(0, 1000000)
-      .repartition(1))
+    "1milints", ???)
 
   val joinTables = Seq(
     // 143.542mb, 10 files
     Table(
-      "100milints",
-      sqlContext.range(0, 100000000)
-        .repartition(10)),
+      "100milints", ???),
 
     // 1.4348gb, 10 files
     Table(
-      "1bilints",
-      sqlContext.range(0, 1000000000)
-      .repartition(10))
+      "1bilints", ???)
   )
 
   val sortMergeJoin = Variation("sortMergeJoin", Seq("on", "off")) {
