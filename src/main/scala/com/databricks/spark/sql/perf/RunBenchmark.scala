@@ -17,14 +17,14 @@
 package com.databricks.spark.sql.perf
 
 import java.net.InetAddress
-
+import java.io.File
 import org.apache.spark.sql.SQLContext
 import org.apache.spark.sql.functions._
 import org.apache.spark.{SparkContext, SparkConf}
-
 import scala.util.Try
 
 case class RunConfig(
+    master: String = "local[*]",
     benchmarkName: String = null,
     filter: Option[String] = None,
     iterations: Int = 3,
@@ -37,6 +37,9 @@ object RunBenchmark {
   def main(args: Array[String]): Unit = {
     val parser = new scopt.OptionParser[RunConfig]("spark-sql-perf") {
       head("spark-sql-perf", "0.2.0")
+      opt[String]('m', "master")
+        .action { (x, c) => c.copy(master = x) }
+        .text("the Spark master to use, default to local[*]")
       opt[String]('b', "benchmark")
         .action { (x, c) => c.copy(benchmarkName = x) }
         .text("the name of the benchmark to run")
@@ -64,14 +67,16 @@ object RunBenchmark {
 
   def run(config: RunConfig): Unit = {
     val conf = new SparkConf()
-        .setMaster("local[*]")
-        .setAppName(getClass.getName)
+      .setMaster(config.master)
+      .setAppName(getClass.getName)
 
     val sc = SparkContext.getOrCreate(conf)
     val sqlContext = SQLContext.getOrCreate(sc)
     import sqlContext.implicits._
 
-    sqlContext.setConf("spark.sql.perf.results", new java.io.File("performance").toURI.toString)
+    sqlContext.setConf("spark.sql.perf.results",
+      new File("performance").toURI.toString)
+
     val benchmark = Try {
       Class.forName(config.benchmarkName)
           .newInstance()
@@ -91,6 +96,7 @@ object RunBenchmark {
     println("== QUERY LIST ==")
     allQueries.foreach(println)
 
+    // TODO run type cluster and host is the url specified?
     val experiment = benchmark.runExperiment(
       executionsToRun = allQueries,
       iterations = config.iterations,
