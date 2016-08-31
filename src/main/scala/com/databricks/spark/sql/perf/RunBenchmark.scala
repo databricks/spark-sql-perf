@@ -96,7 +96,6 @@ object RunBenchmark {
     println("== QUERY LIST ==")
     allQueries.foreach(println)
 
-    // TODO run type cluster and host is the url specified?
     val experiment = benchmark.runExperiment(
       executionsToRun = allQueries,
       iterations = config.iterations,
