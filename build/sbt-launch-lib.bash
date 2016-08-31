@@ -28,8 +28,7 @@ fi
 
 if test -x "$SBT_HOME"; then
   echo -e "Using $SBT_HOME as default SBT_HOME - should be the jar name!"
-  # Could be at
-  # /usr/share/sbt-launcher-packaging/bin/sbt-launch.jar
+  # Could be at /usr/share/sbt-launcher-packaging/bin/sbt-launch.jar
   # so this would be export SBT_HOME=/usr/share/sbt-launcher-packaging/bin/sbt-launch.jar
   sbt_jar=${SBT_HOME}
 fi
@@ -48,7 +47,9 @@ acquire_sbt_jar () {
   SBT_VERSION=`awk -F "=" '/sbt\.version/ {print $2}' ./project/build.properties`
   URL1=https://dl.bintray.com/typesafe/ivy-releases/org.scala-sbt/sbt-launch/${SBT_VERSION}/sbt-launch.jar
   JAR=build/sbt-launch-${SBT_VERSION}.jar
+
   sbt_jar=$JAR
+
   if [[ ! -f "$sbt_jar" ]]; then
     # Download sbt launch jar if it hasn't been downloaded yet
     if [ ! -f "${JAR}" ]; then
@@ -174,11 +175,11 @@ run() {
   # no jar? download it.
   # first check SBT_HOME is present so we use what's already available
   sbt_jar=$SBT_HOME
-  #[[ -f "$sbt_jar" ]] || acquire_sbt_jar "$sbt_version" || {
+  [[ -f "$sbt_jar" ]] || acquire_sbt_jar "$sbt_version" || {
   #  # still no jar? uh-oh.
-  #  echo "Download failed. Obtain the sbt-launch.jar manually and place it at $sbt_jar"
-  #  exit 1
-  #}
+     echo "Download failed. Obtain the sbt-launch.jar manually and place it at $sbt_jar"
+     exit 1
+  }
 
   # process the combined args, then reset "$@" to the residuals
   process_args "$@"
