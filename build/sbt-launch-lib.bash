@@ -176,7 +176,7 @@ run() {
   sbt_jar=$SBT_HOME
   # if there's no jar let's download it.
   [[ -f "$sbt_jar" ]] || acquire_sbt_jar "$sbt_version" || {
-  #  # still no jar? uh-oh.
+  # still no jar? uh-oh.
     echo "Download failed. Obtain the sbt-launch.jar manually and place it at $sbt_jar"
     exit 1
   }
