@@ -1663,8 +1663,8 @@ trait Tpcds_1_4_Queries extends Benchmark {
             |        (i_color = 'light' or i_color = 'cornflower') and
             |        (i_units = 'Box' or i_units = 'Pound') and
             |        (i_size = 'medium' or i_size = 'extra large')
-            |        ))
-            |        or
+            |        ))) or
+            |       (i_manufact = i1.i_manufact and
             |        ((i_category = 'Women' and 
             |        (i_color = 'midnight' or i_color = 'snow') and
             |        (i_units = 'Pallet' or i_units = 'Gross') and
