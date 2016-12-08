@@ -17,11 +17,10 @@
 package com.databricks.spark.sql.perf
 
 import java.net.InetAddress
-
+import java.io.File
 import org.apache.spark.sql.SQLContext
 import org.apache.spark.sql.functions._
 import org.apache.spark.{SparkContext, SparkConf}
-
 import scala.util.Try
 
 case class RunConfig(
@@ -64,14 +63,16 @@ object RunBenchmark {
 
   def run(config: RunConfig): Unit = {
     val conf = new SparkConf()
-        .setMaster("local[*]")
-        .setAppName(getClass.getName)
+      .setMaster(config.master)
+      .setAppName(getClass.getName)
 
     val sc = SparkContext.getOrCreate(conf)
     val sqlContext = SQLContext.getOrCreate(sc)
     import sqlContext.implicits._
 
-    sqlContext.setConf("spark.sql.perf.results", new java.io.File("performance").toURI.toString)
+    sqlContext.setConf("spark.sql.perf.results",
+      new File("performance").toURI.toString)
+
     val benchmark = Try {
       Class.forName(config.benchmarkName)
           .newInstance()
@@ -102,7 +103,7 @@ object RunBenchmark {
     experiment.waitForFinish(1000 * 60 * 30)
 
     sqlContext.setConf("spark.sql.shuffle.partitions", "1")
-    experiment.getCurrentRuns()
+    val toShow = experiment.getCurrentRuns()
         .withColumn("result", explode($"results"))
         .select("result.*")
         .groupBy("name")
@@ -110,9 +111,13 @@ object RunBenchmark {
           min($"executionTime") as 'minTimeMs,
           max($"executionTime") as 'maxTimeMs,
           avg($"executionTime") as 'avgTimeMs,
-          stddev($"executionTime") as 'stdDev)
+          stddev($"executionTime") as 'stdDev,
+          (stddev($"executionTime") / avg($"executionTime") * 100) as 'stdDevPercent)
         .orderBy("name")
-        .show(truncate = false)
+    
+    println("Printing the results (calling .show(100)")
+    toShow.show(100)
+    
     println(s"""Results: sqlContext.read.json("${experiment.resultPath}")""")
 
     config.baseline.foreach { baseTimestamp =>
