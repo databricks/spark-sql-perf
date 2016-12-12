@@ -63,7 +63,7 @@ object RunBenchmark {
 
   def run(config: RunConfig): Unit = {
     val conf = new SparkConf()
-      .setMaster(config.master)
+      .setMaster("local[*]")
       .setAppName(getClass.getName)
 
     val sc = SparkContext.getOrCreate(conf)
