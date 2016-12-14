@@ -2,6 +2,7 @@ package com.databricks.spark.sql.perf.mllib
 
 import com.typesafe.scalalogging.slf4j.{LazyLogging => Logging}
 
+import org.apache.spark.ml.attribute.{NominalAttribute, NumericAttribute}
 import org.apache.spark.ml.{Estimator, Transformer}
 import org.apache.spark.ml.evaluation.Evaluator
 import org.apache.spark.sql._
@@ -76,7 +77,22 @@ trait TrainingSetFromTransformer {
   final override def trainingDataSet(ctx: MLBenchContext): DataFrame = {
     val initial = initialData(ctx)
     val model = trueModel(ctx)
-    model.transform(initial).select(col("features"), col("prediction").as("label"))
+    val fCol = col("features")
+    // Special case for the trees: we need to set the number of labels.
+    // numClasses is set? We will add the number of classes to the final column.
+    val lCol = ctx.params.numClasses match {
+      case Some(numClasses) =>
+        val labelAttribute = if (numClasses == 0) {
+          NumericAttribute.defaultAttr.withName("label")
+        } else {
+          NominalAttribute.defaultAttr.withName("label").withNumValues(numClasses)
+        }
+        val labelMetadata = labelAttribute.toMetadata()
+        col("prediction").as("label", labelMetadata)
+      case None =>
+        col("prediction").as("label")
+    }
+    model.transform(initial).select(fCol, lCol)
   }
 }
 
