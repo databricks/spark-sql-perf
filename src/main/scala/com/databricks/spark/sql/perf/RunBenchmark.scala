@@ -107,7 +107,8 @@ object RunBenchmark {
     experiment.waitForFinish(1000 * 60 * 30)
 
     sqlContext.setConf("spark.sql.shuffle.partitions", "1")
-    experiment.getCurrentRuns()
+      
+    val toShow = experiment.getCurrentRuns()
         .withColumn("result", explode($"results"))
         .select("result.*")
         .groupBy("name")
@@ -115,9 +116,13 @@ object RunBenchmark {
           min($"executionTime") as 'minTimeMs,
           max($"executionTime") as 'maxTimeMs,
           avg($"executionTime") as 'avgTimeMs,
-          stddev($"executionTime") as 'stdDev)
+          stddev($"executionTime") as 'stdDev,
+          (stddev($"executionTime") / avg($"executionTime") * 100) as 'stdDevPercent)
         .orderBy("name")
-        .show(truncate = false)
+        
+    println("Showing at most 100 query results now")
+    toShow.show(100)
+      
     println(s"""Results: sqlContext.read.json("${experiment.resultPath}")""")
 
     config.baseline.foreach { baseTimestamp =>
