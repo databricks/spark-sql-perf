@@ -16,6 +16,8 @@ Usage: spark-sql-perf [options]
 
   -b <value> | --benchmark <value>
         the name of the benchmark to run
+  -m <value> | --master <value
+        the master url to use
   -f <value> | --filter <value>
         a filter on the name of the queries to run
   -i <value> | --iterations <value>
