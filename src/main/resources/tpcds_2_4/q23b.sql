@@ -23,7 +23,7 @@
       ,customer
   where ss_customer_sk = c_customer_sk
   group by c_customer_sk
-  having sum(ss_quantity*ss_sales_price) > (50/100.0) *
+  having sum(ss_quantity*ss_sales_price) > (95/100.0) *
     (select * from max_store_sales))
  select c_last_name,c_first_name,sales
  from ((select c_last_name,c_first_name,sum(cs_quantity*cs_list_price) sales
