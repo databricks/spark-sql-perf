@@ -37,7 +37,8 @@ trait Tpcds_2_4_Queries extends Benchmark {
     "q59", "q60", "q61", "q62", "q63", "q64", "q65", "q66", "q67", "q68", "q69",
     "q70", "q71", "q72", "q73", "q74", "q75", "q76", "q77", "q78", "q79",
     "q80", "q81", "q82", "q83", "q84", "q85", "q86", "q87", "q88", "q89",
-    "q90", "q91", "q92", "q93", "q94", "q95", "q96", "q97", "q98", "q99"
+    "q90", "q91", "q92", "q93", "q94", "q95", "q96", "q97", "q98", "q99",
+    "ss_max"
   )
 
   val tpcds2_4Queries = queryNames.map { queryName =>
