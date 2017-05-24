@@ -65,6 +65,7 @@ After setup, users can use `runExperiment` function to run benchmarking queries 
 
 ```
 val experiment = tpcds.runExperiment(tpcds.interactiveQueries)
+experiment.waitForFinish(60*60*10) // optional: wait for results (with timeout)
 ```
 
 For every experiment run (i.e. every call of `runExperiment`), Spark SQL Perf will use the timestamp of the start time to identify this experiment. Performance results will be stored in the sub-dir named by the timestamp in the given `spark.sql.perf.results` (for example `/tmp/results/timestamp=1429213883272`). The performance results are stored in the JSON format.
