@@ -16,6 +16,7 @@
 
 package com.databricks.spark.sql.perf.tpcds
 
+import scala.io.Source
 import scala.sys.process._
 
 import org.slf4j.LoggerFactory
@@ -55,13 +56,21 @@ class Tables(sqlContext: SQLContext, dsdgenDir: String, scaleFactor: Int) extend
             sys.error(s"Could not find dsdgen at $dsdgen or /$dsdgen. Run install")
           }
 
-          // Note: RNGSEED is the RNG seed used by the data generator. Right now, it is fixed to 100.
-          val parallel = if (partitions > 1) s"-parallel $partitions -child $i" else ""
-          val commands = Seq(
-            "bash", "-c",
-            s"cd $localToolsDir && ./dsdgen -table $name -filter Y -scale $scaleFactor -RNGSEED 100 $parallel")
-          println(commands)
-          commands.lines
+          // If the dat file exists, use it. Otherwise, call dsdgen to generate it.
+          val filename = s"$localToolsDir/$name.dat"
+
+          if (new java.io.File(filename).exists) {
+            println(s"The file $filename exists, so skipping dsdgen.")
+            Source.fromFile(filename, "Cp1252").getLines
+          } else {
+            // Note: RNGSEED is the RNG seed used by the data generator. Right now, it is fixed to 100.
+            val parallel = if (partitions > 1) s"-parallel $partitions -child $i" else ""
+            val commands = Seq(
+              "bash", "-c",
+              s"cd $localToolsDir && ./dsdgen -table $name -scale $scaleFactor -RNGSEED 100 $parallel")
+            println(commands)
+            commands.lines
+          }
         }
       }
 
