@@ -104,10 +104,11 @@ class Tables(sqlContext: SQLContext, dsdgenDir: String, scaleFactor: Int) extend
       }
     }
 
-    def useDoubleForDecimal(): Table = {
+    def convertTypes(useDoubleForDecimal: Boolean, useStringForDate: Boolean): Table = {
       val newFields = fields.map { field =>
         val newDataType = field.dataType match {
-          case decimal: DecimalType => DoubleType
+          case decimal: DecimalType if useDoubleForDecimal  => DoubleType
+          case date: DateType if useStringForDate => StringType
           case other => other
         }
         field.copy(dataType = newDataType)
@@ -198,6 +199,7 @@ class Tables(sqlContext: SQLContext, dsdgenDir: String, scaleFactor: Int) extend
       overwrite: Boolean,
       partitionTables: Boolean,
       useDoubleForDecimal: Boolean,
+      useStringForDate: Boolean,
       clusterByPartitionColumns: Boolean,
       filterOutNullPartitionValues: Boolean,
       tableFilter: String = "",
@@ -215,11 +217,8 @@ class Tables(sqlContext: SQLContext, dsdgenDir: String, scaleFactor: Int) extend
       }
     }
 
-    val withSpecifiedDataType = if (useDoubleForDecimal) {
-      tablesToBeGenerated.map(_.useDoubleForDecimal())
-    } else {
-      tablesToBeGenerated
-    }
+    val withSpecifiedDataType =
+      tablesToBeGenerated.map(_.convertTypes(useDoubleForDecimal, useStringForDate))
 
     withSpecifiedDataType.foreach { table =>
       val tableLocation = s"$location/${table.name}"
