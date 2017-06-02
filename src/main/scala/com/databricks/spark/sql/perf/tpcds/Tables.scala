@@ -46,8 +46,9 @@ class Tables(sqlContext: SQLContext, dsdgenDir: String, scaleFactor: Int,
      *  If convertToSchema is true, the data from generator will be parsed into columns and
      *  converted to `schema`. Otherwise, it just outputs the raw data (as a single STRING column).
      */
-    def df(convertToSchema: Boolean, numPartition: Int) = {
+    def df(convertToSchema: Boolean, numPartition: Int, filter: Boolean) = {
       val partitions = if (partitionColumns.isEmpty) 1 else numPartition
+      val filterArg = if (filter) "-filter Y" else ""
       val generatedData = {
         sparkContext.parallelize(1 to partitions, partitions).flatMap { i =>
           val localToolsDir = if (new java.io.File(dsdgen).exists) {
@@ -62,7 +63,7 @@ class Tables(sqlContext: SQLContext, dsdgenDir: String, scaleFactor: Int,
           val parallel = if (partitions > 1) s"-parallel $partitions -child $i" else ""
           val commands = Seq(
             "bash", "-c",
-            s"cd $localToolsDir && ./dsdgen -table $name -filter Y -scale $scaleFactor -RNGSEED 100 $parallel")
+            s"cd $localToolsDir && ./dsdgen -table $name $filterArg -scale $scaleFactor -RNGSEED 100 $parallel")
           println(commands)
           commands.lines
         }
@@ -126,10 +127,11 @@ class Tables(sqlContext: SQLContext, dsdgenDir: String, scaleFactor: Int,
         overwrite: Boolean,
         clusterByPartitionColumns: Boolean,
         filterOutNullPartitionValues: Boolean,
-        numPartitions: Int): Unit = {
+        numPartitions: Int,
+        filter: Boolean): Unit = {
       val mode = if (overwrite) SaveMode.Overwrite else SaveMode.Ignore
 
-      val data = df(format != "text", numPartitions)
+      val data = df(format != "text", numPartitions, filter)
       val tempTableName = s"${name}_text"
       data.registerTempTable(tempTableName)
 
@@ -177,7 +179,7 @@ class Tables(sqlContext: SQLContext, dsdgenDir: String, scaleFactor: Int,
     }
 
     def createExternalTable(location: String, format: String, databaseName: String,
-        overwrite: Boolean, discoverPartitions = true: Boolean): Unit = {
+        overwrite: Boolean, discoverPartitions: Boolean = true): Unit = {
 
       val qualifiedTableName = databaseName + "." + name
       val tableExists = sqlContext.tableNames(databaseName).contains(name)
@@ -240,7 +242,7 @@ class Tables(sqlContext: SQLContext, dsdgenDir: String, scaleFactor: Int,
     tablesToBeGenerated.foreach { table =>
       val tableLocation = s"$location/${table.name}"
       table.genData(tableLocation, format, overwrite, clusterByPartitionColumns,
-        filterOutNullPartitionValues, numPartitions)
+        filterOutNullPartitionValues, numPartitions, tableFilter.nonEmpty)
     }
   }
 
