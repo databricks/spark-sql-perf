@@ -117,13 +117,13 @@ class Query(
 
       // The executionTime for the entire query includes the time of type conversion from catalyst
       // to scala.
-      // The executionTime for the entire query includes the time of type conversion
-      // from catalyst to scala.
+      // Note: queryExecution.{logical, analyzed, optimizedPlan, executedPlan} has been already
+      // lazily evaluated above, so below we will count only execution time.
       var result: Option[Long] = None
       val executionTime = measureTimeMs {
         executionMode match {
-          case ExecutionMode.CollectResults => dataFrame.rdd.collect()
-          case ExecutionMode.ForeachResults => dataFrame.rdd.foreach { row => Unit }
+          case ExecutionMode.CollectResults => dataFrame.collect()
+          case ExecutionMode.ForeachResults => dataFrame.foreach { row => Unit }
           case ExecutionMode.WriteParquet(location) =>
             dataFrame.write.parquet(s"$location/$name.parquet")
           case ExecutionMode.HashResults =>

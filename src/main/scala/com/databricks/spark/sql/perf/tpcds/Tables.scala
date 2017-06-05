@@ -48,7 +48,6 @@ class Tables(sqlContext: SQLContext, dsdgenDir: String, scaleFactor: Int,
      */
     def df(convertToSchema: Boolean, numPartition: Int, filter: Boolean) = {
       val partitions = if (partitionColumns.isEmpty) 1 else numPartition
-      val filterArg = if (filter) "-filter Y" else ""
       val generatedData = {
         sparkContext.parallelize(1 to partitions, partitions).flatMap { i =>
           val localToolsDir = if (new java.io.File(dsdgen).exists) {
@@ -63,7 +62,7 @@ class Tables(sqlContext: SQLContext, dsdgenDir: String, scaleFactor: Int,
           val parallel = if (partitions > 1) s"-parallel $partitions -child $i" else ""
           val commands = Seq(
             "bash", "-c",
-            s"cd $localToolsDir && ./dsdgen -table $name $filterArg -scale $scaleFactor -RNGSEED 100 $parallel")
+            s"cd $localToolsDir && ./dsdgen -table $name -filter Y -scale $scaleFactor -RNGSEED 100 $parallel")
           println(commands)
           commands.lines
         }
