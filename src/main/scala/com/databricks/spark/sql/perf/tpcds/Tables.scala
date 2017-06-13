@@ -46,7 +46,7 @@ class Tables(sqlContext: SQLContext, dsdgenDir: String, scaleFactor: Int,
      *  If convertToSchema is true, the data from generator will be parsed into columns and
      *  converted to `schema`. Otherwise, it just outputs the raw data (as a single STRING column).
      */
-    def df(convertToSchema: Boolean, numPartition: Int, filter: Boolean) = {
+    def df(convertToSchema: Boolean, numPartition: Int) = {
       val partitions = if (partitionColumns.isEmpty) 1 else numPartition
       val generatedData = {
         sparkContext.parallelize(1 to partitions, partitions).flatMap { i =>
@@ -126,11 +126,10 @@ class Tables(sqlContext: SQLContext, dsdgenDir: String, scaleFactor: Int,
         overwrite: Boolean,
         clusterByPartitionColumns: Boolean,
         filterOutNullPartitionValues: Boolean,
-        numPartitions: Int,
-        filter: Boolean): Unit = {
+        numPartitions: Int): Unit = {
       val mode = if (overwrite) SaveMode.Overwrite else SaveMode.Ignore
 
-      val data = df(format != "text", numPartitions, filter)
+      val data = df(format != "text", numPartitions)
       val tempTableName = s"${name}_text"
       data.registerTempTable(tempTableName)
 
@@ -241,7 +240,7 @@ class Tables(sqlContext: SQLContext, dsdgenDir: String, scaleFactor: Int,
     tablesToBeGenerated.foreach { table =>
       val tableLocation = s"$location/${table.name}"
       table.genData(tableLocation, format, overwrite, clusterByPartitionColumns,
-        filterOutNullPartitionValues, numPartitions, tableFilter.nonEmpty)
+        filterOutNullPartitionValues, numPartitions)
     }
   }
 
