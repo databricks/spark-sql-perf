@@ -15,7 +15,7 @@ SELECT state, cnt FROM (
              (SELECT avg(j.i_current_price) FROM item j
  	            WHERE j.i_category = i.i_category)
  GROUP BY a.ca_state
-) 
+) x
 WHERE cnt >= 10
 ORDER BY cnt LIMIT 100
             
