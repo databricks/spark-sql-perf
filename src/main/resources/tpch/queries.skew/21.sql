@@ -1,4 +1,4 @@
--- using 1498230177 as a seed to the RNG
+-- using 1499680242 as a seed to the RNG
 
 
 select
@@ -34,7 +34,7 @@ where
 			and l3.l_receiptdate > l3.l_commitdate
 	)
 	and s_nationkey = n_nationkey
-	and n_name = 'EGYPT'
+	and n_name = 'UNITED STATES'
 group by
 	s_name
 order by

@@ -1,4 +1,4 @@
--- using 1498230177 as a seed to the RNG
+-- using 1499680242 as a seed to the RNG
 
 with revenue0 as
 	(select
@@ -7,8 +7,8 @@ with revenue0 as
 	from
 		lineitem
 	where
-		l_shipdate >= date '1995-06-01'
-		and l_shipdate < date '1995-06-01' + interval '3' month
+		l_shipdate >= date '1993-07-01'
+		and l_shipdate < date '1993-07-01' + interval '3' month
 	group by
 		l_suppkey)
 
