@@ -37,11 +37,18 @@ the TPCDS data requires dsdgen built and available on the machines. We have a fo
 you will need. It can be found [here](https://github.com/davies/tpcds-kit).  
 
 ```
+// If not done already, you have to set the path for the results
+spark.config("spark.sql.perf.results", "/tmp/results")
+
 import com.databricks.spark.sql.perf.tpcds.Tables
 // Tables in TPC-DS benchmark used by experiments.
 // dsdgenDir is the location of dsdgen tool installed in your machines.
+// scaleFactor defines the size of the dataset to generate (in GB)
 val tables = new Tables(sqlContext, dsdgenDir, scaleFactor)
+
 // Generate data.
+// location is the place there the generated data will be written
+// format is a valid spark format like "parquet"
 tables.genData(location, format, overwrite, partitionTables, useDoubleForDecimal, clusterByPartitionColumns, filterOutNullPartitionValues)
 // Create metastore tables in a specified database for your data.
 // Once tables are created, the current database will be switched to the specified database.
@@ -58,17 +65,21 @@ After setup, users can use `runExperiment` function to run benchmarking queries 
 
 ```
 val experiment = tpcds.runExperiment(tpcds.interactiveQueries)
+experiment.waitForFinish(60*60*10) // optional: wait for results (with timeout)
 ```
 
-For every experiment run (i.e. every call of `runExperiment`), Spark SQL Perf will use the timestamp of the start time to identify this experiment. Performance results will be stored in the sub-dir named by the timestamp in the given `resultsLocation` (for example `results/1429213883272`). The performance results are stored in the JSON format.
+For every experiment run (i.e. every call of `runExperiment`), Spark SQL Perf will use the timestamp of the start time to identify this experiment. Performance results will be stored in the sub-dir named by the timestamp in the given `spark.sql.perf.results` (for example `/tmp/results/timestamp=1429213883272`). The performance results are stored in the JSON format.
 
 ### Retrieve results
-While the experiment is running you can use `experiment.html` to list the status.  Once the experiment is complete, the results will be saved to the table sqlPerformance in json.
+While the experiment is running you can use `experiment.html` to list the status.  Once the experiment is complete, you can load the results from disk.
 
 ```
 // Get all experiments results.
-tpcds.createResultsTable()
+val resultTable = spark.read.json(spark.conf.get("spark.sql.perf.results"))
+resultTable.createOrReplaceTempView("sqlPerformance")
 sqlContext.table("sqlPerformance")
 // Get the result of a particular run by specifying the timestamp of that run.
 sqlContext.table("sqlPerformance").filter("timestamp = 1429132621024")
+// or
+val specificResultTable = spark.read.json(experiment.resultPath)
 ```
