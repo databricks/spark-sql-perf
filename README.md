@@ -43,7 +43,7 @@ spark.config("spark.sql.perf.results", "/tmp/results")
 import com.databricks.spark.sql.perf.tpcds.Tables
 // Tables in TPC-DS benchmark used by experiments.
 // dsdgenDir is the location of dsdgen tool installed in your machines.
-// scaleFactor defines the size of the dataset to generate (in GB?)
+// scaleFactor defines the size of the dataset to generate (in GB)
 val tables = new Tables(sqlContext, dsdgenDir, scaleFactor)
 
 // Generate data.
