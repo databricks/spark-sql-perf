@@ -72,7 +72,7 @@ class TPCHTables(
     scaleFactor: String,
     useDoubleForDecimal: Boolean = false,
     useStringForDate: Boolean = false,
-    generatorParams: Seq[String])
+    generatorParams: Seq[String] = Nil)
     extends Tables(sqlContext, scaleFactor, useDoubleForDecimal, useStringForDate) {
   import sqlContext.implicits._
 
