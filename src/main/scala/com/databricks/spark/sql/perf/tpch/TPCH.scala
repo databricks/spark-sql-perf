@@ -88,7 +88,7 @@ class TPCHTables(
       'p_type.string,
       'p_size.int,
       'p_container.string,
-      'p_retailprice.decimal,
+      'p_retailprice.decimal(12, 2),
       'p_comment.string
     ),
     Table("supplier",
@@ -98,7 +98,7 @@ class TPCHTables(
       's_address.string,
       's_nationkey.long,
       's_phone.string,
-      's_acctbal.decimal,
+      's_acctbal.decimal(12, 2),
       's_comment.string
     ),
     Table("partsupp",
@@ -106,7 +106,7 @@ class TPCHTables(
       'ps_partkey.long,
       'ps_suppkey.long,
       'ps_availqty.int,
-      'ps_supplycost.decimal,
+      'ps_supplycost.decimal(12, 2),
       'ps_comment.string
     ),
     Table("customer",
@@ -116,7 +116,7 @@ class TPCHTables(
       'c_address.string,
       'c_nationkey.string,
       'c_phone.string,
-      'c_acctbal.decimal,
+      'c_acctbal.decimal(12, 2),
       'c_mktsegment.string,
       'c_comment.string
     ),
@@ -125,7 +125,7 @@ class TPCHTables(
       'o_orderkey.long,
       'o_custkey.long,
       'o_orderstatus.string,
-      'o_totalprice.decimal,
+      'o_totalprice.decimal(12, 2),
       'o_orderdate.date,
       'o_orderpriority.string,
       'o_clerk.string,
@@ -138,10 +138,10 @@ class TPCHTables(
       'l_partkey.long,
       'l_suppkey.long,
       'l_linenumber.int,
-      'l_quantity.decimal,
-      'l_extendedprice.decimal,
-      'l_discount.decimal,
-      'l_tax.decimal,
+      'l_quantity.decimal(12, 2),
+      'l_extendedprice.decimal(12, 2),
+      'l_discount.decimal(12, 2),
+      'l_tax.decimal(12, 2),
       'l_returnflag.string,
       'l_linestatus.string,
       'l_shipdate.date,
@@ -164,7 +164,7 @@ class TPCHTables(
       'r_name.string,
       'r_comment.string
     )
-  )
+  ).map(_.convertTypes())
 }
 
 class TPCH(@transient sqlContext: SQLContext)
