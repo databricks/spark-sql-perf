@@ -11,3 +11,4 @@ with the following changes:
 * Q13: "as c_orders (c_custkey, c_count)" changed to "c_orders" and c_count alias moved inside subquery
 * Q15: CREATE VIEW changed to WITH
 * Q22: "substring(c_phone from 1 to 2)" changed to "substring(c_phone, 1, 2)"
+
