@@ -63,9 +63,6 @@ class DBGEN(dbgenDir: String, params: Seq[String]) extends DataGenerator {
   }
 }
 
-
-
-
 class TPCHTables(
     sqlContext: SQLContext,
     dbgenDir: String,
@@ -170,7 +167,6 @@ class TPCHTables(
 class TPCH(@transient sqlContext: SQLContext)
   extends Benchmark(sqlContext) {
 
-
   val queries = (1 to 22).map { q =>
     val queryContent: String = IOUtils.toString(
       getClass().getClassLoader().getResourceAsStream(s"tpch/queries/$q.sql"))
@@ -178,5 +174,4 @@ class TPCH(@transient sqlContext: SQLContext)
       executionMode = CollectResults)
   }
   val queriesMap = queries.map(q => q.name.split("-").get(0) -> q).toMap
-
 }

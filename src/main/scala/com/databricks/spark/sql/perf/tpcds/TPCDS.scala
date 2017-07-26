@@ -15,7 +15,6 @@
  */
 
 package com.databricks.spark.sql.perf.tpcds
-import scala.sys.process._
 
 import scala.collection.mutable
 
@@ -29,11 +28,13 @@ import org.apache.spark.sql.SQLContext
  * @param sqlContext An existing SQLContext.
  */
 class TPCDS(@transient sqlContext: SQLContext)
-    extends Benchmark(sqlContext)
-    with ImpalaKitQueries
-    with SimpleQueries
-    with Tpcds_1_4_Queries
-    with Tpcds_2_4_Queries {
+  extends Benchmark(sqlContext)
+  with ImpalaKitQueries
+  with SimpleQueries
+  with Tpcds_1_4_Queries
+  with Tpcds_2_4_Queries
+  with Serializable {
+
   def this() = this(SQLContext.getOrCreate(SparkContext.getOrCreate()))
 
   /*
