@@ -19,7 +19,6 @@ package com.databricks.spark.sql.perf
 import scala.language.implicitConversions
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
-
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.catalyst.analysis.UnresolvedRelation
 import org.apache.spark.sql.execution.SparkPlan
@@ -54,7 +53,7 @@ class Query(
   }
 
   lazy val tablesInvolved = buildDataFrame.queryExecution.logical collect {
-    case UnresolvedRelation(tableIdentifier, _) => {
+    case UnresolvedRelation(tableIdentifier) => {
       // We are ignoring the database name.
       tableIdentifier.table
     }
@@ -85,14 +84,21 @@ class Query(
 
       val breakdownResults = if (includeBreakdown) {
         val depth = queryExecution.executedPlan.collect { case p: SparkPlan => p }.size
-        val physicalOperators = (0 until depth).map(i => (i, queryExecution.executedPlan(i)))
+        // val physicalOperators: IndexedSeq[(Int, SparkPlan)] = (0 until depth).map(i => (i, queryExecution.executedPlan(i)))
+        // TODO(@sid.murching): does planList represent the same sequence of SparkPlans
+        // as the commented-out declaration of physicalOperators above?
+        val planList = queryExecution.executedPlan.toList
+        val physicalOperators: List[(Int, SparkPlan)] = planList.zipWithIndex.map {
+          case (plan, idx) => (idx, plan)
+        }
+
         val indexMap = physicalOperators.map { case (index, op) => (op, index) }.toMap
         val timeMap = new mutable.HashMap[Int, Double]
 
         physicalOperators.reverse.map {
           case (index, node) =>
             messages += s"Breakdown: ${node.simpleString}"
-            val newNode = buildDataFrame.queryExecution.executedPlan(index)
+            val newNode = planList(index)
             val executionTime = measureTimeMs {
               newNode.execute().foreach((row: Any) => Unit)
             }
@@ -100,7 +106,6 @@ class Query(
 
             val childIndexes = node.children.map(indexMap)
             val childTime = childIndexes.map(timeMap).sum
-
             messages += s"Breakdown time: $executionTime (+${executionTime - childTime})"
 
             BreakdownResult(
