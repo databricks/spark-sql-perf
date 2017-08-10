@@ -52,12 +52,16 @@ class MLTransformerBenchmarkable(
         estimator.fit(trainingData)
       }
       logger.info(s"model: $model")
-      val (_, scoreTraining) = measureTime {
+      val (scoreTrainTime, scoreTraining) = measureTime {
         test.score(param, trainingData, model)
       }
       val (scoreTestTime, scoreTest) = measureTime {
         test.score(param, testData, model)
       }
+
+      logger.info(s"$this doBenchmark: Trained model in ${trainingTime.toMillis / 1000.0}" +
+        s" s, Scored training dataset in ${scoreTrainTime.toMillis / 1000.0} s," +
+        s" test dataset in ${scoreTestTime.toMillis / 1000.0} s")
 
 
       val ml = MLResult(

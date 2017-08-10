@@ -1,12 +1,9 @@
 package com.databricks.spark.sql.perf.mllib
 
 import scala.language.implicitConversions
-
 import com.databricks.spark.sql.perf._
-
 import com.typesafe.scalalogging.slf4j.{LazyLogging => Logging}
-
-import org.apache.spark.SparkContext
+import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.sql.{DataFrame, SQLContext}
 
 
@@ -34,6 +31,12 @@ object MLLib extends Logging {
     e.getCurrentResults()
   }
 
+
+  def main(args: Array[String]): Unit = {
+    val configFile = args(0)
+    run(yamlFile = configFile)
+  }
+
   /**
    * Runs all the experiments and blocks on completion
    *
@@ -46,6 +49,7 @@ object MLLib extends Logging {
       require(yamlConfig != null)
       YamlConfig.readString(yamlConfig)
     }
+
     val sc = SparkContext.getOrCreate()
     sc.setLogLevel("INFO")
     val b = new com.databricks.spark.sql.perf.mllib.MLLib()

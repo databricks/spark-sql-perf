@@ -26,6 +26,11 @@ Usage: spark-sql-perf [options]
 $ bin/run --benchmark DatasetPerformance
 ```
 
+### MLlib tests
+
+To run MLlib tests, run `/bin/run-ml yamlfile`, where `yamlfile` is the path to a YAML configuration
+file describing tests to run and their parameters.
+
 # TPC-DS
 
 ## How to use it

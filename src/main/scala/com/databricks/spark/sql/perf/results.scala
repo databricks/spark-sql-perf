@@ -121,6 +121,7 @@ case class MLParams(
     ldaNumVocabulary: Option[Int] = None,
     link: Option[String] = None,
     maxIter: Option[Int] = None,
+    naiveBayesSmoothing: Option[Double] = None,
     numClasses: Option[Int] = None,
     numFeatures: Option[Int] = None,
     numItems: Option[Int] = None,
