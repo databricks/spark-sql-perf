@@ -31,7 +31,11 @@ object MLLib extends Logging {
     e.getCurrentResults()
   }
 
-
+  /**
+   * Entry point for running ML tests. Expects a single command-line argument: the path to
+   * a YAML config file specifying which ML tests to run and their parameters.
+   * @param args command line args
+   */
   def main(args: Array[String]): Unit = {
     val configFile = args(0)
     run(yamlFile = configFile)
