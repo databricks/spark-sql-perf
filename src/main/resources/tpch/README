@@ -1,0 +1,14 @@
+The queries were generated with:
+
+  DSS_QUERIES=queries qgen -d 1
+
+with the following changes:
+* "first -1" removed
+* "first N" changed to "limit N"
+* ; (semicolon) at end of queries removed
+* Q1: "interval '90' day (3)" changed to "interval '90' day"
+* Q7, Q8, Q9: "extract(year from X)" changed to "year(X)"
+* Q13: "as c_orders (c_custkey, c_count)" changed to "c_orders" and c_count alias moved inside subquery
+* Q15: CREATE VIEW changed to WITH
+* Q22: "substring(c_phone from 1 to 2)" changed to "substring(c_phone, 1, 2)"
+

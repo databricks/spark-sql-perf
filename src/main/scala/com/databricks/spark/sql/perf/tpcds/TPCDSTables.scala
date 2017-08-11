@@ -18,274 +18,52 @@ package com.databricks.spark.sql.perf.tpcds
 
 import scala.sys.process._
 
-import org.slf4j.LoggerFactory
+import com.databricks.spark.sql.perf
+import com.databricks.spark.sql.perf.{DataGenerator, Table, Tables}
 
-import org.apache.spark.sql.functions._
-import org.apache.spark.sql.types._
-import org.apache.spark.sql.{Row, SQLContext, SaveMode}
+import org.apache.spark.SparkContext
+import org.apache.spark.sql.SQLContext
 
-class Tables(sqlContext: SQLContext, dsdgenDir: String, scaleFactor: Int,
-    useDoubleForDecimal: Boolean = false, useStringForDate: Boolean = false)
-    extends Serializable {
-
-  import sqlContext.implicits._
-
-  private val log = LoggerFactory.getLogger(getClass)
-
-  def sparkContext = sqlContext.sparkContext
+class DSDGEN(dsdgenDir: String) extends DataGenerator {
   val dsdgen = s"$dsdgenDir/dsdgen"
 
-  case class Table(name: String, partitionColumns: Seq[String], fields: StructField*) {
-    val schema = StructType(fields)
-
-    def nonPartitioned: Table = {
-      Table(name, Nil, fields : _*)
-    }
-
-    /** 
-     *  If convertToSchema is true, the data from generator will be parsed into columns and
-     *  converted to `schema`. Otherwise, it just outputs the raw data (as a single STRING column).
-     */
-    def df(convertToSchema: Boolean, numPartition: Int) = {
-      val partitions = if (partitionColumns.isEmpty) 1 else numPartition
-      val generatedData = {
-        sparkContext.parallelize(1 to partitions, partitions).flatMap { i =>
-          val localToolsDir = if (new java.io.File(dsdgen).exists) {
-            dsdgenDir
-          } else if (new java.io.File(s"/$dsdgen").exists) {
-            s"/$dsdgenDir"
-          } else {
-            sys.error(s"Could not find dsdgen at $dsdgen or /$dsdgen. Run install")
-          }
-
-          // Note: RNGSEED is the RNG seed used by the data generator. Right now, it is fixed to 100.
-          val parallel = if (partitions > 1) s"-parallel $partitions -child $i" else ""
-          val commands = Seq(
-            "bash", "-c",
-            s"cd $localToolsDir && ./dsdgen -table $name -filter Y -scale $scaleFactor -RNGSEED 100 $parallel")
-          println(commands)
-          commands.lines
-        }
-      }
-
-      generatedData.setName(s"$name, sf=$scaleFactor, strings")
-
-      val rows = generatedData.mapPartitions { iter =>
-        iter.map { l =>
-          if (convertToSchema) {
-            val values = l.split("\\|", -1).dropRight(1).map { v =>
-              if (v.equals("")) {
-                // If the string value is an empty string, we turn it to a null
-                null
-              } else {
-                v
-              }
-            }
-            Row.fromSeq(values)
-          } else {
-            Row.fromSeq(Seq(l))
-          }
-        }
-      }
-
-      if (convertToSchema) {
-        val stringData =
-          sqlContext.createDataFrame(
-            rows,
-            StructType(schema.fields.map(f => StructField(f.name, StringType))))
-
-        val convertedData = {
-          val columns = schema.fields.map { f =>
-            col(f.name).cast(f.dataType).as(f.name)
-          }
-          stringData.select(columns: _*)
-        }
-
-        convertedData
-      } else {
-        sqlContext.createDataFrame(rows, StructType(Seq(StructField("value", StringType))))
-      }
-    }
-
-    def convertTypes(): Table = {
-      val newFields = fields.map { field =>
-        val newDataType = field.dataType match {
-          case decimal: DecimalType if useDoubleForDecimal => DoubleType
-          case date: DateType if useStringForDate => StringType
-          case other => other
-        }
-        field.copy(dataType = newDataType)
-      }
-
-      Table(name, partitionColumns, newFields:_*)
-    }
-
-    def genData(
-        location: String,
-        format: String,
-        overwrite: Boolean,
-        clusterByPartitionColumns: Boolean,
-        filterOutNullPartitionValues: Boolean,
-        numPartitions: Int): Unit = {
-      val mode = if (overwrite) SaveMode.Overwrite else SaveMode.Ignore
-
-      val data = df(format != "text", numPartitions)
-      val tempTableName = s"${name}_text"
-      data.registerTempTable(tempTableName)
-
-      val writer = if (partitionColumns.nonEmpty) {
-        if (clusterByPartitionColumns) {
-          val columnString = data.schema.fields.map { field =>
-            field.name
-          }.mkString(",")
-          val partitionColumnString = partitionColumns.mkString(",")
-          val predicates = if (filterOutNullPartitionValues) {
-            partitionColumns.map(col => s"$col IS NOT NULL").mkString("WHERE ", " AND ", "")
-          } else {
-            ""
-          }
-
-          val query =
-            s"""
-              |SELECT
-              |  $columnString
-              |FROM
-              |  $tempTableName
-              |$predicates
-              |DISTRIBUTE BY
-              |  $partitionColumnString
-            """.stripMargin
-          val grouped = sqlContext.sql(query)
-          println(s"Pre-clustering with partitioning columns with query $query.")
-          log.info(s"Pre-clustering with partitioning columns with query $query.")
-          grouped.write
+  def generate(sparkContext: SparkContext, name: String, partitions: Int, scaleFactor: String) = {
+    val generatedData = {
+      sparkContext.parallelize(1 to partitions, partitions).flatMap { i =>
+        val localToolsDir = if (new java.io.File(dsdgen).exists) {
+          dsdgenDir
+        } else if (new java.io.File(s"/$dsdgen").exists) {
+          s"/$dsdgenDir"
         } else {
-          data.write
+          sys.error(s"Could not find dsdgen at $dsdgen or /$dsdgen. Run install")
         }
-      } else {
-        // If the table is not partitioned, coalesce the data to a single file.
-        data.coalesce(1).write
-      }
-      writer.format(format).mode(mode)
-      if (partitionColumns.nonEmpty) {
-        writer.partitionBy(partitionColumns : _*)
-      }
-      println(s"Generating table $name in database to $location with save mode $mode.")
-      log.info(s"Generating table $name in database to $location with save mode $mode.")
-      writer.save(location)
-      sqlContext.dropTempTable(tempTableName)
-    }
 
-    def createExternalTable(location: String, format: String, databaseName: String,
-        overwrite: Boolean, discoverPartitions: Boolean = true): Unit = {
-
-      val qualifiedTableName = databaseName + "." + name
-      val tableExists = sqlContext.tableNames(databaseName).contains(name)
-      if (overwrite) {
-        sqlContext.sql(s"DROP TABLE IF EXISTS $databaseName.$name")
-      }
-      if (!tableExists || overwrite) {
-        println(s"Creating external table $name in database $databaseName using data stored in $location.")
-        log.info(s"Creating external table $name in database $databaseName using data stored in $location.")
-        sqlContext.createExternalTable(qualifiedTableName, location, format)
-      }
-      if (partitionColumns.nonEmpty && discoverPartitions) {
-        println(s"Discovering partitions for table $name.")
-        log.info(s"Discovering partitions for table $name.")
-        sqlContext.sql(s"ALTER TABLE $databaseName.$name RECOVER PARTITIONS")
+        // Note: RNGSEED is the RNG seed used by the data generator. Right now, it is fixed to 100.
+        val parallel = if (partitions > 1) s"-parallel $partitions -child $i" else ""
+        val commands = Seq(
+          "bash", "-c",
+          s"cd $localToolsDir && ./dsdgen -table $name -filter Y -scale $scaleFactor -RNGSEED 100 $parallel")
+        println(commands)
+        commands.lines
       }
     }
 
-    def createTemporaryTable(location: String, format: String): Unit = {
-      println(s"Creating temporary table $name using data stored in $location.")
-      log.info(s"Creating temporary table $name using data stored in $location.")
-      sqlContext.read.format(format).load(location).registerTempTable(name)
-    }
-
-    def analyzeTable(databaseName: String, analyzeColumns: Boolean = false): Unit = {
-      println(s"Analyzing table $name.")
-      log.info(s"Analyzing table $name.")
-      sqlContext.sql(s"ANALYZE TABLE $databaseName.$name COMPUTE STATISTICS")
-      if (analyzeColumns) {
-        val allColumns = fields.map(_.name).mkString(", ")
-        println(s"Analyzing table $name columns $allColumns.")
-        log.info(s"Analyzing table $name columns $allColumns.")
-        sqlContext.sql(s"ANALYZE TABLE $databaseName.$name COMPUTE STATISTICS FOR COLUMNS $allColumns")
-      }
-    }
+    generatedData.setName(s"$name, sf=$scaleFactor, strings")
+    generatedData
   }
+}
 
-  def genData(
-      location: String,
-      format: String,
-      overwrite: Boolean,
-      partitionTables: Boolean,
-      clusterByPartitionColumns: Boolean,
-      filterOutNullPartitionValues: Boolean,
-      tableFilter: String = "",
-      numPartitions: Int = 100): Unit = {
-    var tablesToBeGenerated = if (partitionTables) {
-      tables
-    } else {
-      tables.map(_.nonPartitioned)
-    }
 
-    if (!tableFilter.isEmpty) {
-      tablesToBeGenerated = tablesToBeGenerated.filter(_.name == tableFilter)
-      if (tablesToBeGenerated.isEmpty) {
-        throw new RuntimeException("Bad table name filter: " + tableFilter)
-      }
-    }
+class TPCDSTables(
+  sqlContext: SQLContext,
+  dsdgenDir: String,
+  scaleFactor: String,
+  useDoubleForDecimal: Boolean = false,
+  useStringForDate: Boolean = false)
+  extends Tables(sqlContext, scaleFactor, useDoubleForDecimal, useStringForDate) {
+  import sqlContext.implicits._
 
-    tablesToBeGenerated.foreach { table =>
-      val tableLocation = s"$location/${table.name}"
-      table.genData(tableLocation, format, overwrite, clusterByPartitionColumns,
-        filterOutNullPartitionValues, numPartitions)
-    }
-  }
-
-  def createExternalTables(location: String, format: String, databaseName: String,
-      overwrite: Boolean, discoverPartitions: Boolean, tableFilter: String = ""): Unit = {
-
-    val filtered = if (tableFilter.isEmpty) {
-      tables
-    } else {
-      tables.filter(_.name == tableFilter)
-    }
-
-    sqlContext.sql(s"CREATE DATABASE IF NOT EXISTS $databaseName")
-    filtered.foreach { table =>
-      val tableLocation = s"$location/${table.name}"
-      table.createExternalTable(tableLocation, format, databaseName, overwrite, discoverPartitions)
-    }
-    sqlContext.sql(s"USE $databaseName")
-    println(s"The current database has been set to $databaseName.")
-    log.info(s"The current database has been set to $databaseName.")
-  }
-
-  def createTemporaryTables(location: String, format: String, tableFilter: String = ""): Unit = {
-    val filtered = if (tableFilter.isEmpty) {
-      tables
-    } else {
-      tables.filter(_.name == tableFilter)
-    }
-    filtered.foreach { table =>
-      val tableLocation = s"$location/${table.name}"
-      table.createTemporaryTable(tableLocation, format)
-    }
-  }
-
-  def analyzeTables(databaseName: String, analyzeColumns: Boolean = false, tableFilter: String = ""): Unit = {
-    val filtered = if (tableFilter.isEmpty) {
-      tables
-    } else {
-      tables.filter(_.name == tableFilter)
-    }
-    filtered.foreach { table =>
-      table.analyzeTable(databaseName, analyzeColumns)
-    }
-  }
-
+  val dataGenerator = new DSDGEN(dsdgenDir)
   val tables = Seq(
     Table("catalog_sales",
       partitionColumns = "cs_sold_date_sk" :: Nil,
