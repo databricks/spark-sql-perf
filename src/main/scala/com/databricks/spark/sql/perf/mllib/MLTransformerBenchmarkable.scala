@@ -1,12 +1,13 @@
 package com.databricks.spark.sql.perf.mllib
 
-import com.databricks.spark.sql.perf._
-import com.typesafe.scalalogging.slf4j.{LazyLogging => Logging}
-
-import org.apache.spark.sql._
 import scala.collection.mutable.ArrayBuffer
 
-import org.apache.spark.ml.Transformer
+import com.typesafe.scalalogging.slf4j.{LazyLogging => Logging}
+
+import org.apache.spark.ml.{Estimator, Transformer}
+import org.apache.spark.sql._
+
+import com.databricks.spark.sql.perf._
 
 class MLTransformerBenchmarkable(
     params: MLParams,
@@ -48,8 +49,14 @@ class MLTransformerBenchmarkable(
     try {
       val (trainingTime, model: Transformer) = measureTime {
         logger.info(s"$this: train: trainingSet=${trainingData.schema}")
-        val estimator = test.getEstimator(param)
-        estimator.fit(trainingData)
+        test.getPipelineStage(param) match {
+          case est: Estimator[_] => est.fit(trainingData)
+          case transformer: Transformer =>
+            transformer.transform(trainingData)
+            transformer
+          case other: Any => throw new UnsupportedOperationException("Algorithm to benchmark must" +
+            s" be an estimator or transformer, found ${other.getClass} instead.")
+        }
       }
       logger.info(s"model: $model")
       val (scoreTrainTime, scoreTraining) = measureTime {

@@ -50,8 +50,10 @@ object MLLib extends Logging {
       YamlConfig.readString(yamlConfig)
     }
 
+    // Uncomment these lines to run locally:
+    // val sparkConf = new SparkConf().setAppName("MLlib QA").setMaster("local[2]")
+    // val sc = new SparkContext(sparkConf)
     val sc = SparkContext.getOrCreate()
-    sc.setLogLevel("INFO")
     val b = new com.databricks.spark.sql.perf.mllib.MLLib()
     val sqlContext = com.databricks.spark.sql.perf.mllib.MLBenchmarks.sqlContext
     val benchmarksDescriptions = conf.runnableBenchmarks

@@ -3,7 +3,7 @@ package com.databricks.spark.sql.perf.mllib
 import com.typesafe.scalalogging.slf4j.{LazyLogging => Logging}
 
 import org.apache.spark.ml.attribute.{NominalAttribute, NumericAttribute}
-import org.apache.spark.ml.{Estimator, Transformer}
+import org.apache.spark.ml.{Estimator, PipelineStage, Transformer}
 import org.apache.spark.ml.evaluation.Evaluator
 import org.apache.spark.sql._
 import org.apache.spark.sql.functions._
@@ -27,9 +27,9 @@ trait BenchmarkAlgorithm extends Logging {
   def testDataSet(ctx: MLBenchContext): DataFrame
 
   /**
-   * Create an [[Estimator]] with params set from the given [[MLBenchContext]].
+   * Create an [[Estimator]] or [[Transformer]] with params set from the given [[MLBenchContext]].
    */
-  def getEstimator(ctx: MLBenchContext): Estimator[_]
+  def getPipelineStage(ctx: MLBenchContext): PipelineStage
 
   /**
    * The unnormalized score of the training procedure on a dataset. The normalization is

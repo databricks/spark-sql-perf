@@ -3,7 +3,7 @@ package com.databricks.spark.sql.perf.mllib.regression
 import org.apache.spark.ml.evaluation.{Evaluator, RegressionEvaluator}
 import org.apache.spark.ml.linalg.Vectors
 import org.apache.spark.ml.regression.GeneralizedLinearRegression
-import org.apache.spark.ml.{Estimator, ModelBuilder, Transformer}
+import org.apache.spark.ml.{ModelBuilder, PipelineStage, Transformer}
 
 import com.databricks.spark.sql.perf.mllib.OptionImplicits._
 import com.databricks.spark.sql.perf.mllib._
@@ -36,7 +36,7 @@ object GLMRegression extends BenchmarkAlgorithm with TestFromTraining with
     m
   }
 
-  override def getEstimator(ctx: MLBenchContext): Estimator[_] = {
+  override def getPipelineStage(ctx: MLBenchContext): PipelineStage = {
     import ctx.params._
     new GeneralizedLinearRegression()
       .setLink(link)

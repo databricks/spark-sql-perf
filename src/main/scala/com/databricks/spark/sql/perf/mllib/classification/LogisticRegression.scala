@@ -3,9 +3,8 @@ package com.databricks.spark.sql.perf.mllib.classification
 import com.databricks.spark.sql.perf.mllib.OptionImplicits._
 import com.databricks.spark.sql.perf.mllib._
 import com.databricks.spark.sql.perf.mllib.data.DataGenerator
-
 import org.apache.spark.ml.evaluation.{Evaluator, MulticlassClassificationEvaluator}
-import org.apache.spark.ml.{Estimator, ModelBuilder, Transformer}
+import org.apache.spark.ml.{Estimator, ModelBuilder, PipelineStage, Transformer}
 import org.apache.spark.ml
 import org.apache.spark.ml.linalg.Vectors
 
@@ -32,7 +31,7 @@ object LogisticRegression extends BenchmarkAlgorithm
     ModelBuilder.newLogisticRegressionModel(coefficients, intercept)
   }
 
-  override def getEstimator(ctx: MLBenchContext): Estimator[_] = {
+  override def getPipelineStage(ctx: MLBenchContext): PipelineStage = {
     import ctx.params._
     new ml.classification.LogisticRegression()
       .setTol(tol)

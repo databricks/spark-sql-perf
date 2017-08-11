@@ -1,7 +1,7 @@
 package com.databricks.spark.sql.perf.mllib.classification
 
 import org.apache.spark.ml
-import org.apache.spark.ml.{Estimator, Transformer}
+import org.apache.spark.ml.{Estimator, PipelineStage, Transformer}
 import org.apache.spark.ml.classification.NaiveBayesBuilder
 import org.apache.spark.ml.evaluation.{Evaluator, MulticlassClassificationEvaluator}
 import org.apache.spark.ml.linalg.{DenseMatrix, Vectors}
@@ -56,7 +56,7 @@ object NaiveBayes extends BenchmarkAlgorithm
     res
   }
 
-  override def getEstimator(ctx: MLBenchContext): Estimator[_] = {
+  override def getPipelineStage(ctx: MLBenchContext): PipelineStage = {
     import ctx.params._
     new ml.classification.NaiveBayes()
       .setSmoothing(naiveBayesSmoothing)

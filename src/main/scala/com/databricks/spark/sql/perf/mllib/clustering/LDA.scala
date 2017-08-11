@@ -4,7 +4,7 @@ import scala.collection.mutable.{HashMap => MHashMap}
 
 import org.apache.commons.math3.random.Well19937c
 
-import org.apache.spark.ml.Estimator
+import org.apache.spark.ml.{Estimator, PipelineStage}
 import org.apache.spark.ml
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql._
@@ -44,7 +44,7 @@ object LDA extends BenchmarkAlgorithm with TestFromTraining {
     ctx.sqlContext.createDataFrame(data).toDF("docIndex", "features")
   }
 
-  override def getEstimator(ctx: MLBenchContext): Estimator[_] = {
+  override def getPipelineStage(ctx: MLBenchContext): PipelineStage = {
     import ctx.params._
     new ml.clustering.LDA()
       .setK(k)

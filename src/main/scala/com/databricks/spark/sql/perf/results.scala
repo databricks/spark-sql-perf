@@ -113,6 +113,7 @@ case class MLParams(
     numTestExamples: Option[Long] = None,
     numPartitions: Option[Int] = None,
     // *** Specialized and sorted by name ***
+    bucketizerNumBuckets: Option[Int] = None,
     depth: Option[Int] = None,
     elasticNetParam: Option[Double] = None,
     family: Option[String] = None,
