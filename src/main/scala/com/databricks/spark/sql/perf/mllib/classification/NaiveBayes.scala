@@ -1,8 +1,7 @@
 package com.databricks.spark.sql.perf.mllib.classification
 
 import org.apache.spark.ml
-import org.apache.spark.ml.{Estimator, PipelineStage, Transformer}
-import org.apache.spark.ml.classification.NaiveBayesBuilder
+import org.apache.spark.ml.{ModelBuilder, PipelineStage, Transformer}
 import org.apache.spark.ml.evaluation.{Evaluator, MulticlassClassificationEvaluator}
 import org.apache.spark.ml.linalg.{DenseMatrix, Vectors}
 
@@ -52,8 +51,7 @@ object NaiveBayes extends BenchmarkAlgorithm
     // Initialize new Naive Bayes model
     val pi = Vectors.dense(piArray)
     val theta = new DenseMatrix(numClasses, numFeatures, thetaArray.flatten, true)
-    val res = NaiveBayesBuilder.newNaiveBayesModel(pi, theta)
-    res
+    ModelBuilder.newNaiveBayesModel(pi, theta)
   }
 
   override def getPipelineStage(ctx: MLBenchContext): PipelineStage = {

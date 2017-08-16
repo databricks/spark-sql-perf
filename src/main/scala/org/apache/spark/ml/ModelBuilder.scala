@@ -1,8 +1,8 @@
 package org.apache.spark.ml
 
-import org.apache.spark.ml.classification.{DecisionTreeClassificationModel, LogisticRegressionModel}
-import org.apache.spark.ml.linalg.Vector
-import org.apache.spark.ml.regression.{LinearRegressionModel, GeneralizedLinearRegressionModel, DecisionTreeRegressionModel}
+import org.apache.spark.ml.classification.{DecisionTreeClassificationModel, LogisticRegressionModel, NaiveBayesModel}
+import org.apache.spark.ml.linalg.{Matrix, Vector}
+import org.apache.spark.ml.regression.{DecisionTreeRegressionModel, GeneralizedLinearRegressionModel, LinearRegressionModel}
 import org.apache.spark.ml.tree._
 import org.apache.spark.mllib.random.RandomDataGenerator
 import org.apache.spark.mllib.tree.impurity.ImpurityCalculator
@@ -50,6 +50,11 @@ object ModelBuilder {
     val rootNode = TreeBuilder.randomBalancedDecisionTree(depth = depth, labelType = 0,
       featureArity = featureArity, seed = seed)
     new DecisionTreeRegressionModel(rootNode, numFeatures = featureArity.length)
+  }
+
+  def newNaiveBayesModel(pi: Vector, theta: Matrix): NaiveBayesModel = {
+    val model = new NaiveBayesModel("naivebayes-uid", pi, theta)
+    model.set(model.modelType, "multinomial")
   }
 }
 

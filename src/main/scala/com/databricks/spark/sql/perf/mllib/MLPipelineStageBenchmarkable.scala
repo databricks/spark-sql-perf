@@ -9,13 +9,13 @@ import org.apache.spark.sql._
 
 import com.databricks.spark.sql.perf._
 
-class MLTransformerBenchmarkable(
+class MLPipelineStageBenchmarkable(
     params: MLParams,
     test: BenchmarkAlgorithm,
     sqlContext: SQLContext)
   extends Benchmarkable with Serializable with Logging {
 
-  import MLTransformerBenchmarkable._
+  import MLPipelineStageBenchmarkable._
 
   private var testData: DataFrame = null
   private var trainingData: DataFrame = null
@@ -107,7 +107,7 @@ class MLTransformerBenchmarkable(
 
 }
 
-object MLTransformerBenchmarkable {
+object MLPipelineStageBenchmarkable {
   private def pprint(p: AnyRef): Seq[String] = {
     val m = getCCParams(p)
     m.flatMap {
