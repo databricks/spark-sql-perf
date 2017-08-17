@@ -80,3 +80,13 @@ benchmarks:
       regParam: 0.1
       rank: 10
       maxIter: 6
+  - name: feature.Bucketizer
+    params:
+      numExamples: 100
+      bucketizerNumBuckets: 10
+  - name: classification.NaiveBayes
+    params:
+      numExamples: 100
+      naiveBayesSmoothing: 1.0
+      numClasses: 10
+      numFeatures: [10]

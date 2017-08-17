@@ -35,8 +35,8 @@ object NaiveBayes extends BenchmarkAlgorithm
     // theta = log of class conditional probabilities, whose dimension is C (number of classes)
     // by D (number of features)
     val unnormalizedProbs = 0.until(numClasses).map(_ => rng.nextDouble() + 1e-5).toArray
-    val probSum = unnormalizedProbs.sum
-    val piArray = unnormalizedProbs.map(prob => math.log(prob) - math.log(probSum))
+    val logProbSum = math.log(unnormalizedProbs.sum)
+    val piArray = unnormalizedProbs.map(prob => math.log(prob) - logProbSum)
 
     // For class i, set the class-conditional probability of feature i to 0.7, and split up the
     // remaining probability mass across the other features
