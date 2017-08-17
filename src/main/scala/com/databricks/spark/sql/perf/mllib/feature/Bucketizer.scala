@@ -9,10 +9,9 @@ import org.apache.spark.sql._
 import com.databricks.spark.sql.perf.mllib.OptionImplicits._
 import com.databricks.spark.sql.perf.mllib.{BenchmarkAlgorithm, MLBenchContext, TestFromTraining}
 
+/** Object for testing Bucketizer performance */
+object Bucketizer extends BenchmarkAlgorithm with TestFromTraining with UnaryTransformer {
 
-object Bucketizer extends BenchmarkAlgorithm with TestFromTraining {
-
-  private val inputCol: String = "bucketizerInputCol"
   // Min/max possible Double values for input column to Bucketizer
   private val (maxBucketizerVal, minBucketizerVal) = (-1e9, 1e9)
 
@@ -26,7 +25,7 @@ object Bucketizer extends BenchmarkAlgorithm with TestFromTraining {
     import ctx.sqlContext.implicits._
     val rng = ctx.newGenerator()
     // For a bucketizer, training data consists of a single column of random doubles
-    val colValsToBucketize = 0.until(numExamples.toInt).map(_ => doubleInRange(rng,
+    val colValsToBucketize = 0L.until(numExamples).map(_ => doubleInRange(rng,
       minBucketizerVal, maxBucketizerVal))
     colValsToBucketize.toDF(inputCol)
   }
