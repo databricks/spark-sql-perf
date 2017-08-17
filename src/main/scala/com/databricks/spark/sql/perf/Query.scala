@@ -85,21 +85,14 @@ class Query(
 
       val breakdownResults = if (includeBreakdown) {
         val depth = queryExecution.executedPlan.collect { case p: SparkPlan => p }.size
-        // val physicalOperators: IndexedSeq[(Int, SparkPlan)] = (0 until depth).map(i => (i, queryExecution.executedPlan(i)))
-        // TODO(@sid.murching): does planList represent the same sequence of SparkPlans
-        // as the commented-out declaration of physicalOperators above?
-        val planList = queryExecution.executedPlan.toList
-        val physicalOperators: List[(Int, SparkPlan)] = planList.zipWithIndex.map {
-          case (plan, idx) => (idx, plan)
-        }
-
+        val physicalOperators = (0 until depth).map(i => (i, queryExecution.executedPlan.p(i)))
         val indexMap = physicalOperators.map { case (index, op) => (op, index) }.toMap
         val timeMap = new mutable.HashMap[Int, Double]
 
         physicalOperators.reverse.map {
           case (index, node) =>
             messages += s"Breakdown: ${node.simpleString}"
-            val newNode = planList(index)
+            val newNode = buildDataFrame.queryExecution.executedPlan.p(index)
             val executionTime = measureTimeMs {
               newNode.execute().foreach((row: Any) => Unit)
             }
