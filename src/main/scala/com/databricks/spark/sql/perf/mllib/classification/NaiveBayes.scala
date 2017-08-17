@@ -20,13 +20,12 @@ object NaiveBayes extends BenchmarkAlgorithm
     val maxFeatureArity = 20
     // All features for Naive Bayes must be categorical, i.e. have arity >= 2
     val featureArity = 0.until(numFeatures).map(_ => 2 + rng.nextInt(maxFeatureArity - 2)).toArray
-    val df = DataGenerator.generateMixedFeatures(
+    DataGenerator.generateMixedFeatures(
       ctx.sqlContext,
       numExamples,
       ctx.seed(),
       numPartitions,
       featureArity)
-    df
   }
 
   override protected def trueModel(ctx: MLBenchContext): Transformer = {
@@ -36,7 +35,8 @@ object NaiveBayes extends BenchmarkAlgorithm
     // theta = log of class conditional probabilities, whose dimension is C (number of classes)
     // by D (number of features)
     val unnormalizedProbs = 0.until(numClasses).map(_ => rng.nextDouble() + 1e-5).toArray
-    val piArray = unnormalizedProbs.map(prob => math.log(prob / unnormalizedProbs.sum))
+    val probSum = unnormalizedProbs.sum
+    val piArray = unnormalizedProbs.map(prob => math.log(prob) - math.log(probSum))
 
     // For class i, set the class-conditional probability of feature i to 0.7, and split up the
     // remaining probability mass across the other features

@@ -1,10 +1,13 @@
 package com.databricks.spark.sql.perf.mllib
 
 import scala.language.implicitConversions
-import com.databricks.spark.sql.perf._
+
 import com.typesafe.scalalogging.slf4j.{LazyLogging => Logging}
-import org.apache.spark.{SparkConf, SparkContext}
+
 import org.apache.spark.sql.{DataFrame, SQLContext}
+import org.apache.spark.{SparkConf, SparkContext}
+
+import com.databricks.spark.sql.perf._
 
 
 class MLLib(@transient sqlContext: SQLContext)
@@ -54,10 +57,9 @@ object MLLib extends Logging {
       YamlConfig.readString(yamlConfig)
     }
 
-    // Uncomment these lines to run locally:
-    // val sparkConf = new SparkConf().setAppName("MLlib QA").setMaster("local[2]")
-    // val sc = new SparkContext(sparkConf)
-    val sc = SparkContext.getOrCreate()
+    val sparkConf = new SparkConf().setAppName("MLlib QA").setMaster("local[2]")
+    val sc = SparkContext.getOrCreate(sparkConf)
+    sc.setLogLevel("INFO")
     val b = new com.databricks.spark.sql.perf.mllib.MLLib()
     val sqlContext = com.databricks.spark.sql.perf.mllib.MLBenchmarks.sqlContext
     val benchmarksDescriptions = conf.runnableBenchmarks
