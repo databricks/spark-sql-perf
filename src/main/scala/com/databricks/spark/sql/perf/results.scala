@@ -113,6 +113,7 @@ case class MLParams(
     numTestExamples: Option[Long] = None,
     numPartitions: Option[Int] = None,
     // *** Specialized and sorted by name ***
+    bucketizerNumBuckets: Option[Int] = None,
     depth: Option[Int] = None,
     elasticNetParam: Option[Double] = None,
     family: Option[String] = None,
@@ -121,6 +122,7 @@ case class MLParams(
     ldaNumVocabulary: Option[Int] = None,
     link: Option[String] = None,
     maxIter: Option[Int] = None,
+    naiveBayesSmoothing: Option[Double] = None,
     numClasses: Option[Int] = None,
     numFeatures: Option[Int] = None,
     numItems: Option[Int] = None,

@@ -30,8 +30,8 @@ object MLBenchmarks {
   val context = SparkContext.getOrCreate()
   val sqlContext: SQLContext = SQLContext.getOrCreate(context)
 
-  def benchmarkObjects: Seq[MLTransformerBenchmarkable] = benchmarks.map { mlb =>
-    new MLTransformerBenchmarkable(mlb.params, mlb.benchmark, sqlContext)
+  def benchmarkObjects: Seq[MLPipelineStageBenchmarkable] = benchmarks.map { mlb =>
+    new MLPipelineStageBenchmarkable(mlb.params, mlb.benchmark, sqlContext)
   }
 
 }

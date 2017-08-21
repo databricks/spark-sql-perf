@@ -1,7 +1,7 @@
 package com.databricks.spark.sql.perf.mllib.clustering
 
 import org.apache.spark.ml
-import org.apache.spark.ml.Estimator
+import org.apache.spark.ml.{Estimator, PipelineStage}
 import org.apache.spark.sql._
 
 import com.databricks.spark.sql.perf.mllib.OptionImplicits._
@@ -17,7 +17,7 @@ object KMeans extends BenchmarkAlgorithm with TestFromTraining {
       numPartitions, numFeatures)
   }
 
-  override def getEstimator(ctx: MLBenchContext): Estimator[_] = {
+  override def getPipelineStage(ctx: MLBenchContext): PipelineStage = {
     import ctx.params._
     new ml.clustering.KMeans()
       .setK(k)

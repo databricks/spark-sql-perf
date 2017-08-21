@@ -1,12 +1,12 @@
 package com.databricks.spark.sql.perf.mllib.classification
 
-import org.apache.spark.ml.{Estimator, ModelBuilder, Transformer, TreeUtils}
+import org.apache.spark.ml.{ModelBuilder, PipelineStage, Transformer, TreeUtils}
 import org.apache.spark.ml.classification.GBTClassifier
 import org.apache.spark.ml.evaluation.{Evaluator, MulticlassClassificationEvaluator}
 import org.apache.spark.sql._
 
-import com.databricks.spark.sql.perf.mllib._
 import com.databricks.spark.sql.perf.mllib.OptionImplicits._
+import com.databricks.spark.sql.perf.mllib._
 import com.databricks.spark.sql.perf.mllib.data.DataGenerator
 
 
@@ -31,7 +31,7 @@ object GBTClassification extends BenchmarkAlgorithm
       ctx.seed())
   }
 
-  override def getEstimator(ctx: MLBenchContext): Estimator[_] = {
+  override def getPipelineStage(ctx: MLBenchContext): PipelineStage = {
     import ctx.params._
     // TODO: subsamplingRate, featureSubsetStrategy
     // TODO: cacheNodeIds, checkpoint?

@@ -1,20 +1,21 @@
 package com.databricks.spark.sql.perf.mllib
 
-import com.databricks.spark.sql.perf._
-import com.typesafe.scalalogging.slf4j.{LazyLogging => Logging}
-
-import org.apache.spark.sql._
 import scala.collection.mutable.ArrayBuffer
 
-import org.apache.spark.ml.Transformer
+import com.typesafe.scalalogging.slf4j.{LazyLogging => Logging}
 
-class MLTransformerBenchmarkable(
+import org.apache.spark.ml.{Estimator, Transformer}
+import org.apache.spark.sql._
+
+import com.databricks.spark.sql.perf._
+
+class MLPipelineStageBenchmarkable(
     params: MLParams,
     test: BenchmarkAlgorithm,
     sqlContext: SQLContext)
   extends Benchmarkable with Serializable with Logging {
 
-  import MLTransformerBenchmarkable._
+  import MLPipelineStageBenchmarkable._
 
   private var testData: DataFrame = null
   private var trainingData: DataFrame = null
@@ -48,16 +49,26 @@ class MLTransformerBenchmarkable(
     try {
       val (trainingTime, model: Transformer) = measureTime {
         logger.info(s"$this: train: trainingSet=${trainingData.schema}")
-        val estimator = test.getEstimator(param)
-        estimator.fit(trainingData)
+        test.getPipelineStage(param) match {
+          case est: Estimator[_] => est.fit(trainingData)
+          case transformer: Transformer =>
+            transformer.transform(trainingData)
+            transformer
+          case other: Any => throw new UnsupportedOperationException("Algorithm to benchmark must" +
+            s" be an estimator or transformer, found ${other.getClass} instead.")
+        }
       }
       logger.info(s"model: $model")
-      val (_, scoreTraining) = measureTime {
+      val (scoreTrainTime, scoreTraining) = measureTime {
         test.score(param, trainingData, model)
       }
       val (scoreTestTime, scoreTest) = measureTime {
         test.score(param, testData, model)
       }
+
+      logger.info(s"$this doBenchmark: Trained model in ${trainingTime.toMillis / 1000.0}" +
+        s" s, Scored training dataset in ${scoreTrainTime.toMillis / 1000.0} s," +
+        s" test dataset in ${scoreTestTime.toMillis / 1000.0} s")
 
 
       val ml = MLResult(
@@ -96,7 +107,7 @@ class MLTransformerBenchmarkable(
 
 }
 
-object MLTransformerBenchmarkable {
+object MLPipelineStageBenchmarkable {
   private def pprint(p: AnyRef): Seq[String] = {
     val m = getCCParams(p)
     m.flatMap {

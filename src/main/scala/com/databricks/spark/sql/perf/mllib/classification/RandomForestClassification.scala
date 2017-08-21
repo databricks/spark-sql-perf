@@ -1,6 +1,6 @@
 package com.databricks.spark.sql.perf.mllib.classification
 
-import org.apache.spark.ml.Estimator
+import org.apache.spark.ml.{Estimator, PipelineStage}
 import org.apache.spark.ml.classification.RandomForestClassifier
 
 import com.databricks.spark.sql.perf.mllib._
@@ -9,7 +9,7 @@ import com.databricks.spark.sql.perf.mllib.OptionImplicits._
 
 object RandomForestClassification extends TreeOrForestClassification {
 
-  override def getEstimator(ctx: MLBenchContext): Estimator[_] = {
+  override def getPipelineStage(ctx: MLBenchContext): PipelineStage = {
     import ctx.params._
     // TODO: subsamplingRate, featureSubsetStrategy
     // TODO: cacheNodeIds, checkpoint?

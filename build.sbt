@@ -14,7 +14,7 @@ sparkPackageName := "databricks/spark-sql-perf"
 // All Spark Packages need a license
 licenses := Seq("Apache-2.0" -> url("http://opensource.org/licenses/Apache-2.0"))
 
-sparkVersion := "2.0.1"
+sparkVersion := "2.2.0"
 
 sparkComponents ++= Seq("sql", "hive", "mllib")
 
@@ -71,6 +71,19 @@ runBenchmark := {
   scalaRun.run("com.databricks.spark.sql.perf.RunBenchmark", classpath.map(_.data), args,
     streams.value.log)
 }
+
+
+val runMLBenchmark = inputKey[Unit]("runs an ML benchmark")
+
+runMLBenchmark := {
+  import complete.DefaultParsers._
+  val args = spaceDelimited("[args]").parsed
+  val scalaRun = (runner in run).value
+  val classpath = (fullClasspath in Compile).value
+  scalaRun.run("com.databricks.spark.sql.perf.mllib.MLLib", classpath.map(_.data), args,
+    streams.value.log)
+}
+
 
 import ReleaseTransformations._
 

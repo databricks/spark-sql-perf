@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/databricks/spark-sql-perf.svg)](https://travis-ci.org/databricks/spark-sql-perf)
 
-This is a performance testing framework for [Spark SQL](https://spark.apache.org/sql/) in [Apache Spark](https://spark.apache.org/) 1.6+.
+This is a performance testing framework for [Spark SQL](https://spark.apache.org/sql/) in [Apache Spark](https://spark.apache.org/) 2.2+.
 
 **Note: This README is still under development. Please also check our source code for more information.**
 
@@ -25,6 +25,11 @@ Usage: spark-sql-perf [options]
         
 $ bin/run --benchmark DatasetPerformance
 ```
+
+### MLlib tests
+
+To run MLlib tests, run `/bin/run-ml yamlfile`, where `yamlfile` is the path to a YAML configuration
+file describing tests to run and their parameters.
 
 # TPC-DS
 

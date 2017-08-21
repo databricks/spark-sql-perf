@@ -16,9 +16,9 @@
 
 package com.databricks.spark.sql.perf
 
-import scala.language.implicitConversions
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
+import scala.language.implicitConversions
 
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.catalyst.analysis.UnresolvedRelation
@@ -54,7 +54,7 @@ class Query(
   }
 
   lazy val tablesInvolved = buildDataFrame.queryExecution.logical collect {
-    case UnresolvedRelation(tableIdentifier, _) => {
+    case UnresolvedRelation(tableIdentifier) => {
       // We are ignoring the database name.
       tableIdentifier.table
     }
@@ -85,14 +85,14 @@ class Query(
 
       val breakdownResults = if (includeBreakdown) {
         val depth = queryExecution.executedPlan.collect { case p: SparkPlan => p }.size
-        val physicalOperators = (0 until depth).map(i => (i, queryExecution.executedPlan(i)))
+        val physicalOperators = (0 until depth).map(i => (i, queryExecution.executedPlan.p(i)))
         val indexMap = physicalOperators.map { case (index, op) => (op, index) }.toMap
         val timeMap = new mutable.HashMap[Int, Double]
 
         physicalOperators.reverse.map {
           case (index, node) =>
             messages += s"Breakdown: ${node.simpleString}"
-            val newNode = buildDataFrame.queryExecution.executedPlan(index)
+            val newNode = buildDataFrame.queryExecution.executedPlan.p(index)
             val executionTime = measureTimeMs {
               newNode.execute().foreach((row: Any) => Unit)
             }
@@ -100,7 +100,6 @@ class Query(
 
             val childIndexes = node.children.map(indexMap)
             val childTime = childIndexes.map(timeMap).sum
-
             messages += s"Breakdown time: $executionTime (+${executionTime - childTime})"
 
             BreakdownResult(

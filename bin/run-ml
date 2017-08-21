@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# runs spark-sql-perf ML tests from the current directory
+# accepts a single command-line argument; the path to a YAML configuration file
+# specifying the tests to be run & their params
+
+ARGS="runMLBenchmark $@"
+build/sbt "$ARGS"

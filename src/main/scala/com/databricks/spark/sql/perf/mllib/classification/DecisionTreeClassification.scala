@@ -1,6 +1,6 @@
 package com.databricks.spark.sql.perf.mllib.classification
 
-import org.apache.spark.ml.{Estimator, ModelBuilder, Transformer, TreeUtils}
+import org.apache.spark.ml._
 import org.apache.spark.ml.classification.DecisionTreeClassifier
 import org.apache.spark.ml.evaluation.{Evaluator, MulticlassClassificationEvaluator}
 import org.apache.spark.sql.DataFrame
@@ -34,7 +34,7 @@ abstract class TreeOrForestClassification extends BenchmarkAlgorithm
 
 object DecisionTreeClassification extends TreeOrForestClassification {
 
-  override def getEstimator(ctx: MLBenchContext): Estimator[_] = {
+  override def getPipelineStage(ctx: MLBenchContext): PipelineStage = {
     import ctx.params._
     new DecisionTreeClassifier()
       .setMaxDepth(depth)
