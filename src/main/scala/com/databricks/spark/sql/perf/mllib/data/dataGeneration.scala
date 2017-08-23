@@ -1,11 +1,12 @@
 package com.databricks.spark.sql.perf.mllib.data
 
+import com.databricks.spark.sql.perf.mllib.fpm.FrequentItemSetGenerator
 import org.apache.spark.ml.linalg.Vectors
 import org.apache.spark.ml.linalg.Vector
 import org.apache.spark.ml.recommendation.ALS.Rating
 import org.apache.spark.mllib.random._
 import org.apache.spark.rdd.{PairRDDFunctions, RDD}
-import org.apache.spark.sql.{SQLContext, DataFrame}
+import org.apache.spark.sql.{DataFrame, SQLContext}
 
 
 object DataGenerator {
@@ -127,6 +128,22 @@ object DataGenerator {
     val rdd: RDD[String] = RandomRDDs.randomRDD(sql.sparkContext,
       new DocGenerator(vocabSize, avgDocLength), numExamples, numPartitions, seed)
     sql.createDataFrame(rdd.map(Tuple1.apply)).toDF(dataColName)
+  }
+
+  def generateItemSet(
+      sql: SQLContext,
+      numExamples: Long,
+      seed: Long,
+      numPartitions: Int,
+      numItems: Int,
+      averageSizeOfItemSet: Int): DataFrame = {
+    val rdd: RDD[Array[String]] = RandomRDDs.randomRDD(
+      sql.sparkContext,
+      new FrequentItemSetGenerator(numItems, averageSizeOfItemSet),
+      numExamples,
+      numPartitions,
+      seed)
+    sql.createDataFrame(rdd.map(Tuple1.apply)).toDF("items")
   }
 }
 
