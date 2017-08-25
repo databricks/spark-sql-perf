@@ -1,10 +1,14 @@
 package com.databricks.spark.sql.perf.mllib
 
-import scala.reflect.ClassTag
+import scala.reflect.{classTag, ClassTag}
 import scala.reflect.runtime.universe._
 
-/** Exposes methods to simplify implementation of classes like MLParameters. */
+/** Exposes methods to simplify implementation of classes like MLParams. */
 private[perf] object ReflectionUtils {
+
+  private def getConstructor[T: TypeTag: ClassTag](obj: T): MethodSymbol = {
+    typeOf[T].declaration(nme.CONSTRUCTOR).asMethod
+  }
 
   /**
    * Given an instance [[obj]] of a class whose constructor arguments are all of type Option[Any],
@@ -14,7 +18,7 @@ private[perf] object ReflectionUtils {
    */
   def getConstructorArgs[T: TypeTag: ClassTag](obj: T): Map[String, Any] = {
     // Get constructor of passed-in instance
-    val constructor = typeOf[T].declaration(nme.CONSTRUCTOR).asMethod
+    val constructor = getConstructor(obj)
     // Include each constructor argument not equal to None in the output map
     constructor.paramss.flatten.flatMap { (param: Symbol) =>
       // Get name and value of the constructor argument
@@ -30,6 +34,21 @@ private[perf] object ReflectionUtils {
           s"type Option[Any]; constructor argument ${paramName} had invalid type.")
       }
     }.toMap
+  }
+
+  /**
+   * Create a copy of [[obj]] by calling obj's constructor with the same parameters as
+   * those used to instantiate [[obj]]
+   */
+  def copy[T: TypeTag: ClassTag](obj: T): T = {
+    // Get arguments passed to obj's constructor
+    val constructorArgValues = getConstructorArgs(obj).values.toSeq
+    // Create runtime mirror
+    val rm = runtimeMirror(classTag[T].runtimeClass.getClassLoader)
+    val classMirror = rm.reflectClass(typeOf[T].typeSymbol.asClass)
+    // Create new instance with same class as obj
+    val constructor = getConstructor(obj)
+    classMirror.reflectConstructor(constructor).apply(constructorArgValues: _*).asInstanceOf[T]
   }
 
 }

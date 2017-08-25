@@ -10,7 +10,7 @@ import org.apache.spark.sql._
 import com.databricks.spark.sql.perf._
 
 class MLPipelineStageBenchmarkable(
-    params: MLParameters,
+    params: MLParams,
     test: BenchmarkAlgorithm,
     sqlContext: SQLContext)
   extends Benchmarkable with Serializable with Logging {

@@ -24,14 +24,14 @@ object LDA extends BenchmarkAlgorithm with TestFromTraining {
       numPartitions
     )
     val seed: Int = randomSeed
-    val docLength = ldaDocLength.get
-    val numVocab = ldaNumVocabulary.get
+    val docLen = docLength.get
+    val numVocab = numVocabulary.get
     val data: RDD[(Long, Vector)] = rdd.mapPartitionsWithIndex { (idx, partition) =>
       val rng = new Well19937c(seed ^ idx)
       partition.map { docIndex =>
         var currentSize = 0
         val entries = MHashMap[Int, Int]()
-        while (currentSize < docLength) {
+        while (currentSize < docLen) {
           val index = rng.nextInt(numVocab)
           entries(index) = entries.getOrElse(index, 0) + 1
           currentSize += 1

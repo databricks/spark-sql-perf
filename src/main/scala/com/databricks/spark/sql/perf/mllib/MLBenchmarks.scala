@@ -4,12 +4,12 @@ import com.databricks.spark.sql.perf.mllib.classification.LogisticRegression
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SQLContext
 
-import com.databricks.spark.sql.perf.{MLParameters}
+import com.databricks.spark.sql.perf.{MLParams}
 import OptionImplicits._
 
 case class MLTest(
                    benchmark: BenchmarkAlgorithm,
-                   params: MLParameters)
+                   params: MLParams)
 
 // Example on how to create benchmarks using the API.
 object MLBenchmarks {
@@ -17,7 +17,7 @@ object MLBenchmarks {
   val benchmarks: Seq[MLTest] = List(
       MLTest(
         LogisticRegression,
-        new MLParameters(
+        new MLParams(
           numFeatures = 10,
           numExamples = 10,
           numTestExamples = 10,

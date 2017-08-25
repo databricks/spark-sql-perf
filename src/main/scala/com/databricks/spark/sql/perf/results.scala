@@ -5,7 +5,8 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/
+ *        .0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -83,7 +84,6 @@ case class BenchmarkResult(
     breakDown: Seq[BreakdownResult] = Nil,
     queryExecution: Option[String] = None,
     failure: Option[Failure] = None,
-    mlParams: Option[MLParams] = None,
     mlResult: Option[MLResult] = None)
 
 /**
@@ -114,7 +114,7 @@ case class Failure(className: String, message: String)
  * KEEP CONSTRUCTOR ARGUMENTS SORTED BY NAME.
  * It simplifies lookup when checking if a parameter is here already.
  */
-class MLParameters(
+class MLParams(
     // *** Common to all algorithms ***
     val randomSeed: Option[Int] = Some(42),
     val numExamples: Option[Long] = None,
@@ -126,8 +126,8 @@ class MLParameters(
     val elasticNetParam: Option[Double] = None,
     val family: Option[String] = None,
     val k: Option[Int] = None,
-    val ldaDocLength: Option[Int] = None,
-    val ldaNumVocabulary: Option[Int] = None,
+    val docLength: Option[Int] = None,
+    val numVocabulary: Option[Int] = None,
     val link: Option[String] = None,
     val maxIter: Option[Int] = None,
     val naiveBayesSmoothing: Option[Double] = None,
@@ -146,15 +146,14 @@ class MLParameters(
    */
   def toMap: Map[String, String] = {
     val allParams = ReflectionUtils.getConstructorArgs(this)
-    allParams.map { case(key: String, value: Any) =>
+    allParams.map { case (key: String, value: Any) =>
       key -> value.toString
     }
   }
 
-  /** Returns a copy of the current MLParameters instance */
-  // TODO(smurching): Can this be simplified with reflection? Would be annoying to have to update
-  // this each time a param is added or removed
+  /** Returns a copy of the current MLParams instance */
   def copy(
+      // *** Common to all algorithms ***
       randomSeed: Option[Int] = randomSeed,
       numExamples: Option[Long] = numExamples,
       numTestExamples: Option[Long] = numTestExamples,
@@ -165,8 +164,8 @@ class MLParameters(
       elasticNetParam: Option[Double] = elasticNetParam,
       family: Option[String] = family,
       k: Option[Int] = k,
-      ldaDocLength: Option[Int] = ldaDocLength,
-      ldaNumVocabulary: Option[Int] = ldaNumVocabulary,
+      docLength: Option[Int] = docLength,
+      numVocabulary: Option[Int] = numVocabulary,
       link: Option[String] = link,
       maxIter: Option[Int] = maxIter,
       naiveBayesSmoothing: Option[Double] = naiveBayesSmoothing,
@@ -177,51 +176,17 @@ class MLParameters(
       optimizer: Option[String] = optimizer,
       regParam: Option[Double] = regParam,
       rank: Option[Int] = rank,
-      tol: Option[Double] = tol): MLParameters = {
-    new MLParameters(randomSeed, numExamples, numTestExamples, numPartitions, bucketizerNumBuckets,
-      depth, elasticNetParam, family, k, ldaDocLength, ldaNumVocabulary, link, maxIter,
+      tol: Option[Double] = tol): MLParams = {
+    new MLParams(randomSeed, numExamples, numTestExamples, numPartitions, bucketizerNumBuckets,
+      depth, elasticNetParam, family, k, docLength, numVocabulary, link, maxIter,
       naiveBayesSmoothing, numClasses, numFeatures, numItems, numUsers, optimizer, regParam,
       rank, tol)
   }
 }
 
-/**
- * DEPRECATED IN FAVOR OF MLParameters.
- *
- * Case class wrapping parameters for ML tests.
- *
- * KEEP CONSTRUCTOR ARGUMENTS SORTED BY NAME.
- * It simplifies lookup when checking if a parameter is here already.
- */
-case class MLParams(
-    // *** Common to all algorithms ***
-    randomSeed: Option[Int] = Some(42),
-    numExamples: Option[Long] = None,
-    numTestExamples: Option[Long] = None,
-    numPartitions: Option[Int] = None,
-    // *** Specialized and sorted by name ***
-    bucketizerNumBuckets: Option[Int] = None,
-    depth: Option[Int] = None,
-    elasticNetParam: Option[Double] = None,
-    family: Option[String] = None,
-    k: Option[Int] = None,
-    ldaDocLength: Option[Int] = None,
-    ldaNumVocabulary: Option[Int] = None,
-    link: Option[String] = None,
-    maxIter: Option[Int] = None,
-    naiveBayesSmoothing: Option[Double] = None,
-    numClasses: Option[Int] = None,
-    numFeatures: Option[Int] = None,
-    numItems: Option[Int] = None,
-    numUsers: Option[Int] = None,
-    optimizer: Option[String] = None,
-    regParam: Option[Double] = None,
-    rank: Option[Int] = None,
-    tol: Option[Double] = None
-)
 
 object MLParams {
-  val empty = MLParams()
+  val empty = new MLParams()
 }
 
 /**
