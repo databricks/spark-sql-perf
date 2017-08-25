@@ -14,9 +14,9 @@ private[perf] object ReflectionUtils {
    */
   def getConstructorArgs[T: TypeTag: ClassTag](obj: T): Map[String, Any] = {
     // Get constructor of passed-in instance
-    val constructor = typeOf[T].decl(termNames.CONSTRUCTOR).asMethod
+    val constructor = typeOf[T].declaration(nme.CONSTRUCTOR).asMethod
     // Include each constructor argument not equal to None in the output map
-    constructor.paramLists.flatten.flatMap { (param: Symbol) =>
+    constructor.paramss.flatten.flatMap { (param: Symbol) =>
       // Get name and value of the constructor argument
       val paramName = param.name.toString
       val getter = obj.getClass.getDeclaredField(paramName)
