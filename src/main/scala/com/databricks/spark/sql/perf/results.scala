@@ -5,8 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/
- *        .0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -123,11 +122,10 @@ class MLParams(
     // *** Specialized and sorted by name ***
     val bucketizerNumBuckets: Option[Int] = None,
     val depth: Option[Int] = None,
+    val docLength: Option[Int] = None,
     val elasticNetParam: Option[Double] = None,
     val family: Option[String] = None,
     val k: Option[Int] = None,
-    val docLength: Option[Int] = None,
-    val numVocabulary: Option[Int] = None,
     val link: Option[String] = None,
     val maxIter: Option[Int] = None,
     val naiveBayesSmoothing: Option[Double] = None,
@@ -135,6 +133,7 @@ class MLParams(
     val numFeatures: Option[Int] = None,
     val numItems: Option[Int] = None,
     val numUsers: Option[Int] = None,
+    val numVocabulary: Option[Int] = None,
     val optimizer: Option[String] = None,
     val regParam: Option[Double] = None,
     val rank: Option[Int] = None,
@@ -161,11 +160,10 @@ class MLParams(
       // *** Specialized and sorted by name ***
       bucketizerNumBuckets: Option[Int] = bucketizerNumBuckets,
       depth: Option[Int] = depth,
+      docLength: Option[Int] = docLength,
       elasticNetParam: Option[Double] = elasticNetParam,
       family: Option[String] = family,
       k: Option[Int] = k,
-      docLength: Option[Int] = docLength,
-      numVocabulary: Option[Int] = numVocabulary,
       link: Option[String] = link,
       maxIter: Option[Int] = maxIter,
       naiveBayesSmoothing: Option[Double] = naiveBayesSmoothing,
@@ -173,6 +171,7 @@ class MLParams(
       numFeatures: Option[Int] = numFeatures,
       numItems: Option[Int] = numItems,
       numUsers: Option[Int] = numUsers,
+      numVocabulary: Option[Int] = numVocabulary,
       optimizer: Option[String] = optimizer,
       regParam: Option[Double] = regParam,
       rank: Option[Int] = rank,
