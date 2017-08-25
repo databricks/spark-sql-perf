@@ -186,7 +186,7 @@ class MLParameters(
 }
 
 /**
- * CURRENTLY UNUSED, DEPRECATED IN FAVOR OF MLParameters.
+ * DEPRECATED IN FAVOR OF MLParameters.
  *
  * Case class wrapping parameters for ML tests.
  *
