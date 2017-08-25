@@ -16,6 +16,8 @@
 
 package com.databricks.spark.sql.perf
 
+import com.databricks.spark.sql.perf.mllib.ReflectionUtils
+
 /**
  * The performance results of all given queries for a single iteration.
  *
@@ -104,8 +106,93 @@ case class BreakdownResult(
 
 case class Failure(className: String, message: String)
 
-// KEEP ARGUMENTS SORTED BY NAME.
-// It simplifies lookup when checking if a parameter is here already.
+/**
+ * Class wrapping parameters for ML tests; provides the same functionality as MLParams, but is
+ * a class instead of a case class so that we can bypass Scala's limit of 22 members for case
+ * classes.
+ *
+ * KEEP CONSTRUCTOR ARGUMENTS SORTED BY NAME.
+ * It simplifies lookup when checking if a parameter is here already.
+ */
+class MLParameters(
+    // *** Common to all algorithms ***
+    val randomSeed: Option[Int] = Some(42),
+    val numExamples: Option[Long] = None,
+    val numTestExamples: Option[Long] = None,
+    val numPartitions: Option[Int] = None,
+    // *** Specialized and sorted by name ***
+    val bucketizerNumBuckets: Option[Int] = None,
+    val depth: Option[Int] = None,
+    val elasticNetParam: Option[Double] = None,
+    val family: Option[String] = None,
+    val k: Option[Int] = None,
+    val ldaDocLength: Option[Int] = None,
+    val ldaNumVocabulary: Option[Int] = None,
+    val link: Option[String] = None,
+    val maxIter: Option[Int] = None,
+    val naiveBayesSmoothing: Option[Double] = None,
+    val numClasses: Option[Int] = None,
+    val numFeatures: Option[Int] = None,
+    val numItems: Option[Int] = None,
+    val numUsers: Option[Int] = None,
+    val optimizer: Option[String] = None,
+    val regParam: Option[Double] = None,
+    val rank: Option[Int] = None,
+    val tol: Option[Double] = None) {
+
+  /**
+   * Returns a map of param names to string representations of their values. Only params that
+   * were defined (i.e., not equal to None) are included in the map.
+   */
+  def toMap: Map[String, String] = {
+    val allParams = ReflectionUtils.getConstructorArgs(this)
+    allParams.map { case(key: String, value: Any) =>
+      key -> value.toString
+    }
+  }
+
+  /** Returns a copy of the current MLParameters instance */
+  // TODO(smurching): Can this be simplified with reflection? Would be annoying to have to update
+  // this each time a param is added or removed
+  def copy(
+      randomSeed: Option[Int] = randomSeed,
+      numExamples: Option[Long] = numExamples,
+      numTestExamples: Option[Long] = numTestExamples,
+      numPartitions: Option[Int] = numPartitions,
+      // *** Specialized and sorted by name ***
+      bucketizerNumBuckets: Option[Int] = bucketizerNumBuckets,
+      depth: Option[Int] = depth,
+      elasticNetParam: Option[Double] = elasticNetParam,
+      family: Option[String] = family,
+      k: Option[Int] = k,
+      ldaDocLength: Option[Int] = ldaDocLength,
+      ldaNumVocabulary: Option[Int] = ldaNumVocabulary,
+      link: Option[String] = link,
+      maxIter: Option[Int] = maxIter,
+      naiveBayesSmoothing: Option[Double] = naiveBayesSmoothing,
+      numClasses: Option[Int] = numClasses,
+      numFeatures: Option[Int] = numFeatures,
+      numItems: Option[Int] = numItems,
+      numUsers: Option[Int] = numUsers,
+      optimizer: Option[String] = optimizer,
+      regParam: Option[Double] = regParam,
+      rank: Option[Int] = rank,
+      tol: Option[Double] = tol): MLParameters = {
+    new MLParameters(randomSeed, numExamples, numTestExamples, numPartitions, bucketizerNumBuckets,
+      depth, elasticNetParam, family, k, ldaDocLength, ldaNumVocabulary, link, maxIter,
+      naiveBayesSmoothing, numClasses, numFeatures, numItems, numUsers, optimizer, regParam,
+      rank, tol)
+  }
+}
+
+/**
+ * CURRENTLY UNUSED, DEPRECATED IN FAVOR OF MLParameters.
+ *
+ * Case class wrapping parameters for ML tests.
+ *
+ * KEEP CONSTRUCTOR ARGUMENTS SORTED BY NAME.
+ * It simplifies lookup when checking if a parameter is here already.
+ */
 case class MLParams(
     // *** Common to all algorithms ***
     randomSeed: Option[Int] = Some(42),

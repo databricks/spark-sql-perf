@@ -10,7 +10,7 @@ import org.apache.spark.sql._
 import com.databricks.spark.sql.perf._
 
 class MLPipelineStageBenchmarkable(
-    params: MLParams,
+    params: MLParameters,
     test: BenchmarkAlgorithm,
     sqlContext: SQLContext)
   extends Benchmarkable with Serializable with Logging {
@@ -80,17 +80,15 @@ class MLPipelineStageBenchmarkable(
       BenchmarkResult(
         name = name,
         mode = executionMode.toString,
-        parameters = Map.empty,
+        parameters = params.toMap,
         executionTime = Some(trainingTime.toMillis),
-        mlParams = Some(params),
         mlResult = Some(ml))
     } catch {
       case e: Exception =>
         BenchmarkResult(
           name = name,
           mode = executionMode.toString,
-          parameters = Map.empty,
-          mlParams = Some(params),
+          parameters = params.toMap,
           failure = Some(Failure(e.getClass.getSimpleName,
             e.getMessage + ":\n" + e.getStackTraceString)))
     } finally {

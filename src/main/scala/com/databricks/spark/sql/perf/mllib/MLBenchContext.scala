@@ -2,7 +2,7 @@ package com.databricks.spark.sql.perf.mllib
 
 import java.util.Random
 
-import com.databricks.spark.sql.perf.{MLParams}
+import com.databricks.spark.sql.perf.{MLParameters}
 import org.apache.spark.sql.SQLContext
 
 
@@ -13,7 +13,7 @@ import org.apache.spark.sql.SQLContext
  * @param sqlContext
  */
 case class MLBenchContext(
-    params: MLParams,
+    params: MLParameters,
     sqlContext: SQLContext) {
 
   // Some seed fixed for the context.

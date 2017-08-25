@@ -12,7 +12,7 @@ import scala.util.{Try => STry, Success, Failure}
 
 import org.yaml.snakeyaml.Yaml
 
-import com.databricks.spark.sql.perf.{MLParams}
+import com.databricks.spark.sql.perf.{MLParameters}
 
 
 /**
@@ -50,7 +50,7 @@ object YamlConfig {
     println("exp parsed")
     println(experiments)
     val e2 = experiments.map { case (n, e) =>
-      val e2 = ccFromMap.fromMap[MLParams](e, strict=true)
+      val e2 = ccFromMap.fromMap[MLParameters](e, strict=true)
       val s = ccFromMap.loadExperiment(n).getOrElse {
         throw new Exception(s"Cannot find algorithm $n in the standard benchmark algorithms")
       }
