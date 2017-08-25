@@ -177,8 +177,8 @@ class MLParams(
       rank: Option[Int] = rank,
       tol: Option[Double] = tol): MLParams = {
     new MLParams(randomSeed, numExamples, numTestExamples, numPartitions, bucketizerNumBuckets,
-      depth, elasticNetParam, family, k, docLength, numVocabulary, link, maxIter,
-      naiveBayesSmoothing, numClasses, numFeatures, numItems, numUsers, optimizer, regParam,
+      depth, docLength, elasticNetParam, family, k, link, maxIter,
+      naiveBayesSmoothing, numClasses, numFeatures, numItems, numUsers, numVocabulary, optimizer, regParam,
       rank, tol)
   }
 }
