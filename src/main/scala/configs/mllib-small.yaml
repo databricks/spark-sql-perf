@@ -18,7 +18,7 @@ benchmarks:
       numExamples: 10
       numTestExamples: 10
       docLength: 20
-      numVocabulary: 4
+      vocabSize: 4
       k: 5
       maxIter: 10
       optimizer:
@@ -87,6 +87,6 @@ benchmarks:
   - name: classification.NaiveBayes
     params:
       numExamples: 100
-      naiveBayesSmoothing: 1.0
+      smoothing: 1.0
       numClasses: 10
       numFeatures: [10]

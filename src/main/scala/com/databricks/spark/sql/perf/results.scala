@@ -106,9 +106,7 @@ case class BreakdownResult(
 case class Failure(className: String, message: String)
 
 /**
- * Class wrapping parameters for ML tests; provides the same functionality as MLParams, but is
- * a class instead of a case class so that we can bypass Scala's limit of 22 members for case
- * classes.
+ * Class wrapping parameters for ML tests.
  *
  * KEEP CONSTRUCTOR ARGUMENTS SORTED BY NAME.
  * It simplifies lookup when checking if a parameter is here already.
@@ -128,16 +126,16 @@ class MLParams(
     val k: Option[Int] = None,
     val link: Option[String] = None,
     val maxIter: Option[Int] = None,
-    val naiveBayesSmoothing: Option[Double] = None,
     val numClasses: Option[Int] = None,
     val numFeatures: Option[Int] = None,
     val numItems: Option[Int] = None,
     val numUsers: Option[Int] = None,
-    val numVocabulary: Option[Int] = None,
     val optimizer: Option[String] = None,
     val regParam: Option[Double] = None,
     val rank: Option[Int] = None,
-    val tol: Option[Double] = None) {
+    val smoothing: Option[Double] = None,
+    val tol: Option[Double] = None,
+    val vocabSize: Option[Int] = None) {
 
   /**
    * Returns a map of param names to string representations of their values. Only params that
@@ -166,20 +164,23 @@ class MLParams(
       k: Option[Int] = k,
       link: Option[String] = link,
       maxIter: Option[Int] = maxIter,
-      naiveBayesSmoothing: Option[Double] = naiveBayesSmoothing,
       numClasses: Option[Int] = numClasses,
       numFeatures: Option[Int] = numFeatures,
       numItems: Option[Int] = numItems,
       numUsers: Option[Int] = numUsers,
-      numVocabulary: Option[Int] = numVocabulary,
+      vocabSize: Option[Int] = vocabSize,
       optimizer: Option[String] = optimizer,
       regParam: Option[Double] = regParam,
       rank: Option[Int] = rank,
+      smoothing: Option[Double] = smoothing,
       tol: Option[Double] = tol): MLParams = {
-    new MLParams(randomSeed, numExamples, numTestExamples, numPartitions, bucketizerNumBuckets,
-      depth, docLength, elasticNetParam, family, k, link, maxIter,
-      naiveBayesSmoothing, numClasses, numFeatures, numItems, numUsers, numVocabulary, optimizer, regParam,
-      rank, tol)
+    new MLParams(randomSeed = randomSeed, numExamples = numExamples,
+      numTestExamples = numTestExamples, numPartitions = numPartitions,
+      bucketizerNumBuckets = bucketizerNumBuckets, depth = depth, docLength = docLength,
+      elasticNetParam = elasticNetParam, family = family, k = k, link = link, maxIter = maxIter,
+      numClasses = numClasses, numFeatures = numFeatures,
+      numItems = numItems, numUsers = numUsers, optimizer = optimizer, regParam = regParam,
+      rank = rank, smoothing = smoothing, tol = tol, vocabSize = vocabSize)
   }
 }
 

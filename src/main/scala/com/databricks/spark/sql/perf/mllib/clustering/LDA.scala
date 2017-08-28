@@ -25,7 +25,7 @@ object LDA extends BenchmarkAlgorithm with TestFromTraining {
     )
     val seed: Int = randomSeed
     val docLen = docLength.get
-    val numVocab = numVocabulary.get
+    val numVocab = vocabSize.get
     val data: RDD[(Long, Vector)] = rdd.mapPartitionsWithIndex { (idx, partition) =>
       val rng = new Well19937c(seed ^ idx)
       partition.map { docIndex =>
