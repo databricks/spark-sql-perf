@@ -17,7 +17,7 @@ object MLBenchmarks {
   val benchmarks: Seq[MLTest] = List(
       MLTest(
         LogisticRegression,
-        MLParams(
+        new MLParams(
           numFeatures = 10,
           numExamples = 10,
           numTestExamples = 10,

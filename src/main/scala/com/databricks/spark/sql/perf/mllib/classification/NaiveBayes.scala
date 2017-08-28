@@ -57,7 +57,7 @@ object NaiveBayes extends BenchmarkAlgorithm
   override def getPipelineStage(ctx: MLBenchContext): PipelineStage = {
     import ctx.params._
     new ml.classification.NaiveBayes()
-      .setSmoothing(naiveBayesSmoothing)
+      .setSmoothing(smoothing)
   }
 
   override protected def evaluator(ctx: MLBenchContext): Evaluator =

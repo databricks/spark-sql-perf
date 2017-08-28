@@ -16,6 +16,8 @@
 
 package com.databricks.spark.sql.perf
 
+import com.databricks.spark.sql.perf.mllib.ReflectionUtils
+
 /**
  * The performance results of all given queries for a single iteration.
  *
@@ -81,7 +83,6 @@ case class BenchmarkResult(
     breakDown: Seq[BreakdownResult] = Nil,
     queryExecution: Option[String] = None,
     failure: Option[Failure] = None,
-    mlParams: Option[MLParams] = None,
     mlResult: Option[MLResult] = None)
 
 /**
@@ -104,37 +105,88 @@ case class BreakdownResult(
 
 case class Failure(className: String, message: String)
 
-// KEEP ARGUMENTS SORTED BY NAME.
-// It simplifies lookup when checking if a parameter is here already.
-case class MLParams(
+/**
+ * Class wrapping parameters for ML tests.
+ *
+ * KEEP CONSTRUCTOR ARGUMENTS SORTED BY NAME.
+ * It simplifies lookup when checking if a parameter is here already.
+ */
+class MLParams(
     // *** Common to all algorithms ***
-    randomSeed: Option[Int] = Some(42),
-    numExamples: Option[Long] = None,
-    numTestExamples: Option[Long] = None,
-    numPartitions: Option[Int] = None,
+    val randomSeed: Option[Int] = Some(42),
+    val numExamples: Option[Long] = None,
+    val numTestExamples: Option[Long] = None,
+    val numPartitions: Option[Int] = None,
     // *** Specialized and sorted by name ***
-    bucketizerNumBuckets: Option[Int] = None,
-    depth: Option[Int] = None,
-    elasticNetParam: Option[Double] = None,
-    family: Option[String] = None,
-    k: Option[Int] = None,
-    ldaDocLength: Option[Int] = None,
-    ldaNumVocabulary: Option[Int] = None,
-    link: Option[String] = None,
-    maxIter: Option[Int] = None,
-    naiveBayesSmoothing: Option[Double] = None,
-    numClasses: Option[Int] = None,
-    numFeatures: Option[Int] = None,
-    numItems: Option[Int] = None,
-    numUsers: Option[Int] = None,
-    optimizer: Option[String] = None,
-    regParam: Option[Double] = None,
-    rank: Option[Int] = None,
-    tol: Option[Double] = None
-)
+    val bucketizerNumBuckets: Option[Int] = None,
+    val depth: Option[Int] = None,
+    val docLength: Option[Int] = None,
+    val elasticNetParam: Option[Double] = None,
+    val family: Option[String] = None,
+    val k: Option[Int] = None,
+    val link: Option[String] = None,
+    val maxIter: Option[Int] = None,
+    val numClasses: Option[Int] = None,
+    val numFeatures: Option[Int] = None,
+    val numItems: Option[Int] = None,
+    val numUsers: Option[Int] = None,
+    val optimizer: Option[String] = None,
+    val regParam: Option[Double] = None,
+    val rank: Option[Int] = None,
+    val smoothing: Option[Double] = None,
+    val tol: Option[Double] = None,
+    val vocabSize: Option[Int] = None) {
+
+  /**
+   * Returns a map of param names to string representations of their values. Only params that
+   * were defined (i.e., not equal to None) are included in the map.
+   */
+  def toMap: Map[String, String] = {
+    val allParams = ReflectionUtils.getConstructorArgs(this)
+    allParams.map { case (key: String, value: Any) =>
+      key -> value.toString
+    }
+  }
+
+  /** Returns a copy of the current MLParams instance */
+  def copy(
+      // *** Common to all algorithms ***
+      randomSeed: Option[Int] = randomSeed,
+      numExamples: Option[Long] = numExamples,
+      numTestExamples: Option[Long] = numTestExamples,
+      numPartitions: Option[Int] = numPartitions,
+      // *** Specialized and sorted by name ***
+      bucketizerNumBuckets: Option[Int] = bucketizerNumBuckets,
+      depth: Option[Int] = depth,
+      docLength: Option[Int] = docLength,
+      elasticNetParam: Option[Double] = elasticNetParam,
+      family: Option[String] = family,
+      k: Option[Int] = k,
+      link: Option[String] = link,
+      maxIter: Option[Int] = maxIter,
+      numClasses: Option[Int] = numClasses,
+      numFeatures: Option[Int] = numFeatures,
+      numItems: Option[Int] = numItems,
+      numUsers: Option[Int] = numUsers,
+      vocabSize: Option[Int] = vocabSize,
+      optimizer: Option[String] = optimizer,
+      regParam: Option[Double] = regParam,
+      rank: Option[Int] = rank,
+      smoothing: Option[Double] = smoothing,
+      tol: Option[Double] = tol): MLParams = {
+    new MLParams(randomSeed = randomSeed, numExamples = numExamples,
+      numTestExamples = numTestExamples, numPartitions = numPartitions,
+      bucketizerNumBuckets = bucketizerNumBuckets, depth = depth, docLength = docLength,
+      elasticNetParam = elasticNetParam, family = family, k = k, link = link, maxIter = maxIter,
+      numClasses = numClasses, numFeatures = numFeatures,
+      numItems = numItems, numUsers = numUsers, optimizer = optimizer, regParam = regParam,
+      rank = rank, smoothing = smoothing, tol = tol, vocabSize = vocabSize)
+  }
+}
+
 
 object MLParams {
-  val empty = MLParams()
+  val empty = new MLParams()
 }
 
 /**
