@@ -121,11 +121,11 @@ object DataGenerator {
       numExamples: Long,
       seed: Long,
       numPartitions: Int,
-      numVocabulary: Int,
-      avgNumWordsInDoc: Int,
+      vocabSize: Int,
+      avgDocLength: Int,
       dataColName: String): DataFrame = {
     val rdd: RDD[String] = RandomRDDs.randomRDD(sql.sparkContext,
-      new DocGenerator(numVocabulary, avgNumWordsInDoc), numExamples, numPartitions, seed)
+      new DocGenerator(vocabSize, avgDocLength), numExamples, numPartitions, seed)
     sql.createDataFrame(rdd.map(Tuple1.apply)).toDF(dataColName)
   }
 }
@@ -232,11 +232,11 @@ class RandStringGenerator(
 }
 
 class DocGenerator(
-    numVocabulary: Int,
-    avgNumWordsInDoc: Int) extends RandomDataGenerator[String] {
+    vocabSize: Int,
+    avgDocLength: Int) extends RandomDataGenerator[String] {
 
   private val wordRng = new java.util.Random()
-  private val numWordsInDocRng = new PoissonGenerator(avgNumWordsInDoc)
+  private val numWordsInDocRng = new PoissonGenerator(avgDocLength)
 
   override def setSeed(seed: Long) {
     wordRng.setSeed(seed)
@@ -250,12 +250,12 @@ class DocGenerator(
     var i = 0
     while (i < numWordsInDoc) {
       sb.append(" ")
-      sb.append(wordRng.nextInt(numVocabulary).toString)
+      sb.append(wordRng.nextInt(vocabSize).toString)
       i += 1
     }
     sb.toString
   }
 
   override def copy(): DocGenerator =
-    new DocGenerator(numVocabulary, avgNumWordsInDoc)
+    new DocGenerator(vocabSize, avgDocLength)
 }

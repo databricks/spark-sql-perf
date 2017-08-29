@@ -20,7 +20,7 @@ object StringIndexer extends BenchmarkAlgorithm with TestFromTraining with Unary
       numExamples,
       ctx.seed(),
       numPartitions,
-      ldaNumVocabulary,
+      vocabSize,
       inputCol)
   }
 

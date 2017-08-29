@@ -21,8 +21,8 @@ object Tokenizer extends BenchmarkAlgorithm with TestFromTraining with UnaryTran
       numExamples,
       ctx.seed(),
       numPartitions,
-      ldaNumVocabulary,
-      ldaDocLength,
+      vocabSize,
+      docLength,
       inputCol)
   }
 

@@ -10,7 +10,7 @@ import org.apache.spark.{SparkConf, SparkContext}
 import com.databricks.spark.sql.perf._
 
 
-class MLLib(@transient sqlContext: SQLContext)
+class MLLib(sqlContext: SQLContext)
   extends Benchmark(sqlContext) with Serializable {
 
   def this() = this(SQLContext.getOrCreate(SparkContext.getOrCreate()))
