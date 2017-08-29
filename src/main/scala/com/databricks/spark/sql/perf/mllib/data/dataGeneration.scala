@@ -136,10 +136,10 @@ object DataGenerator {
       seed: Long,
       numPartitions: Int,
       numItems: Int,
-      averageSizeOfItemSet: Int): DataFrame = {
+      avgItemSetSize: Int): DataFrame = {
     val rdd: RDD[Array[String]] = RandomRDDs.randomRDD(
       sql.sparkContext,
-      new FrequentItemSetGenerator(numItems, averageSizeOfItemSet),
+      new FrequentItemSetGenerator(numItems, avgItemSetSize),
       numExamples,
       numPartitions,
       seed)

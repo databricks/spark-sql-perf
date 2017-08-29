@@ -14,17 +14,13 @@ object FPGrowth extends BenchmarkAlgorithm with TestFromTraining {
     import ctx.params._
     val rng = ctx.newGenerator()
 
-    // These two param will move to MLParam later.
-    val numItems = 1000
-    val averageSizeOfItemSet = 4
-
     DataGenerator.generateFrequentItemSet(
       ctx.sqlContext,
       numExamples,
       ctx.seed(),
       numPartitions,
       numItems,
-      averageSizeOfItemSet)
+      freqItemSetSize)
   }
 
   override def getPipelineStage(ctx: MLBenchContext): PipelineStage = {
