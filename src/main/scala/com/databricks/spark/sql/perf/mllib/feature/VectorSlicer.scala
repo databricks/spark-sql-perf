@@ -1,9 +1,9 @@
 package com.databricks.spark.sql.perf.mllib.feature
 
 import org.apache.spark.ml
-import org.apache.spark.ml.linalg.Vector
 import org.apache.spark.ml.PipelineStage
 import org.apache.spark.sql._
+
 import com.databricks.spark.sql.perf.mllib.OptionImplicits._
 import com.databricks.spark.sql.perf.mllib.data.DataGenerator
 import com.databricks.spark.sql.perf.mllib.{BenchmarkAlgorithm, MLBenchContext, TestFromTraining}
