@@ -17,7 +17,7 @@
 package com.databricks.spark.sql.perf.tpch
 import scala.sys.process._
 
-import com.databricks.spark.sql.perf.{Benchmark, DataGenerator, Table, Tables}
+import com.databricks.spark.sql.perf.{Benchmark, BlockingLineStream, DataGenerator, Table, Tables}
 import com.databricks.spark.sql.perf.ExecutionMode.CollectResults
 import org.apache.commons.io.IOUtils
 
@@ -54,7 +54,7 @@ class DBGEN(dbgenDir: String, params: Seq[String]) extends DataGenerator {
           "bash", "-c",
           s"cd $localToolsDir && ./dbgen -q $paramsString -T ${shortTableNames(name)} -s $scaleFactor $parallel")
         println(commands)
-        commands.lines
+        BlockingLineStream(commands)
       }.repartition(numPartitions)
     }
 
