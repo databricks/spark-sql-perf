@@ -19,7 +19,7 @@ package com.databricks.spark.sql.perf.tpcds
 import scala.sys.process._
 
 import com.databricks.spark.sql.perf
-import com.databricks.spark.sql.perf.{DataGenerator, Table, Tables}
+import com.databricks.spark.sql.perf.{BlockingLineStream, DataGenerator, Table, Tables}
 
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SQLContext
@@ -44,7 +44,7 @@ class DSDGEN(dsdgenDir: String) extends DataGenerator {
           "bash", "-c",
           s"cd $localToolsDir && ./dsdgen -table $name -filter Y -scale $scaleFactor -RNGSEED 100 $parallel")
         println(commands)
-        commands.lines
+        BlockingLineStream(commands)
       }
     }
 
