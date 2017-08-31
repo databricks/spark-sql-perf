@@ -29,8 +29,7 @@ private[mllib] trait TreeOrForestClassifier extends TreeOrForestEstimator {
   override protected def evaluator(ctx: MLBenchContext): Evaluator = {
     new MulticlassClassificationEvaluator()
   }
-  // TODO(smurching/reviewers) Should trueModel be changed to a RandomForestClassificationModel for
-  // random forest classifier tests?
+
   override protected def trueModel(ctx: MLBenchContext): Transformer = {
     ModelBuilder.newDecisionTreeClassificationModel(ctx.params.depth, ctx.params.numClasses,
       TreeOrForestEstimator.getFeatureArity(ctx), ctx.seed())
@@ -45,7 +44,6 @@ private[mllib] trait TreeOrForestRegressor extends TreeOrForestEstimator {
     new RegressionEvaluator()
   }
 
-  // TODO(smurching): See TODO for TreeOrForestClassifier.trueModel() above
   override protected def trueModel(ctx: MLBenchContext): Transformer = {
     ModelBuilder.newDecisionTreeRegressionModel(ctx.params.depth,
       TreeOrForestEstimator.getFeatureArity(ctx), ctx.seed())
