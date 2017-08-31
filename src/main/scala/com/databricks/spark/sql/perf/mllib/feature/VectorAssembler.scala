@@ -1,10 +1,10 @@
 package com.databricks.spark.sql.perf.mllib.feature
 
 import org.apache.spark.ml
-import org.apache.spark.ml.linalg.{Vector, Vectors}
+import org.apache.spark.ml.linalg.{Vector, Vectors, VectorUDT}
 import org.apache.spark.ml.PipelineStage
-import org.apache.spark.mllib.linalg.VectorUDT
 import org.apache.spark.sql._
+import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{StructField, StructType}
 
 import com.databricks.spark.sql.perf.mllib.OptionImplicits._
@@ -20,28 +20,23 @@ object VectorAssembler extends BenchmarkAlgorithm with TestFromTraining {
 
     val localNumInputCols = numInputCols.get
     val localNumFeatures = numFeatures.get
-    val rdd = DataGenerator.generateContinuousFeatures(
+    var df = DataGenerator.generateContinuousFeatures(
       ctx.sqlContext,
       numExamples,
       ctx.seed(),
       numPartitions,
       numFeatures * numInputCols
-    ).rdd.map { case Row(v: Vector) =>
-      val data = v.toArray
-      Row.fromSeq(
-        (0 until localNumInputCols).map(i => {
-          Vectors.dense(data.slice(localNumFeatures * i, localNumFeatures * (i + 1)))
-        })
-      )
-    }
-    val vecUDT = new VectorUDT
-    val schema = StructType(
-      (1 to numInputCols).map { i =>
-        val colName = s"inputCol${i.toString}"
-        StructField(colName, vecUDT, false)
-      }
     )
-    val df = ctx.sqlContext.createDataFrame(rdd, schema)
+    val sliceVec = udf { (v: Vector, from: Int, until: Int) =>
+      Vectors.dense(v.toArray.slice(from, until))
+    }
+    for (i <- (1 to numInputCols.get)) {
+      val colName = s"inputCol${i.toString}"
+      val fromIndex = (i - 1) * numFeatures
+      val untilIndex = i * numFeatures
+      df = df.withColumn(colName, sliceVec(col("features"), lit(fromIndex), lit(untilIndex)))
+    }
+    df.drop(col("features"))
     df
   }
 
