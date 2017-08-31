@@ -103,6 +103,31 @@ object DataGenerator {
 
     (sql.createDataFrame(trainPruned), sql.createDataFrame(finalTest))
   }
+
+  def generateRandString(
+      sql: SQLContext,
+      numExamples: Long,
+      seed: Long,
+      numPartitions: Int,
+      distinctCount: Int,
+      dataColName: String): DataFrame = {
+    val rdd: RDD[String] = RandomRDDs.randomRDD(sql.sparkContext,
+      new RandStringGenerator(distinctCount), numExamples, numPartitions, seed)
+    sql.createDataFrame(rdd.map(Tuple1.apply)).toDF(dataColName)
+  }
+
+  def generateDoc(
+      sql: SQLContext,
+      numExamples: Long,
+      seed: Long,
+      numPartitions: Int,
+      vocabSize: Int,
+      avgDocLength: Int,
+      dataColName: String): DataFrame = {
+    val rdd: RDD[String] = RandomRDDs.randomRDD(sql.sparkContext,
+      new DocGenerator(vocabSize, avgDocLength), numExamples, numPartitions, seed)
+    sql.createDataFrame(rdd.map(Tuple1.apply)).toDF(dataColName)
+  }
 }
 
 
@@ -188,4 +213,60 @@ class GaussianMixtureDataGenerator(
 
   override def copy(): GaussianMixtureDataGenerator =
     new GaussianMixtureDataGenerator(numCenters, numFeatures, seed)
+}
+
+class RandStringGenerator(
+    distinctCount: Int) extends RandomDataGenerator[String] {
+
+  private val rng = new java.util.Random()
+
+  override def nextValue(): String = {
+    rng.nextInt(distinctCount).toString
+  }
+
+  override def setSeed(seed: Long) {
+    rng.setSeed(seed)
+  }
+
+  override def copy(): RandStringGenerator = new RandStringGenerator(distinctCount)
+}
+
+class DocGenerator(
+    vocabSize: Int,
+    avgDocLength: Int,
+    maxDocLength: Int = 65535) extends RandomDataGenerator[String] {
+
+  private val wordRng = new java.util.Random()
+  private val docLengthRng = new PoissonGenerator(avgDocLength)
+
+  override def setSeed(seed: Long) {
+    wordRng.setSeed(seed)
+    docLengthRng.setSeed(seed)
+  }
+
+  override def nextValue(): String = {
+    val docLength = DataGenUtil.nextPoisson(docLengthRng, v => v > 0 && v <= maxDocLength).toInt
+    val sb = new StringBuffer()
+
+    var i = 0
+    while (i < docLength) {
+      sb.append(" ")
+      sb.append(wordRng.nextInt(vocabSize).toString)
+      i += 1
+    }
+    sb.toString
+  }
+
+  override def copy(): DocGenerator =
+    new DocGenerator(vocabSize, avgDocLength)
+}
+
+object DataGenUtil {
+  def nextPoisson(rng: PoissonGenerator, condition: Double => Boolean): Double = {
+    var value = 0.0
+    do {
+      value = rng.nextValue()
+    } while (!condition(value))
+    value
+  }
 }

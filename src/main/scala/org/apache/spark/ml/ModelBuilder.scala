@@ -1,6 +1,6 @@
 package org.apache.spark.ml
 
-import org.apache.spark.ml.classification.{DecisionTreeClassificationModel, LogisticRegressionModel, NaiveBayesModel}
+import org.apache.spark.ml.classification.{ClassificationModelBuilder, DecisionTreeClassificationModel, LinearSVCModel, LogisticRegressionModel, NaiveBayesModel}
 import org.apache.spark.ml.linalg.{Matrix, Vector}
 import org.apache.spark.ml.regression.{DecisionTreeRegressionModel, GeneralizedLinearRegressionModel, LinearRegressionModel}
 import org.apache.spark.ml.tree._
@@ -55,6 +55,12 @@ object ModelBuilder {
   def newNaiveBayesModel(pi: Vector, theta: Matrix): NaiveBayesModel = {
     val model = new NaiveBayesModel("naivebayes-uid", pi, theta)
     model.set(model.modelType, "multinomial")
+  }
+
+  def newLinearSVCModel(
+      coefficients: Vector,
+      intercept: Double): LinearSVCModel = {
+    ClassificationModelBuilder.newLinearSVCModel(coefficients, intercept)
   }
 }
 
