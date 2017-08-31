@@ -35,7 +35,7 @@ object HashingTF extends BenchmarkAlgorithm with TestFromTraining with UnaryTran
     val rng = ctx.newGenerator()
     new ml.feature.HashingTF()
       .setInputCol(inputCol)
-      .setNumFeatures(featurizerNumFeatures)
+      .setNumFeatures(featurizerOutputDim)
   }
 
 }

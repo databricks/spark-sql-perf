@@ -81,7 +81,7 @@ benchmarks:
       numExamples: 100
       docLength: 20
       vocabSize: 4
-      featurizerNumFeatures: 10
+      featurizerOutputDim: 10
   - name: feature.OneHotEncoder
     params:
       numExamples: 100
