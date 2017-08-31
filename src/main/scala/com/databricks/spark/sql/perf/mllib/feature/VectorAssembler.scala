@@ -1,11 +1,10 @@
 package com.databricks.spark.sql.perf.mllib.feature
 
 import org.apache.spark.ml
-import org.apache.spark.ml.linalg.{Vector, Vectors, VectorUDT}
+import org.apache.spark.ml.linalg.{Vector, Vectors}
 import org.apache.spark.ml.PipelineStage
 import org.apache.spark.sql._
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.types.{StructField, StructType}
 
 import com.databricks.spark.sql.perf.mllib.OptionImplicits._
 import com.databricks.spark.sql.perf.mllib.data.DataGenerator
@@ -18,8 +17,6 @@ object VectorAssembler extends BenchmarkAlgorithm with TestFromTraining {
     import ctx.params._
     import ctx.sqlContext.implicits._
 
-    val localNumInputCols = numInputCols.get
-    val localNumFeatures = numFeatures.get
     var df = DataGenerator.generateContinuousFeatures(
       ctx.sqlContext,
       numExamples,
