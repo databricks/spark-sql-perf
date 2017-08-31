@@ -130,6 +130,7 @@ object DataGenerator {
   }
 }
 
+
 /**
  * Generator for a feature vector which can include a mix of categorical and continuous features.
  *
