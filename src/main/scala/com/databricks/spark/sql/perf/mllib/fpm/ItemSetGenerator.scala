@@ -1,20 +1,19 @@
 package com.databricks.spark.sql.perf.mllib.fpm
 
-import org.apache.spark.ml.linalg.Vector
-import org.apache.spark.mllib.random.{PoissonGenerator, RandomDataGenerator}
-
 import scala.collection.mutable.ArrayBuffer
 
-class FrequentItemSetGenerator(
+import org.apache.spark.mllib.random.{PoissonGenerator, RandomDataGenerator}
+
+class ItemSetGenerator(
     val numItems: Int,
-    val averageSizeOfItemSet: Int)
+    val avgItemSetSize: Int)
   extends RandomDataGenerator[Array[String]] {
 
-  assert(averageSizeOfItemSet >= 3)
-  assert(numItems > 10)
+  assert(avgItemSetSize >= 2)
+  assert(numItems >= 2)
 
   private val rng = new java.util.Random()
-  private val itemSetSizeRng = new PoissonGenerator(averageSizeOfItemSet - 2)
+  private val itemSetSizeRng = new PoissonGenerator(avgItemSetSize - 2)
   private val itemRng = new PoissonGenerator(numItems / 2)
 
   def nextPoissonValueWithCond(rng: PoissonGenerator)(condition: Int => Boolean): Int = {
@@ -33,7 +32,7 @@ class FrequentItemSetGenerator(
 
   override def nextValue(): Array[String] = {
     // 1. generate size of itemset
-    val size = nextPoissonValueWithCond(itemSetSizeRng)(_ >= 1)
+    val size = nextPoissonValueWithCond(itemSetSizeRng)(v => v >= 1 && v <= numItems)
     val arrayBuff = new ArrayBuffer[Int](size + 2)
 
     // 2. generate items in the itemset
@@ -63,6 +62,6 @@ class FrequentItemSetGenerator(
     arrayBuff.map(_.toString).toArray
   }
 
-  override def copy(): FrequentItemSetGenerator
-    = new FrequentItemSetGenerator(numItems, averageSizeOfItemSet)
+  override def copy(): ItemSetGenerator
+    = new ItemSetGenerator(numItems, avgItemSetSize)
 }

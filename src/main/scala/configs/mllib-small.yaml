@@ -119,3 +119,9 @@ benchmarks:
       regParam: 0.1
       tol: 0.001
       maxIter: 10
+  - name: fpm.FPGrowth
+    params:
+      numExamples: 200
+      numItems: 6
+      freqItemSetSize: 3
+

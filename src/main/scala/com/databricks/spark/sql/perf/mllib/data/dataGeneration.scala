@@ -1,6 +1,6 @@
 package com.databricks.spark.sql.perf.mllib.data
 
-import com.databricks.spark.sql.perf.mllib.fpm.FrequentItemSetGenerator
+import com.databricks.spark.sql.perf.mllib.fpm.ItemSetGenerator
 import org.apache.spark.ml.linalg.Vectors
 import org.apache.spark.ml.linalg.Vector
 import org.apache.spark.ml.recommendation.ALS.Rating
@@ -139,7 +139,7 @@ object DataGenerator {
       avgItemSetSize: Int): DataFrame = {
     val rdd: RDD[Array[String]] = RandomRDDs.randomRDD(
       sql.sparkContext,
-      new FrequentItemSetGenerator(numItems, avgItemSetSize),
+      new ItemSetGenerator(numItems, avgItemSetSize),
       numExamples,
       numPartitions,
       seed)
