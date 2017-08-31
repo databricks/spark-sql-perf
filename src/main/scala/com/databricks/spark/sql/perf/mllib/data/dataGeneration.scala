@@ -1,6 +1,5 @@
 package com.databricks.spark.sql.perf.mllib.data
 
-import com.databricks.spark.sql.perf.mllib.fpm.ItemSetGenerator
 import org.apache.spark.ml.linalg.Vectors
 import org.apache.spark.ml.linalg.Vector
 import org.apache.spark.ml.recommendation.ALS.Rating
@@ -8,6 +7,7 @@ import org.apache.spark.mllib.random._
 import org.apache.spark.rdd.{PairRDDFunctions, RDD}
 import org.apache.spark.sql.{DataFrame, SQLContext}
 
+import com.databricks.spark.sql.perf.mllib.fpm.ItemSetGenerator
 
 object DataGenerator {
 
