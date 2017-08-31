@@ -3,12 +3,13 @@ package com.databricks.spark.sql.perf.mllib.feature
 import org.apache.spark.ml
 import org.apache.spark.ml.linalg.{Vector, Vectors}
 import org.apache.spark.ml.PipelineStage
+import org.apache.spark.mllib.linalg.VectorUDT
 import org.apache.spark.sql._
+import org.apache.spark.sql.types.{StructField, StructType}
+
 import com.databricks.spark.sql.perf.mllib.OptionImplicits._
 import com.databricks.spark.sql.perf.mllib.data.DataGenerator
 import com.databricks.spark.sql.perf.mllib.{BenchmarkAlgorithm, MLBenchContext, TestFromTraining}
-import org.apache.spark.mllib.linalg.VectorUDT
-import org.apache.spark.sql.types.{StructField, StructType}
 
 /** Object for testing VectorAssembler performance */
 object VectorAssembler extends BenchmarkAlgorithm with TestFromTraining {

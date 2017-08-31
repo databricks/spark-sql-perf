@@ -14,12 +14,12 @@ object VectorSlicer extends BenchmarkAlgorithm with TestFromTraining {
   override def trainingDataSet(ctx: MLBenchContext): DataFrame = {
     import ctx.params._
 
-    DataGenerator.generateMixedFeatures(
+    DataGenerator.generateContinuousFeatures(
       ctx.sqlContext,
       numExamples,
       ctx.seed(),
       numPartitions,
-      Array.fill(numFeatures)(20)
+      numFeatures
     )
   }
 

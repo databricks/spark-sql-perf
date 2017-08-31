@@ -233,22 +233,23 @@ class RandStringGenerator(
 
 class DocGenerator(
     vocabSize: Int,
-    avgDocLength: Int) extends RandomDataGenerator[String] {
+    avgDocLength: Int,
+    maxDocLength: Int = 65535) extends RandomDataGenerator[String] {
 
   private val wordRng = new java.util.Random()
-  private val numWordsInDocRng = new PoissonGenerator(avgDocLength)
+  private val docLengthRng = new PoissonGenerator(avgDocLength)
 
   override def setSeed(seed: Long) {
     wordRng.setSeed(seed)
-    numWordsInDocRng.setSeed(seed)
+    docLengthRng.setSeed(seed)
   }
 
   override def nextValue(): String = {
-    val numWordsInDoc = numWordsInDocRng.nextValue().toInt
+    val docLength = DataGenUtil.nextPoisson(docLengthRng, v => v > 0 && v <= maxDocLength).toInt
     val sb = new StringBuffer()
 
     var i = 0
-    while (i < numWordsInDoc) {
+    while (i < docLength) {
       sb.append(" ")
       sb.append(wordRng.nextInt(vocabSize).toString)
       i += 1
@@ -258,4 +259,14 @@ class DocGenerator(
 
   override def copy(): DocGenerator =
     new DocGenerator(vocabSize, avgDocLength)
+}
+
+object DataGenUtil {
+  def nextPoisson(rng: PoissonGenerator, condition: Double => Boolean): Double = {
+    var value = 0.0
+    do {
+      value = rng.nextValue()
+    } while (!condition(value))
+    value
+  }
 }
