@@ -34,6 +34,7 @@ object VectorAssembler extends BenchmarkAlgorithm with TestFromTraining {
       df = df.withColumn(colName, sliceVec(col("features"), lit(fromIndex), lit(untilIndex)))
     }
     df.drop(col("features"))
+    df
   }
 
   override def getPipelineStage(ctx: MLBenchContext): PipelineStage = {
