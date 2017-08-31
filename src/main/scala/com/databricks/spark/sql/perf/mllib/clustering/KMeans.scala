@@ -23,6 +23,7 @@ object KMeans extends BenchmarkAlgorithm with TestFromTraining {
       .setK(k)
       .setSeed(randomSeed.toLong)
       .setMaxIter(maxIter)
+      .setTol(tol)
   }
 
   // TODO(?) add a scoring method here.

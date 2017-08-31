@@ -55,12 +55,14 @@ benchmarks:
       numTestExamples: 10
       k: 5
       maxIter: 10
+      tol: 0.01
   - name: clustering.KMeans
     params:
       numExamples: 10
       numTestExamples: 10
       k: 5
       maxIter: 10
+      tol: 1e-4
   - name: clustering.LDA
     params:
       numExamples: 10
