@@ -7,7 +7,7 @@ import org.apache.spark.ml.PipelineStage
 import org.apache.spark.sql._
 
 import com.databricks.spark.sql.perf.mllib.OptionImplicits._
-import com.databricks.spark.sql.perf.mllib.data.{DataGenerator, DocumentGenerator}
+import com.databricks.spark.sql.perf.mllib.data.DataGenerator
 import com.databricks.spark.sql.perf.mllib.{BenchmarkAlgorithm, MLBenchContext, TestFromTraining}
 
 
@@ -22,12 +22,12 @@ object HashingTF extends BenchmarkAlgorithm with TestFromTraining with UnaryTran
 
   override def trainingDataSet(ctx: MLBenchContext): DataFrame = {
     import ctx.params._
-    // To test HashingTF, we generate arrays of docLength strings, where
-    // each string is selected from a pool of numVocabulary strings
+    // To test HashingTF, we generate arrays of (on average) docLength strings, where
+    // each string is selected from a pool of vocabSize strings
     // The expected # of occurrences of each word in our vocabulary is
-    // (docLength * numExamples) / numVocabulary
-    DataGenerator.generateDocuments(ctx.sqlContext,
-      numExamples, ctx.seed(), vocabSize, docLength, numPartitions, inputCol)
+    // (docLength * numExamples) / vocabSize
+    DataGenerator.generateDoc(ctx.sqlContext, numExamples = numExamples, seed = ctx.seed(),
+      numPartitions = numPartitions, vocabSize = vocabSize, avgDocLength = docLength, inputCol)
   }
 
   override def getPipelineStage(ctx: MLBenchContext): PipelineStage = {
