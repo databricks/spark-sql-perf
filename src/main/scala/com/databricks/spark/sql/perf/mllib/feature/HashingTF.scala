@@ -27,12 +27,12 @@ object HashingTF extends BenchmarkAlgorithm with TestFromTraining with UnaryTran
     // The expected # of occurrences of each word in our vocabulary is
     // (docLength * numExamples) / vocabSize
     DataGenerator.generateDoc(ctx.sqlContext, numExamples = numExamples, seed = ctx.seed(),
-      numPartitions = numPartitions, vocabSize = vocabSize, avgDocLength = docLength, inputCol)
+      numPartitions = numPartitions, vocabSize = vocabSize, avgDocLength = docLength,
+      dataColName = inputCol)
   }
 
   override def getPipelineStage(ctx: MLBenchContext): PipelineStage = {
     import ctx.params._
-    val rng = ctx.newGenerator()
     new ml.feature.HashingTF()
       .setInputCol(inputCol)
       .setNumFeatures(featurizerOutputDim)

@@ -129,7 +129,7 @@ benchmarks:
       numFeatures: 5
       link: log
       family: gaussian
-      tol: 0.0
+      tol: 1e-6
       maxIter: 10
       regParam: 0.1
   - name: regression.LinearRegression
@@ -138,7 +138,7 @@ benchmarks:
       numTestExamples: 100
       numFeatures: 100
       regParam: 0.1
-      tol: [0.0]
+      tol: [1e-6]
       maxIter: 10
   - name: regression.RandomForestRegression
     params:
