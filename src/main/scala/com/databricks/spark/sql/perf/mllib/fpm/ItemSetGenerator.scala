@@ -1,7 +1,8 @@
 package com.databricks.spark.sql.perf.mllib.fpm
 
-import scala.collection.mutable.ArrayBuffer
+import com.databricks.spark.sql.perf.mllib.data.DataGenUtil
 
+import scala.collection.mutable.ArrayBuffer
 import org.apache.spark.mllib.random.{PoissonGenerator, RandomDataGenerator}
 
 class ItemSetGenerator(
@@ -16,14 +17,6 @@ class ItemSetGenerator(
   private val itemSetSizeRng = new PoissonGenerator(avgItemSetSize - 2)
   private val itemRng = new PoissonGenerator(numItems / 2)
 
-  def nextPoissonValueWithCond(rng: PoissonGenerator)(condition: Int => Boolean): Int = {
-    var value: Int = 0
-    do {
-      value = rng.nextValue().toInt
-    } while (!condition(value))
-    value
-  }
-
   override def setSeed(seed: Long) {
     rng.setSeed(seed)
     itemSetSizeRng.setSeed(seed)
@@ -32,15 +25,15 @@ class ItemSetGenerator(
 
   override def nextValue(): Array[String] = {
     // 1. generate size of itemset
-    val size = nextPoissonValueWithCond(itemSetSizeRng)(v => v >= 1 && v <= numItems)
+    val size = DataGenUtil.nextPoisson(itemSetSizeRng, v => v >= 1 && v <= numItems).toInt
     val arrayBuff = new ArrayBuffer[Int](size + 2)
 
     // 2. generate items in the itemset
     var i = 0
     while (i < size) {
-      val nextVal = nextPoissonValueWithCond(itemRng) { item: Int =>
+      val nextVal = DataGenUtil.nextPoisson(itemRng, (item: Double) => {
         item >= 0 && item < numItems && !arrayBuff.contains(item)
-      }
+      }).toInt
       arrayBuff.append(nextVal)
       i += 1
     }
