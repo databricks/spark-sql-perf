@@ -56,8 +56,8 @@ private[mllib] object TreeOrForestEstimator {
   /**
    * Get feature arity for tree and tree ensemble tests.
    * Currently, this is hard-coded as:
-   * - 1/2 binary features
-   * - 1/2 high-arity (20-category) features
+   * - 1/4 binary features
+   * - 1/4 high-arity (20-category) features
    * - 1/2 continuous features
    *
    * @return Array of length numFeatures, where 0 indicates continuous feature and
