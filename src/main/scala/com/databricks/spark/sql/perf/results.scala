@@ -112,33 +112,33 @@ case class Failure(className: String, message: String)
  * It simplifies lookup when checking if a parameter is here already.
  */
 class MLParams(
-    // *** Common to all algorithms ***
-    val randomSeed: Option[Int] = Some(42),
-    val numExamples: Option[Long] = None,
-    val numTestExamples: Option[Long] = None,
-    val numPartitions: Option[Int] = None,
-    // *** Specialized and sorted by name ***
-    val bucketizerNumBuckets: Option[Int] = None,
-    val depth: Option[Int] = None,
-    val docLength: Option[Int] = None,
-    val elasticNetParam: Option[Double] = None,
-    val freqItemSetSize: Option[Int] = None,
-    val family: Option[String] = None,
-    val featureArity: Option[Int] = None,
-    val k: Option[Int] = None,
-    val link: Option[String] = None,
-    val maxIter: Option[Int] = None,
-    val numClasses: Option[Int] = None,
-    val numFeatures: Option[Int] = None,
-    val numInputCols: Option[Int] = None,
-    val numItems: Option[Int] = None,
-    val numUsers: Option[Int] = None,
-    val optimizer: Option[String] = None,
-    val regParam: Option[Double] = None,
-    val rank: Option[Int] = None,
-    val smoothing: Option[Double] = None,
-    val tol: Option[Double] = None,
-    val vocabSize: Option[Int] = None) {
+      // *** Common to all algorithms ***
+      val randomSeed: Option[Int] = Some(42),
+      val numExamples: Option[Long] = None,
+      val numTestExamples: Option[Long] = None,
+      val numPartitions: Option[Int] = None,
+      // *** Specialized and sorted by name ***
+      val bucketizerNumBuckets: Option[Int] = None,
+      val depth: Option[Int] = None,
+      val docLength: Option[Int] = None,
+      val elasticNetParam: Option[Double] = None,
+      val family: Option[String] = None,
+      val featureArity: Option[Int] = None,
+      val itemSetSize: Option[Int] = None,
+      val k: Option[Int] = None,
+      val link: Option[String] = None,
+      val maxIter: Option[Int] = None,
+      val numClasses: Option[Int] = None,
+      val numFeatures: Option[Int] = None,
+      val numInputCols: Option[Int] = None,
+      val numItems: Option[Int] = None,
+      val numUsers: Option[Int] = None,
+      val optimizer: Option[String] = None,
+      val regParam: Option[Double] = None,
+      val rank: Option[Int] = None,
+      val smoothing: Option[Double] = None,
+      val tol: Option[Double] = None,
+      val vocabSize: Option[Int] = None) {
 
   /**
    * Returns a map of param names to string representations of their values. Only params that
@@ -163,9 +163,9 @@ class MLParams(
       depth: Option[Int] = depth,
       docLength: Option[Int] = docLength,
       elasticNetParam: Option[Double] = elasticNetParam,
-      freqItemSetSize: Option[Int] = freqItemSetSize,
       family: Option[String] = family,
       featureArity: Option[Int] = featureArity,
+      itemSetSize: Option[Int] = itemSetSize,
       k: Option[Int] = k,
       link: Option[String] = link,
       maxIter: Option[Int] = maxIter,
@@ -183,7 +183,8 @@ class MLParams(
     new MLParams(randomSeed = randomSeed, numExamples = numExamples,
       numTestExamples = numTestExamples, numPartitions = numPartitions,
       bucketizerNumBuckets = bucketizerNumBuckets, depth = depth, docLength = docLength,
-      elasticNetParam = elasticNetParam, family = family, featureArity = featureArity, freqItemSetSize = freqItemSetSize, k = k, link = link, maxIter = maxIter,
+      elasticNetParam = elasticNetParam, family = family, featureArity = featureArity,
+      itemSetSize = itemSetSize, k = k, link = link, maxIter = maxIter,
       numClasses = numClasses, numFeatures = numFeatures, numInputCols = numInputCols,
       numItems = numItems, numUsers = numUsers, optimizer = optimizer, regParam = regParam,
       rank = rank, smoothing = smoothing, tol = tol, vocabSize = vocabSize)

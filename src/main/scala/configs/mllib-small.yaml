@@ -123,5 +123,5 @@ benchmarks:
     params:
       numExamples: 200
       numItems: 6
-      freqItemSetSize: 3
+      itemSetSize: 3
 

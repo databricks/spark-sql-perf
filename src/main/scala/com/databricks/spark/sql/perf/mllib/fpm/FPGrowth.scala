@@ -15,13 +15,13 @@ object FPGrowth extends BenchmarkAlgorithm with TestFromTraining {
   def trainingDataSet(ctx: MLBenchContext): DataFrame = {
     import ctx.params._
 
-    DataGenerator.generateFrequentItemSet(
+    DataGenerator.generateItemSet(
       ctx.sqlContext,
       numExamples,
       ctx.seed(),
       numPartitions,
       numItems,
-      freqItemSetSize)
+      itemSetSize)
   }
 
   override def getPipelineStage(ctx: MLBenchContext): PipelineStage = {
