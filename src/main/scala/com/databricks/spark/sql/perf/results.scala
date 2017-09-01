@@ -124,7 +124,6 @@ class MLParams(
     val elasticNetParam: Option[Double] = None,
     val family: Option[String] = None,
     val featureArity: Option[Int] = None,
-    val featurizerOutputDim: Option[Int] = None, // # of output features produced by a featurizer
     val k: Option[Int] = None,
     val link: Option[String] = None,
     val maxIter: Option[Int] = None,

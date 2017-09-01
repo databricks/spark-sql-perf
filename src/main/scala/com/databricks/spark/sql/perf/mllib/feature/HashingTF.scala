@@ -5,11 +5,11 @@ import scala.util.Random
 import org.apache.spark.ml
 import org.apache.spark.ml.PipelineStage
 import org.apache.spark.sql._
+import org.apache.spark.sql.functions.split
 
 import com.databricks.spark.sql.perf.mllib.OptionImplicits._
 import com.databricks.spark.sql.perf.mllib.data.DataGenerator
 import com.databricks.spark.sql.perf.mllib.{BenchmarkAlgorithm, MLBenchContext, TestFromTraining}
-
 
 object HashingTF extends BenchmarkAlgorithm with TestFromTraining with UnaryTransformer {
 
@@ -26,16 +26,17 @@ object HashingTF extends BenchmarkAlgorithm with TestFromTraining with UnaryTran
     // each string is selected from a pool of vocabSize strings
     // The expected # of occurrences of each word in our vocabulary is
     // (docLength * numExamples) / vocabSize
-    DataGenerator.generateDoc(ctx.sqlContext, numExamples = numExamples, seed = ctx.seed(),
+    val df = DataGenerator.generateDoc(ctx.sqlContext, numExamples = numExamples, seed = ctx.seed(),
       numPartitions = numPartitions, vocabSize = vocabSize, avgDocLength = docLength,
       dataColName = inputCol)
+    df.withColumn(inputCol, split(df(inputCol), " "))
   }
 
   override def getPipelineStage(ctx: MLBenchContext): PipelineStage = {
     import ctx.params._
     new ml.feature.HashingTF()
       .setInputCol(inputCol)
-      .setNumFeatures(featurizerOutputDim)
+      .setNumFeatures(numFeatures)
   }
 
 }
