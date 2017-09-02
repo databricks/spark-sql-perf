@@ -7,8 +7,6 @@ import org.apache.spark.mllib.random._
 import org.apache.spark.rdd.{PairRDDFunctions, RDD}
 import org.apache.spark.sql.{DataFrame, SQLContext}
 
-import com.databricks.spark.sql.perf.mllib.fpm.ItemSetGenerator
-
 object DataGenerator {
 
   def generateContinuousFeatures(

@@ -1,8 +1,7 @@
-package com.databricks.spark.sql.perf.mllib.fpm
-
-import com.databricks.spark.sql.perf.mllib.data.DataGenUtil
+package com.databricks.spark.sql.perf.mllib.data
 
 import scala.collection.mutable.ArrayBuffer
+
 import org.apache.spark.mllib.random.{PoissonGenerator, RandomDataGenerator}
 
 class ItemSetGenerator(
@@ -10,12 +9,12 @@ class ItemSetGenerator(
     val avgItemSetSize: Int)
   extends RandomDataGenerator[Array[String]] {
 
-  assert(avgItemSetSize >= 2)
-  assert(numItems >= 2)
+  assert(avgItemSetSize > 2)
+  assert(numItems > 2)
 
   private val rng = new java.util.Random()
   private val itemSetSizeRng = new PoissonGenerator(avgItemSetSize - 2)
-  private val itemRng = new PoissonGenerator(numItems / 2)
+  private val itemRng = new PoissonGenerator(numItems / 2.0)
 
   override def setSeed(seed: Long) {
     rng.setSeed(seed)
@@ -38,7 +37,7 @@ class ItemSetGenerator(
       i += 1
     }
 
-    // 3 generate associate-rules by adding two computed items
+    // 3 generate association rules by adding two computed items
 
     // 3.1 add a new item = (firstItem + numItems / 2) % numItems
     val newItem1 = (arrayBuff(0) + numItems / 2) % numItems
