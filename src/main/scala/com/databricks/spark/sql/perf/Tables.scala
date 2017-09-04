@@ -211,7 +211,12 @@ abstract class Tables(sqlContext: SQLContext, scaleFactor: String,
           data.write
         }
       } else {
-        data.write
+        if (clusterByPartitionColumns) {
+          // treat non-partitioned tables as "one partition" that we want to coalesce
+          data.coalesce(1).write
+        } else {
+          data.write
+        }
       }
       writer.format(format).mode(mode)
       if (partitionColumns.nonEmpty) {
