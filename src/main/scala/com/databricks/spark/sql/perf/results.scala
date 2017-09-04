@@ -181,13 +181,13 @@ class MLParams(
     new MLParams(randomSeed = randomSeed, numExamples = numExamples,
       numTestExamples = numTestExamples, numPartitions = numPartitions,
       bucketizerNumBuckets = bucketizerNumBuckets, depth = depth, docLength = docLength,
-      elasticNetParam = elasticNetParam, family = family, featureArity = featureArity, k = k, link = link, maxIter = maxIter,
+      elasticNetParam = elasticNetParam, family = family, featureArity = featureArity, k = k,
+      link = link, maxIter = maxIter,
       numClasses = numClasses, numFeatures = numFeatures, numInputCols = numInputCols,
       numItems = numItems, numUsers = numUsers, optimizer = optimizer, regParam = regParam,
       rank = rank, smoothing = smoothing, tol = tol, vocabSize = vocabSize)
   }
 }
-
 
 object MLParams {
   val empty = new MLParams()

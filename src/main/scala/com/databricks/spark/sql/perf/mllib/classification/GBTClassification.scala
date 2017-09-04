@@ -1,27 +1,14 @@
 package com.databricks.spark.sql.perf.mllib.classification
 
-import org.apache.spark.ml.{ModelBuilder, PipelineStage, Transformer, TreeUtils}
 import org.apache.spark.ml.classification.GBTClassifier
-import org.apache.spark.ml.evaluation.{Evaluator, MulticlassClassificationEvaluator}
-import org.apache.spark.sql._
+import org.apache.spark.ml.{ModelBuilder, PipelineStage, Transformer}
 
 import com.databricks.spark.sql.perf.mllib.OptionImplicits._
 import com.databricks.spark.sql.perf.mllib._
-import com.databricks.spark.sql.perf.mllib.data.DataGenerator
 
+object GBTClassification extends BenchmarkAlgorithm with TreeOrForestClassifier {
 
-object GBTClassification extends BenchmarkAlgorithm
-  with TestFromTraining with TrainingSetFromTransformer with ScoringWithEvaluator {
-
-  import TreeOrForestClassification.getFeatureArity
-
-  override protected def initialData(ctx: MLBenchContext) = {
-    import ctx.params._
-    val featureArity: Array[Int] = getFeatureArity(ctx)
-    val data: DataFrame = DataGenerator.generateMixedFeatures(ctx.sqlContext, numExamples,
-      ctx.seed(), numPartitions, featureArity)
-    TreeUtils.setMetadata(data, "features", featureArity)
-  }
+  import TreeOrForestEstimator.getFeatureArity
 
   override protected def trueModel(ctx: MLBenchContext): Transformer = {
     import ctx.params._
@@ -41,6 +28,4 @@ object GBTClassification extends BenchmarkAlgorithm
       .setSeed(ctx.seed())
   }
 
-  override protected def evaluator(ctx: MLBenchContext): Evaluator =
-    new MulticlassClassificationEvaluator()
 }
