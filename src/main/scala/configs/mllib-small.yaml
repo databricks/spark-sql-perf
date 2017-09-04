@@ -146,3 +146,8 @@ benchmarks:
       depth: 3
       numFeatures: 5
       maxIter: 3
+  - name: fpm.FPGrowth
+    params:
+      numExamples: 200
+      numItems: 6
+      itemSetSize: 3
