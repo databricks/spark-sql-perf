@@ -7,12 +7,62 @@ common:
   numPartitions: 3
   randomSeed: [1]
 benchmarks:
+  - name: classification.DecisionTreeClassification
+    params:
+      numExamples: 100
+      numTestExamples: 10
+      depth: 3
+      numClasses: 4
+      numFeatures: 5
+  - name: classification.GBTClassification
+    params:
+      numExamples: 100
+      numTestExamples: 10
+      depth: 3
+      numClasses: 2
+      numFeatures: 5
+      maxIter: 3
+  - name: classification.LinearSVC
+    params:
+      numExamples: 100
+      numFeatures: 10
+      regParam: 0.1
+      tol: 0.001
+      maxIter: 10
   - name: classification.LogisticRegression
     params:
       numFeatures: 100
       regParam: 0.1
       tol: [0.2, 0.1]
       maxIter: 10
+  - name: classification.NaiveBayes
+    params:
+      numExamples: 100
+      smoothing: 1.0
+      numClasses: 10
+      numFeatures: [10]
+  - name: classification.RandomForestClassification
+    params:
+      numExamples: 100
+      numTestExamples: 10
+      depth: 3
+      numClasses: 4
+      numFeatures: 5
+      maxIter: 3
+  - name: clustering.GaussianMixture
+    params:
+      numExamples: 10
+      numTestExamples: 10
+      k: 5
+      maxIter: 10
+      tol: 0.01
+  - name: clustering.KMeans
+    params:
+      numExamples: 10
+      numTestExamples: 10
+      k: 5
+      maxIter: 10
+      tol: 1e-4
   - name: clustering.LDA
     params:
       numExamples: 10
@@ -24,72 +74,15 @@ benchmarks:
       optimizer:
         - em
         - online
-  - name: clustering.KMeans
-    params:
-      numExamples: 10
-      numTestExamples: 10
-      k: 5
-      maxIter: 10
-  - name: regression.GLMRegression
-    params:
-      numExamples: 100
-      numTestExamples: 10
-      numFeatures: 5
-      link: log
-      family: gaussian
-      tol: 0.0
-      maxIter: 10
-      regParam: 0.1
-  - name: classification.DecisionTreeClassification
-    params:
-      numExamples: 100
-      numTestExamples: 10
-      depth: 3
-      numClasses: 4
-      numFeatures: 5
-  - name: classification.RandomForestClassification
-    params:
-      numExamples: 100
-      numTestExamples: 10
-      depth: 3
-      numClasses: 4
-      numFeatures: 5
-      maxIter: 3
-  - name: classification.GBTClassification
-    params:
-      numExamples: 100
-      numTestExamples: 10
-      depth: 3
-      numClasses: 2
-      numFeatures: 5
-      maxIter: 3
-  - name: regression.LinearRegression
-    params:
-      numExamples: 100
-      numTestExamples: 100
-      numFeatures: 100
-      regParam: 0.1
-      tol: [0.0]
-      maxIter: 10
-  - name: recommendation.ALS
-    params:
-      numExamples: 100
-      numTestExamples: 100
-      numUsers: 100
-      numItems: 100
-      regParam: 0.1
-      rank: 10
-      maxIter: 6
   - name: feature.Bucketizer
     params:
       numExamples: 100
       bucketizerNumBuckets: 10
-  - name: classification.NaiveBayes
+  - name: feature.HashingTF
     params:
       numExamples: 100
-      smoothing: 1.0
-      numClasses: 10
-      numFeatures: [10]
+      docLength: 20
+      vocabSize: 4
   - name: feature.OneHotEncoder
     params:
       numExamples: 100
@@ -112,16 +105,49 @@ benchmarks:
     params:
       numExamples: 100
       numFeatures: 10
-  - name: classification.LinearSVC
+  - name: recommendation.ALS
     params:
       numExamples: 100
-      numFeatures: 10
+      numTestExamples: 100
+      numUsers: 100
+      numItems: 100
       regParam: 0.1
-      tol: 0.001
+      rank: 10
+      maxIter: 6
+  - name: regression.DecisionTreeRegression
+    params:
+      numExamples: 100
+      numTestExamples: 10
+      depth: 3
+      numClasses: 4
+      numFeatures: 5
+  - name: regression.GLMRegression
+    params:
+      numExamples: 100
+      numTestExamples: 10
+      numFeatures: 5
+      link: log
+      family: gaussian
+      tol: 1e-6
       maxIter: 10
+      regParam: 0.1
+  - name: regression.LinearRegression
+    params:
+      numExamples: 100
+      numTestExamples: 100
+      numFeatures: 100
+      regParam: 0.1
+      tol: [1e-6]
+      maxIter: 10
+  - name: regression.RandomForestRegression
+    params:
+      numExamples: 100
+      numTestExamples: 10
+      depth: 3
+      numFeatures: 5
+      maxIter: 3
   - name: fpm.FPGrowth
     params:
       numExamples: 200
       numItems: 6
       itemSetSize: 3
-
