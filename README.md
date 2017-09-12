@@ -60,18 +60,21 @@ val scaleFactor = ... // scaleFactor defines the size of the dataset to generate
 val format = ... // valid spark format like parquet "parquet".
 // Run:
 val tables = new TPCDSTables(sqlContext,
-  dsdgenDir = "/tmp/tpcds-kit/tools", // location of dsdgen tool
-  scaleFactor = scaleFactor)
+    dsdgenDir = "/tmp/tpcds-kit/tools", // location of dsdgen
+    scaleFactor = scaleFactor,
+    useDoubleForDecimal = false, // true to replace DecimalType with DoubleType
+    useStringForDate = false) // true to replace DateType with StringType
+
 
 tables.genData(
     location = rootDir,
     format = format,
-    overwrite = true,
-    partitionTables = true,
-    clusterByPartitionColumns = true,
-    filterOutNullPartitionValues = false,
-    tableFilter = "", // all tables
-    numPartitions = 100) // how many dsdgen partitions to run.
+    overwrite = true, // overwrite the data that is already there
+    partitionTables = true, // create the partitioned fact tables 
+    clusterByPartitionColumns = true, // shuffle to get partitions coalesced into single files. 
+    filterOutNullPartitionValues = false, // true to filter out the partition with NULL key value
+    tableFilter = "", // "" means generate all tables
+    numPartitions = 100) // how many dsdgen partitions to run - number of input tasks.
 
 // Create the specified database
 sql(s"create database $databaseName")
