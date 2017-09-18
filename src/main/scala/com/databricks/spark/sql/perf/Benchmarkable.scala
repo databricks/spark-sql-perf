@@ -55,15 +55,8 @@ trait Benchmarkable extends Logging {
 
   protected def beforeBenchmark(): Unit = { }
 
-  private def afterBenchmark(sc: SparkContext): Unit = {
-    // Best-effort clean up of weakly referenced RDDs, shuffles, and broadcasts
+  protected def afterBenchmark(sc: SparkContext): Unit = {
     System.gc()
-    if (sparkContext.getConf.getBoolean("spark.databricks.benchmark.cleanBlocksAfter", true)) {
-      // Remove any leftover blocks that still exist
-      sc.getExecutorStorageStatus
-          .flatMap { status => status.blocks.map { case (bid, _) => bid } }
-          .foreach { bid => SparkEnv.get.blockManager.master.removeBlock(bid) }
-    }
   }
 
   private def runBenchmarkForked(
