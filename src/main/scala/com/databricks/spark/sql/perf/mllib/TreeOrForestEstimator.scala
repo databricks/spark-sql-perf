@@ -1,6 +1,6 @@
 package com.databricks.spark.sql.perf.mllib
 
-import org.apache.spark.ml.{ModelBuilder, Transformer, TreeUtils}
+import org.apache.spark.ml.{ModelBuilderSSP, Transformer, TreeUtils}
 import org.apache.spark.ml.evaluation.{Evaluator, MulticlassClassificationEvaluator,
   RegressionEvaluator}
 import org.apache.spark.sql.DataFrame
@@ -31,7 +31,7 @@ private[mllib] trait TreeOrForestClassifier extends TreeOrForestEstimator {
   }
 
   override protected def trueModel(ctx: MLBenchContext): Transformer = {
-    ModelBuilder.newDecisionTreeClassificationModel(ctx.params.depth, ctx.params.numClasses,
+    ModelBuilderSSP.newDecisionTreeClassificationModel(ctx.params.depth, ctx.params.numClasses,
       TreeOrForestEstimator.getFeatureArity(ctx), ctx.seed())
   }
 }
@@ -45,7 +45,7 @@ private[mllib] trait TreeOrForestRegressor extends TreeOrForestEstimator {
   }
 
   override protected def trueModel(ctx: MLBenchContext): Transformer = {
-    ModelBuilder.newDecisionTreeRegressionModel(ctx.params.depth,
+    ModelBuilderSSP.newDecisionTreeRegressionModel(ctx.params.depth,
       TreeOrForestEstimator.getFeatureArity(ctx), ctx.seed())
   }
 

@@ -4,7 +4,7 @@ import com.databricks.spark.sql.perf.mllib.OptionImplicits._
 import com.databricks.spark.sql.perf.mllib._
 import com.databricks.spark.sql.perf.mllib.data.DataGenerator
 import org.apache.spark.ml.evaluation.{Evaluator, MulticlassClassificationEvaluator}
-import org.apache.spark.ml.{Estimator, ModelBuilder, PipelineStage, Transformer}
+import org.apache.spark.ml.{Estimator, ModelBuilderSSP, PipelineStage, Transformer}
 import org.apache.spark.ml
 import org.apache.spark.ml.linalg.Vectors
 
@@ -28,7 +28,7 @@ object LogisticRegression extends BenchmarkAlgorithm
       Vectors.dense(Array.fill[Double](ctx.params.numFeatures)(2 * rng.nextDouble() - 1))
     // Small intercept to prevent some skew in the data.
     val intercept = 0.01 * (2 * rng.nextDouble - 1)
-    ModelBuilder.newLogisticRegressionModel(coefficients, intercept)
+    ModelBuilderSSP.newLogisticRegressionModel(coefficients, intercept)
   }
 
   override def getPipelineStage(ctx: MLBenchContext): PipelineStage = {

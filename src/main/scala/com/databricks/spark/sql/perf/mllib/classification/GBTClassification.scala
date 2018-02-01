@@ -1,7 +1,7 @@
 package com.databricks.spark.sql.perf.mllib.classification
 
 import org.apache.spark.ml.classification.GBTClassifier
-import org.apache.spark.ml.{ModelBuilder, PipelineStage, Transformer}
+import org.apache.spark.ml.{ModelBuilderSSP, PipelineStage, Transformer}
 
 import com.databricks.spark.sql.perf.mllib.OptionImplicits._
 import com.databricks.spark.sql.perf.mllib._
@@ -14,7 +14,7 @@ object GBTClassification extends BenchmarkAlgorithm with TreeOrForestClassifier 
     import ctx.params._
     // We add +1 to the depth to make it more likely that many iterations of boosting are needed
     // to model the true tree.
-    ModelBuilder.newDecisionTreeClassificationModel(depth + 1, numClasses, getFeatureArity(ctx),
+    ModelBuilderSSP.newDecisionTreeClassificationModel(depth + 1, numClasses, getFeatureArity(ctx),
       ctx.seed())
   }
 

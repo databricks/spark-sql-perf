@@ -1,7 +1,7 @@
 package com.databricks.spark.sql.perf.mllib.classification
 
 import org.apache.spark.ml.evaluation.{Evaluator, MulticlassClassificationEvaluator}
-import org.apache.spark.ml.{ModelBuilder, PipelineStage, Transformer}
+import org.apache.spark.ml.{ModelBuilderSSP, PipelineStage, Transformer}
 import org.apache.spark.ml
 import org.apache.spark.ml.linalg.Vectors
 
@@ -28,7 +28,7 @@ object LinearSVC extends BenchmarkAlgorithm
       Vectors.dense(Array.fill[Double](ctx.params.numFeatures)(2 * rng.nextDouble() - 1))
     // Small intercept to prevent some skew in the data.
     val intercept = 0.01 * (2 * rng.nextDouble - 1)
-    ModelBuilder.newLinearSVCModel(coefficients, intercept)
+    ModelBuilderSSP.newLinearSVCModel(coefficients, intercept)
   }
 
   override def getPipelineStage(ctx: MLBenchContext): PipelineStage = {
