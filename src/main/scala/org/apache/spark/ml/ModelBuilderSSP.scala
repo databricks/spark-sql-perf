@@ -17,6 +17,7 @@ object ModelBuilderSSP {
       coefficients: Vector,
       intercept: Double): LogisticRegressionModel = {
     new LogisticRegressionModel("lr", coefficients, intercept)
+      .setThreshold(.5)
 
   }
 
