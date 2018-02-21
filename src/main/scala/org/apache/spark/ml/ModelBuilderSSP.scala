@@ -24,7 +24,11 @@ object ModelBuilderSSP {
   def newLinearRegressionModel(
       coefficients: Vector,
       intercept: Double): LinearRegressionModel = {
-    new LinearRegressionModel("linr", coefficients, intercept)
+    val model = new LinearRegressionModel("linr", coefficients, intercept)
+    if (model.hasParam("loss")) {
+      model.set(model.getParam("loss"), "squaredError")
+    }
+    model
   }
 
   def newGLR(
