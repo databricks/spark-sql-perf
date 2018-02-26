@@ -74,6 +74,11 @@ benchmarks:
       optimizer:
         - em
         - online
+  - name: feature.BucketedRandomProjectionLSH
+    params:
+      numExamples: 100
+      numFeatures: 10
+      numHashTables: 1
   - name: feature.Bucketizer
     params:
       numExamples: 100
@@ -83,6 +88,11 @@ benchmarks:
       numExamples: 100
       docLength: 20
       vocabSize: 4
+  - name: feature.MinHashLSH
+    params:
+      numExamples: 100
+      numFeatures: 10
+      numHashTables: 1
   - name: feature.OneHotEncoder
     params:
       numExamples: 100
