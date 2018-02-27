@@ -48,6 +48,9 @@ the TPCDS data requires dsdgen built and available on the machines. We have a fo
 you will need. The fork includes changes to generate TPCDS data to stdout, so that this library can
 pipe them directly to Spark, without intermediate files. Therefore, this library will not work with
 the vanilla TPCDS kit.
+
+TPCDS kit needs to be installed on all cluster executor nodes under the same path!
+
 It can be found [here](https://github.com/databricks/tpcds-kit).  
 
 ```
