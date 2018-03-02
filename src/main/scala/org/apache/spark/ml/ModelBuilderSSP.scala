@@ -11,18 +11,24 @@ import org.apache.spark.mllib.tree.impurity.ImpurityCalculator
 /**
  * Helper for creating MLlib models which have private constructors.
  */
-object ModelBuilder {
+object ModelBuilderSSP {
 
   def newLogisticRegressionModel(
       coefficients: Vector,
       intercept: Double): LogisticRegressionModel = {
     new LogisticRegressionModel("lr", coefficients, intercept)
+      .setThreshold(.5)
+
   }
 
   def newLinearRegressionModel(
       coefficients: Vector,
       intercept: Double): LinearRegressionModel = {
-    new LinearRegressionModel("linr", coefficients, intercept)
+    val model = new LinearRegressionModel("linr", coefficients, intercept)
+    if (model.hasParam("loss")) {
+      model.set(model.getParam("loss"), "squaredError")
+    }
+    model
   }
 
   def newGLR(
