@@ -130,6 +130,7 @@ class MLParams(
     val maxIter: Option[Int] = None,
     val numClasses: Option[Int] = None,
     val numFeatures: Option[Int] = None,
+    val numHashTables: Option[Int] = Some(1),
     val numInputCols: Option[Int] = None,
     val numItems: Option[Int] = None,
     val numUsers: Option[Int] = None,
@@ -171,6 +172,7 @@ class MLParams(
       maxIter: Option[Int] = maxIter,
       numClasses: Option[Int] = numClasses,
       numFeatures: Option[Int] = numFeatures,
+      numHashTables: Option[Int] = numHashTables,
       numInputCols: Option[Int] = numInputCols,
       numItems: Option[Int] = numItems,
       numUsers: Option[Int] = numUsers,
@@ -185,8 +187,9 @@ class MLParams(
       bucketizerNumBuckets = bucketizerNumBuckets, depth = depth, docLength = docLength,
       elasticNetParam = elasticNetParam, family = family, featureArity = featureArity,
       itemSetSize = itemSetSize, k = k, link = link, maxIter = maxIter,
-      numClasses = numClasses, numFeatures = numFeatures, numInputCols = numInputCols,
-      numItems = numItems, numUsers = numUsers, optimizer = optimizer, regParam = regParam,
+      numClasses = numClasses, numFeatures = numFeatures, numHashTables = numHashTables,
+      numInputCols = numInputCols, numItems = numItems, numUsers = numUsers,
+      optimizer = optimizer, regParam = regParam,
       rank = rank, smoothing = smoothing, tol = tol, vocabSize = vocabSize)
   }
 }
