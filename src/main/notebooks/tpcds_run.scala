@@ -4,9 +4,20 @@
 
 // COMMAND ----------
 
+// Database to be used:
+// TPCDS Scale factor
 val scaleFactor = "1"
-val databaseName = s"tpcds_sf${scaleFactor}_nodecimal_nodate_withnulls"
-val iterations = 1 // how many times to run the whole set of queries.
+// If false, float type will be used instead of decimal.
+val useDecimal = true
+// If false, string type will be used instead of date.
+val useDate = true
+// name of database to be used.
+val databaseName = s"tpcds_sf${scaleFactor}" +
+  s"""_${if (useDecimal) "with" else "no"}decimal""" +
+  s"""_${if (useDate) "with" else "no"}date""" +
+  s"""_${if (filterNull) "no" else "with"}nulls"""
+
+val iterations = 2 // how many times to run the whole set of queries.
 
 val timeout = 60 // timeout in hours
 
