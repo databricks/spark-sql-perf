@@ -22,9 +22,9 @@ val scaleFactor = "1"
 // data format.
 val format = "parquet"
 // If false, float type will be used instead of decimal.
-val useDecimal = false 
+val useDecimal = true
 // If false, string type will be used instead of date.
-val useDate = false
+val useDate = true
 // If true, rows with nulls in partition key will be thrown away.
 val filterNull = false
 // If true, partitions will be coalesced into a single file during generation.
