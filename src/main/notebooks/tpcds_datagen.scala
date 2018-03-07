@@ -134,8 +134,8 @@ nonPartitionedTables.foreach { t => {
       filterOutNullPartitionValues = filterNull,
       tableFilter = t,
       numPartitions = dsdgen_nonpartitioned)
-  println("Done generating non partitioned tables.")
 }}
+println("Done generating non partitioned tables.")
 
 // leave the biggest/potentially hardest tables to be generated last.
 val partitionedTables = Array("inventory", "web_returns", "catalog_returns", "store_returns", "web_sales", "catalog_sales", "store_sales") 
@@ -149,8 +149,8 @@ partitionedTables.foreach { t => {
       filterOutNullPartitionValues = filterNull,
       tableFilter = t,
       numPartitions = dsdgen_partitioned)
-  println("Done generating partitioned tables.")
 }}
+println("Done generating partitioned tables.")
 
 // COMMAND ----------
 
@@ -178,65 +178,3 @@ tables.createExternalTables(rootDir, format, databaseName, overwrite = true, dis
 // COMMAND ----------
 
 tables.analyzeTables(databaseName, analyzeColumns = true)
-
-// COMMAND ----------
-
-// MAGIC %md
-// MAGIC Vacuuming the tables - remove any unnecessary files.
-
-// COMMAND ----------
-
-// MAGIC %sql
-// MAGIC -- small non partitioned tables
-// MAGIC VACUUM customer_address RETAIN 0.0 HOURS;
-// MAGIC VACUUM customer_demographics RETAIN 0.0 HOURS;
-// MAGIC VACUUM date_dim RETAIN 0.0 HOURS;
-// MAGIC VACUUM warehouse RETAIN 0.0 HOURS;
-// MAGIC VACUUM ship_mode RETAIN 0.0 HOURS;
-// MAGIC VACUUM time_dim RETAIN 0.0 HOURS;
-// MAGIC VACUUM reason RETAIN 0.0 HOURS;
-// MAGIC VACUUM income_band RETAIN 0.0 HOURS;
-// MAGIC VACUUM item RETAIN 0.0 HOURS;
-// MAGIC VACUUM store RETAIN 0.0 HOURS;
-// MAGIC VACUUM call_center RETAIN 0.0 HOURS;
-// MAGIC VACUUM customer RETAIN 0.0 HOURS;
-// MAGIC VACUUM web_site RETAIN 0.0 HOURS;
-// MAGIC --VACUUM store_returns RETAIN 0.0 HOURS;
-// MAGIC VACUUM household_demographics RETAIN 0.0 HOURS;
-// MAGIC VACUUM web_page RETAIN 0.0 HOURS;
-// MAGIC VACUUM promotion RETAIN 0.0 HOURS;
-// MAGIC VACUUM catalog_page RETAIN 0.0 HOURS;
-// MAGIC --VACUUM inventory RETAIN 0.0 HOURS;
-// MAGIC --VACUUM catalog_returns RETAIN 0.0 HOURS;
-// MAGIC --VACUUM web_returns RETAIN 0.0 HOURS;
-// MAGIC --VACUUM web_sales RETAIN 0.0 HOURS;
-// MAGIC --VACUUM catalog_sales RETAIN 0.0 HOURS;
-// MAGIC --VACUUM store_sales RETAIN 0.0 HOURS;
-
-// COMMAND ----------
-
-// MAGIC %sql VACUUM inventory RETAIN 0.0 HOURS;
-
-// COMMAND ----------
-
-// MAGIC %sql VACUUM store_returns RETAIN 0.0 HOURS;
-
-// COMMAND ----------
-
-// MAGIC %sql VACUUM catalog_returns RETAIN 0.0 HOURS;
-
-// COMMAND ----------
-
-// MAGIC %sql VACUUM web_returns RETAIN 0.0 HOURS;
-
-// COMMAND ----------
-
-// MAGIC %sql VACUUM web_sales RETAIN 0.0 HOURS;
-
-// COMMAND ----------
-
-// MAGIC %sql VACUUM catalog_sales RETAIN 0.0 HOURS;
-
-// COMMAND ----------
-
-// MAGIC %sql VACUUM store_sales RETAIN 0.0 HOURS;
