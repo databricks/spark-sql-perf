@@ -16,15 +16,17 @@
 
 package com.databricks.spark.sql.perf.tpcds
 
-import scala.sys.process._
-
-import com.databricks.spark.sql.perf
-import com.databricks.spark.sql.perf.{BlockingLineStream, DataGenerator, Table, Tables}
-
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SQLContext
 
-class DSDGEN(dsdgenDir: String) extends DataGenerator {
+import com.databricks.spark.sql.perf.{BlockingLineStream, DataGenerator, Tables}
+
+class DSDGEN(dsdgenDirOpt: Option[String]) extends DataGenerator {
+  val dsdgenDir = dsdgenDirOpt match {
+    case Some(d) => d
+    case None => DsdgenResourceExtractor.extractAndGetTempDsdgenDir()
+  }
+
   val dsdgen = s"$dsdgenDir/dsdgen"
 
   def generate(sparkContext: SparkContext, name: String, partitions: Int, scaleFactor: String) = {
@@ -53,10 +55,9 @@ class DSDGEN(dsdgenDir: String) extends DataGenerator {
   }
 }
 
-
 class TPCDSTables(
   sqlContext: SQLContext,
-  dsdgenDir: String,
+  dsdgenDir: Option[String] = None,  // If not specified, we use the pre-packaged dsdgen in the JAR
   scaleFactor: String,
   useDoubleForDecimal: Boolean = false,
   useStringForDate: Boolean = false)
