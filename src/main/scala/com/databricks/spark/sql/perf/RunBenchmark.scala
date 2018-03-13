@@ -18,11 +18,11 @@ package com.databricks.spark.sql.perf
 
 import java.net.InetAddress
 
+import scala.util.Try
+
 import org.apache.spark.sql.SQLContext
 import org.apache.spark.sql.functions._
-import org.apache.spark.{SparkContext, SparkConf}
-
-import scala.util.Try
+import org.apache.spark.{SparkConf, SparkContext}
 
 case class RunConfig(
     benchmarkName: String = null,
@@ -69,7 +69,6 @@ object RunBenchmark {
 
     val sc = SparkContext.getOrCreate(conf)
     val sqlContext = SQLContext.getOrCreate(sc)
-    import sqlContext.implicits._
 
     sqlContext.setConf("spark.sql.perf.results", new java.io.File("performance").toURI.toString)
     val benchmark = Try {
@@ -101,8 +100,18 @@ object RunBenchmark {
     println("== STARTING EXPERIMENT ==")
     experiment.waitForFinish(1000 * 60 * 30)
 
+    presentFindings(sqlContext, experiment, config.baseline, benchmark.resultsLocation)
+  }
+
+  def presentFindings(
+      sqlContext: SQLContext,
+      experiment: Benchmark.ExperimentStatus,
+      baseline: Option[Long],
+      resultsLocation: String): Unit = {
+
+    import sqlContext.implicits._
     sqlContext.setConf("spark.sql.shuffle.partitions", "1")
-    experiment.getCurrentRuns()
+    val runResults = experiment.getCurrentRuns()
         .withColumn("result", explode($"results"))
         .select("result.*")
         .groupBy("name")
@@ -112,14 +121,22 @@ object RunBenchmark {
           avg($"executionTime") as 'avgTimeMs,
           stddev($"executionTime") as 'stdDev)
         .orderBy("name")
-        .show(truncate = false)
+
+    runResults.show(runResults.count.toInt, truncate = false)
+
+    runResults
+      .coalesce(1)
+      .write
+      .format("csv")
+      .save(experiment.reportPath)
+
     println(s"""Results: sqlContext.read.json("${experiment.resultPath}")""")
 
-    config.baseline.foreach { baseTimestamp =>
+    baseline.foreach { baseTimestamp =>
       val baselineTime = when($"timestamp" === baseTimestamp, $"executionTime").otherwise(null)
       val thisRunTime = when($"timestamp" === experiment.timestamp, $"executionTime").otherwise(null)
 
-      val data = sqlContext.read.json(benchmark.resultsLocation)
+      val data = sqlContext.read.json(resultsLocation)
           .coalesce(1)
           .where(s"timestamp IN ($baseTimestamp, ${experiment.timestamp})")
           .withColumn("result", explode($"results"))
@@ -133,7 +150,13 @@ object RunBenchmark {
             "percentChange", ($"baselineTimeMs" - $"thisRunTimeMs") / $"baselineTimeMs" * 100)
           .filter('thisRunTimeMs.isNotNull)
 
-      data.show(truncate = false)
+      data.show(data.count.toInt, truncate = false)
+
+      runResults
+        .coalesce(1)
+        .write
+        .format("csv")
+        .save(s"${experiment.reportPath}/baseline_ts=$baseTimestamp")
     }
   }
 }

@@ -22,22 +22,17 @@ import org.apache.spark.sql.SQLContext
 import com.databricks.spark.sql.perf.{BlockingLineStream, DataGenerator, Tables}
 
 class DSDGEN(dsdgenDirOpt: Option[String]) extends DataGenerator {
-  val dsdgenDir = dsdgenDirOpt match {
-    case Some(d) => d
-    case None => DsdgenResourceExtractor.extractAndGetTempDsdgenDir()
-  }
-
-  val dsdgen = s"$dsdgenDir/dsdgen"
-
   def generate(sparkContext: SparkContext, name: String, partitions: Int, scaleFactor: String) = {
     val generatedData = {
       sparkContext.parallelize(1 to partitions, partitions).flatMap { i =>
-        val localToolsDir = if (new java.io.File(dsdgen).exists) {
+        val dsdgenDir = getDsdgenDir()
+        val dsdgenPath = s"$dsdgenDir/dsdgen"
+        val localToolsDir = if (new java.io.File(dsdgenPath).exists) {
           dsdgenDir
-        } else if (new java.io.File(s"/$dsdgen").exists) {
+        } else if (new java.io.File(s"/$dsdgenPath").exists) {
           s"/$dsdgenDir"
         } else {
-          sys.error(s"Could not find dsdgen at $dsdgen or /$dsdgen. Run install")
+          sys.error(s"Could not find dsdgen at $dsdgenPath or /$dsdgenPath. Run install")
         }
 
         // Note: RNGSEED is the RNG seed used by the data generator. Right now, it is fixed to 100.
@@ -52,6 +47,13 @@ class DSDGEN(dsdgenDirOpt: Option[String]) extends DataGenerator {
 
     generatedData.setName(s"$name, sf=$scaleFactor, strings")
     generatedData
+  }
+
+  def getDsdgenDir(): String = {
+    dsdgenDirOpt match {
+      case Some(d) => d
+      case None => DsdgenResourceExtractor.extractAndGetTempDsdgenDir()
+    }
   }
 }
 

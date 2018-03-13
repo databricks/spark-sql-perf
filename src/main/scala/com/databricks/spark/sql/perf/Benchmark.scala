@@ -23,10 +23,10 @@ import scala.concurrent.duration._
 import scala.language.implicitConversions
 import scala.util.{Success, Try, Failure => SFailure}
 
-import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.{Dataset, DataFrame, SQLContext}
-import org.apache.spark.sql.catalyst.analysis.UnresolvedRelation
 import org.apache.spark.SparkContext
+import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.catalyst.analysis.UnresolvedRelation
+import org.apache.spark.sql.{DataFrame, Dataset, SQLContext}
 
 import com.databricks.spark.sql.perf.cpu._
 
@@ -112,7 +112,6 @@ abstract class Benchmark(
   }
 
 
-  import reflect.runtime._, universe._
   import reflect.runtime._
   import universe._
 
@@ -285,6 +284,7 @@ case class Table(
 
 
 object Benchmark {
+  import com.typesafe.scalalogging.slf4j.{LazyLogging => Logging}
 
   class ExperimentStatus(
       executionsToRun: Seq[Benchmarkable],
@@ -297,13 +297,13 @@ object Benchmark {
       sqlContext: SQLContext,
       allTables: Seq[Table],
       currentConfiguration: BenchmarkConfiguration,
-      forkThread: Boolean = true) {
+      forkThread: Boolean = true) extends Logging {
     val currentResults = new collection.mutable.ArrayBuffer[BenchmarkResult]()
     val currentRuns = new collection.mutable.ArrayBuffer[ExperimentRun]()
     val currentMessages = new collection.mutable.ArrayBuffer[String]()
 
     def logMessage(msg: String) = {
-      println(msg)
+      logger.info(msg)
       currentMessages += msg
     }
 
@@ -325,6 +325,7 @@ object Benchmark {
 
     val timestamp = System.currentTimeMillis()
     val resultPath = s"$resultsLocation/timestamp=$timestamp"
+    val reportPath = s"$resultsLocation/report_ts=$timestamp"
     val combinations = cartesianProduct(variations.map(l => (0 until l.options.size).toList).toList)
     val resultsFuture = Future {
 
@@ -443,7 +444,7 @@ object Benchmark {
 
     def scheduleCpuCollection(fs: FS) = {
       logCollection = () => {
-        logMessage(s"Begining CPU log collection")
+        logMessage(s"Beginning CPU log collection")
         try {
           val location = cpu.collectLogs(sqlContext, fs, timestamp)
           logMessage(s"cpu results recorded to $location")

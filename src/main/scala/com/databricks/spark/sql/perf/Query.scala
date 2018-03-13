@@ -38,18 +38,16 @@ class Query(
 
   override def toString: String = {
     try {
-      s"""
-         |== Query: $name ==
-         |${buildDataFrame.queryExecution.analyzed}
-     """.stripMargin
+      s"""|== Query: $name ==
+          |${buildDataFrame.queryExecution.analyzed}
+      """.stripMargin
     } catch {
       case e: Exception =>
-        s"""
-           |== Query: $name ==
-           | Can't be analyzed: $e
-           |
-           | $description
-         """.stripMargin
+        s"""|== Query: $name ==
+            | Can't be analyzed: $e
+            |
+            | $description
+          """.stripMargin
     }
   }
 
