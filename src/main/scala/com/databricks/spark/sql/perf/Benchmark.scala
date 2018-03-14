@@ -324,8 +324,9 @@ object Benchmark {
     }
 
     val timestamp = System.currentTimeMillis()
-    val resultPath = s"$resultsLocation/timestamp=$timestamp"
-    val reportPath = s"$resultsLocation/report_ts=$timestamp"
+    val jsonResultPath = s"$resultsLocation/timestamp=$timestamp"
+    val csvResultPath = s"$resultsLocation/timestamp=$timestamp/csv"
+    val comparisonResultPath = s"$resultsLocation/timestamp=$timestamp/compare"
     val combinations = cartesianProduct(variations.map(l => (0 until l.options.size).toList).toList)
     val resultsFuture = Future {
 
@@ -429,12 +430,14 @@ object Benchmark {
 
       try {
         val resultsTable = sqlContext.createDataFrame(results)
-        logMessage(s"Results written to table: 'sqlPerformance' at $resultPath")
+        logMessage(s"JSON results written to table: 'sqlPerformance' at $jsonResultPath")
         resultsTable
           .coalesce(1)
           .write
           .format("json")
-          .save(resultPath)
+          .save(jsonResultPath)
+
+        println(s"""Results: sqlContext.read.json("$jsonResultPath")""")
       } catch {
         case e: Throwable => logMessage(s"Failed to write data: $e")
       }
@@ -514,7 +517,7 @@ object Benchmark {
         }
       s"""
          |<h2>$status Experiment</h2>
-         |<b>Permalink:</b> <tt>sqlContext.read.json("$resultPath")</tt><br/>
+         |<b>Permalink:</b> <tt>sqlContext.read.json("$jsonResultPath")</tt><br/>
          |<b>Iterations complete:</b> ${currentRuns.size / combinations.size} / $iterations<br/>
          |<b>Failures:</b> $failures<br/>
          |<b>Executions run:</b> ${currentResults.size} / ${iterations * combinations.size * executionsToRun.size}

@@ -100,14 +100,21 @@ object RunBenchmark {
     println("== STARTING EXPERIMENT ==")
     experiment.waitForFinish(1000 * 60 * 30)
 
-    presentFindings(sqlContext, experiment, config.baseline, benchmark.resultsLocation)
+    presentFindings(sqlContext, experiment)
+
+    if (config.baseline.isDefined) {
+      compareResults(
+        sqlContext,
+        config.baseline.get,
+        experiment.timestamp,
+        benchmark.resultsLocation,
+        experiment.comparisonResultPath)
+    }
   }
 
   def presentFindings(
       sqlContext: SQLContext,
-      experiment: Benchmark.ExperimentStatus,
-      baseline: Option[Long],
-      resultsLocation: String): Unit = {
+      experiment: Benchmark.ExperimentStatus): Unit = {
 
     import sqlContext.implicits._
     sqlContext.setConf("spark.sql.shuffle.partitions", "1")
@@ -116,10 +123,30 @@ object RunBenchmark {
         .select("result.*")
         .groupBy("name")
         .agg(
-          min($"executionTime") as 'minTimeMs,
-          max($"executionTime") as 'maxTimeMs,
-          avg($"executionTime") as 'avgTimeMs,
-          stddev($"executionTime") as 'stdDev)
+          min($"parsingTime") as 'minParsingTimeMs,
+          max($"parsingTime") as 'maxParsingTimeMs,
+          avg($"parsingTime") as 'avgParsingTimeMs,
+          stddev($"parsingTime") as 'stdParsingDev,
+
+          min($"analysisTime") as 'minAnalysisTimeMs,
+          max($"analysisTime") as 'maxAnalysisTimeMs,
+          avg($"analysisTime") as 'avgAnalysisTimeMs,
+          stddev($"analysisTime") as 'stdAnalysisDev,
+
+          min($"optimizationTime") as 'minOptimizationTimeMs,
+          max($"optimizationTime") as 'maxOptimizationTimeMs,
+          avg($"optimizationTime") as 'avgOptimizationTimeMs,
+          stddev($"optimizationTime") as 'stdOptimizationDev,
+
+          min($"planningTime") as 'minPlanningTimeMs,
+          max($"planningTime") as 'maxPlanningTimeMs,
+          avg($"planningTime") as 'avgPlanningTimeMs,
+          stddev($"planningTime") as 'stdPlanningDev,
+
+          min($"executionTime") as 'minExecutionTimeMs,
+          max($"executionTime") as 'maxExecutionTimeMs,
+          avg($"executionTime") as 'avgExecutionTimeMs,
+          stddev($"executionTime") as 'stdExecutionDev)
         .orderBy("name")
 
     runResults.show(runResults.count.toInt, truncate = false)
@@ -127,36 +154,48 @@ object RunBenchmark {
     runResults
       .coalesce(1)
       .write
-      .format("csv")
-      .save(experiment.reportPath)
+      .option("header", "true")
+      .csv(experiment.csvResultPath)
 
-    println(s"""Results: sqlContext.read.json("${experiment.resultPath}")""")
+    println(s"""CSV Results: ${experiment.csvResultPath}""")
+  }
 
-    baseline.foreach { baseTimestamp =>
-      val baselineTime = when($"timestamp" === baseTimestamp, $"executionTime").otherwise(null)
-      val thisRunTime = when($"timestamp" === experiment.timestamp, $"executionTime").otherwise(null)
+  def compareResults(
+      sqlContext: SQLContext,
+      baselineTimestamp: Long,
+      targetTimestamp: Long,
+      resultsLocation: String,
+      outputLocation: String): Unit = {
 
-      val data = sqlContext.read.json(resultsLocation)
-          .coalesce(1)
-          .where(s"timestamp IN ($baseTimestamp, ${experiment.timestamp})")
-          .withColumn("result", explode($"results"))
-          .select("timestamp", "result.*")
-          .groupBy("name")
-          .agg(
-            avg(baselineTime) as 'baselineTimeMs,
-            avg(thisRunTime) as 'thisRunTimeMs,
-            stddev(baselineTime) as 'stddev)
-          .withColumn(
-            "percentChange", ($"baselineTimeMs" - $"thisRunTimeMs") / $"baselineTimeMs" * 100)
-          .filter('thisRunTimeMs.isNotNull)
+    import sqlContext.implicits._
+    val baselineTime = when($"timestamp" === baselineTimestamp, $"executionTime").otherwise(null)
+    val targetTime = when($"timestamp" === targetTimestamp, $"executionTime").otherwise(null)
 
-      data.show(data.count.toInt, truncate = false)
-
-      runResults
+    val comparison = sqlContext.read.json(resultsLocation)
         .coalesce(1)
-        .write
-        .format("csv")
-        .save(s"${experiment.reportPath}/baseline_ts=$baseTimestamp")
-    }
+        .where(s"timestamp IN ($baselineTimestamp, $targetTimestamp)")
+        .withColumn("result", explode($"results"))
+        .select("timestamp", "result.*")
+        .groupBy("name")
+        .agg(
+          avg(baselineTime) as 'baselineTimeMs,
+          avg(targetTime) as 'targetTimeMs,
+          stddev(baselineTime) as 'stddev)
+        .withColumn(
+          "percentChange", ($"baselineTimeMs" - $"targetTimeMs") / $"baselineTimeMs" * 100)
+        .filter('targetTimeMs.isNotNull)
+
+    comparison.show(comparison.count.toInt, truncate = false)
+
+    val comparisonPath =
+      s"$outputLocation/baselineTs=${baselineTimestamp}_targetTs=$targetTimestamp"
+
+    comparison
+      .coalesce(1)
+      .write
+      .option("header", "true")
+      .csv(comparisonPath)
+
+    println(s"""Comparison results: $comparisonPath""")
   }
 }

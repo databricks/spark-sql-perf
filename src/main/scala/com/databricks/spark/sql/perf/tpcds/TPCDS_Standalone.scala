@@ -11,7 +11,7 @@ import com.databricks.spark.sql.perf.RunBenchmark
 case class TpcdsStandaloneConfig(
   sparkMaster: String = "local[*]",
   datasetLocation: String = null,
-  resultLocation: String = null,
+  outputLocation: String = null,
   scaleFactor: Int = 10,
   iterations: Int = 1,
   regenerateDataset: Boolean = false,
@@ -22,7 +22,6 @@ case class TpcdsStandaloneConfig(
   timeoutHours: Int = 60,
   format: String = "parquet",
   shufflePartitions: Int = 12,
-  derbyLocation: String = "/tmp/derby",
   baseline: Option[Long] = None)
 
 object TPCDS_Standalone extends Logging {
@@ -38,7 +37,7 @@ object TPCDS_Standalone extends Logging {
         .text("location where to store the datasets (HDFS)")
         .required()
       opt[String]('o', "output_location")
-        .action { (x, c) => c.copy(resultLocation = x) }
+        .action { (x, c) => c.copy(outputLocation = x) }
         .text("location where to store the results")
         .required()
       opt[Int]('s', "scale_factor")
@@ -124,7 +123,7 @@ object TPCDS_Standalone extends Logging {
     val experiment = tpcds.runExperiment(
       tpcds.tpcds2_4Queries,
       iterations = conf.iterations,
-      resultLocation = conf.resultLocation,
+      resultLocation = conf.outputLocation,
       tags = Map(
         "runtype" -> "benchmark",
         "database" -> generateDbName(conf),
@@ -143,7 +142,16 @@ object TPCDS_Standalone extends Logging {
 
     summary.show(summary.count().toInt, truncate = false)
 
-    RunBenchmark.presentFindings(spark.sqlContext, experiment, conf.baseline, conf.resultLocation)
+    RunBenchmark.presentFindings(spark.sqlContext, experiment)
+
+    if (conf.baseline.isDefined) {
+      RunBenchmark.compareResults(
+        spark.sqlContext,
+        conf.baseline.get,
+        experiment.timestamp,
+        conf.outputLocation,
+        experiment.comparisonResultPath)
+    }
   }
 
   def generateDatasetLocation(conf: TpcdsStandaloneConfig): String = {
