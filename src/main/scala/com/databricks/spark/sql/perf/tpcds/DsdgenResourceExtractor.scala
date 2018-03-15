@@ -17,7 +17,7 @@
 package com.databricks.spark.sql.perf.tpcds
 
 import java.io.{File, FileOutputStream}
-import java.nio.file.Files
+import java.nio.file.{Files, Paths}
 
 import org.apache.commons.io.IOUtils
 import org.apache.commons.lang3.SystemUtils
@@ -31,7 +31,7 @@ object DsdgenResourceExtractor {
     "tpcds.idx"
   )
 
-  def extractAndGetTempDsdgenDir(): String = {
+  def extractAndGetTempDsdgenDir(dirName: String): String = {
     val resourceDir = if (SystemUtils.IS_OS_LINUX) {
       "dsdgen-kit/linux"
     } else if (SystemUtils.IS_OS_MAC_OSX) {
@@ -40,13 +40,17 @@ object DsdgenResourceExtractor {
       throw new Exception(s"No dsdgen binary for platform: ${System.getProperty("os.name")}")
     }
 
-    val tempDir = Files.createTempDirectory("dsdgen_")
-    new File(tempDir.toString).deleteOnExit()
+    val tempDirPath = Files.createDirectory(Paths.get(dirName))
+    val tempDireFile = new File(tempDirPath.toString)
 
-    emitDsdgenResourceDirectory(resourceDir, tempDir.toString)
-    tempDir.resolve("dsdgen").toFile.setExecutable(true)
+    emitDsdgenResourceDirectory(resourceDir, tempDirPath.toString)
+    tempDirPath.resolve("dsdgen").toFile.setExecutable(true)
 
-    tempDir.toString
+    // If this file is already present (e.g. created by different thread), ignore
+    tempDireFile.renameTo(new File(dirName))
+    tempDireFile.deleteOnExit()
+
+    dirName
   }
 
   def emitDsdgenResourceDirectory(resourceDir: String, localDir: String): Unit = {

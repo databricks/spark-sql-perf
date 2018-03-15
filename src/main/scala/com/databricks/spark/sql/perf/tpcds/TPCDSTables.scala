@@ -16,6 +16,8 @@
 
 package com.databricks.spark.sql.perf.tpcds
 
+import java.nio.file.{Files, Paths}
+
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SQLContext
 
@@ -32,7 +34,8 @@ class DSDGEN(dsdgenDirOpt: Option[String]) extends DataGenerator {
         } else if (new java.io.File(s"/$dsdgenPath").exists) {
           s"/$dsdgenDir"
         } else {
-          sys.error(s"Could not find dsdgen at $dsdgenPath or /$dsdgenPath. Run install")
+          sys.error(s"Could not find dsdgen at $dsdgenPath or /$dsdgenPath." +
+            s"Run install or remove this folder from the temp directory.")
         }
 
         // Note: RNGSEED is the RNG seed used by the data generator. Right now, it is fixed to 100.
@@ -52,7 +55,13 @@ class DSDGEN(dsdgenDirOpt: Option[String]) extends DataGenerator {
   def getDsdgenDir(): String = {
     dsdgenDirOpt match {
       case Some(d) => d
-      case None => DsdgenResourceExtractor.extractAndGetTempDsdgenDir()
+      case None =>
+        val dirName = s"/tmp/dsdgen"
+        if (Files.exists(Paths.get(dirName))) {
+          dirName
+        } else {
+          DsdgenResourceExtractor.extractAndGetTempDsdgenDir(dirName)
+        }
     }
   }
 }
