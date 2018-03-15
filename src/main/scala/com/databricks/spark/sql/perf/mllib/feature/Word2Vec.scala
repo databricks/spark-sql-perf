@@ -3,7 +3,7 @@ package com.databricks.spark.sql.perf.mllib.feature
 import org.apache.spark.ml
 import org.apache.spark.ml.PipelineStage
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.functions.{col, udf}
+import org.apache.spark.sql.functions.{col, split}
 
 import com.databricks.spark.sql.perf.mllib.{BenchmarkAlgorithm, MLBenchContext, TestFromTraining}
 import com.databricks.spark.sql.perf.mllib.OptionImplicits._
@@ -24,8 +24,7 @@ object Word2Vec extends BenchmarkAlgorithm with TestFromTraining {
       docLength,
       "text"
     )
-    val splitUDF = udf { text: String => text.split(" ") }
-    df.select(splitUDF(col("text")).as("text"))
+    df.select(split(col("text"), " ").as("text"))
   }
 
   override def getPipelineStage(ctx: MLBenchContext): PipelineStage = {
