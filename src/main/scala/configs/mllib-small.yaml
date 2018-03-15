@@ -115,6 +115,11 @@ benchmarks:
     params:
       numExamples: 100
       numFeatures: 10
+  - name: feature.Word2Vec
+    params:
+      numExamples: 100
+      vocabSize: 100
+      docLength: 10
   - name: recommendation.ALS
     params:
       numExamples: 100
