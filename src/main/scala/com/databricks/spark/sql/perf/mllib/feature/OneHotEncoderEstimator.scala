@@ -9,7 +9,7 @@ import com.databricks.spark.sql.perf.mllib.OptionImplicits._
 import com.databricks.spark.sql.perf.mllib.data.DataGenerator
 import com.databricks.spark.sql.perf.mllib.{BenchmarkAlgorithm, MLBenchContext, TestFromTraining}
 
-/** Object for testing OneHotEncoder performance */
+/** Object for testing OneHotEncoderEstimator performance */
 object OneHotEncoderEstimator extends BenchmarkAlgorithm with TestFromTraining with UnaryTransformer {
 
   override def trainingDataSet(ctx: MLBenchContext): DataFrame = {
