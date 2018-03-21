@@ -140,9 +140,21 @@ experiment.getCurrentResults // or: spark.read.json(resultLocation).filter("time
   .select('Name, 'Runtime)
 ```
 
-## Running in Databricks.
+# TPC-H
 
-There are example notebooks in `src/main/notebooks` for running TPCDS in the Databricks environment.
+TPC-H can be run similarly to TPC-DS replacing `tpcds` for `tpch`.
+Take a look at the data generator and `tpch_run` notebook code below.
+
+## Running in Databricks workspace (or spark-shell)
+
+There are example notebooks in `src/main/notebooks` for running TPCDS and TPCH in the Databricks environment.
+_These scripts can also be run from spark-shell command line with minor modifications using `:load file_name.scala`._
+
+### TPC-multi_datagen notebook
+This notebook (or scala script) can be use to generate both TPCDS and TPCH data at selected scale factors.
+It is a newer version from the `tpcds_datagen` notebook below.  To use it:
+* Edit the config variables the top of the script.
+* Run the whole notebook.
 
 ### tpcds_datagen notebook
 
@@ -160,3 +172,7 @@ For running parallel TPCDS streams:
 * Create a Job using the notebook and attaching to the created cluster as "existing cluster".
 * Allow concurrent runs of the created job.
 * Launch appriopriate number of Runs of the Job to run in parallel on the cluster.
+
+### tpch_run notebook
+
+This notebook can be used to run TPCH queries.  Data needs be generated first.
