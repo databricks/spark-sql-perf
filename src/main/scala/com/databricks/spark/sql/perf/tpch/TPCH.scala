@@ -77,7 +77,7 @@ class TPCHTables(
 
   val tables = Seq(
     Table("part",
-      partitionColumns = Nil,
+      partitionColumns = "p_brand" :: Nil,
       'p_partkey.long,
       'p_name.string,
       'p_mfgr.string,
@@ -107,7 +107,7 @@ class TPCHTables(
       'ps_comment.string
     ),
     Table("customer",
-      partitionColumns = Nil,
+      partitionColumns = "c_mktsegment" :: Nil,
       'c_custkey.long,
       'c_name.string,
       'c_address.string,
@@ -118,7 +118,7 @@ class TPCHTables(
       'c_comment.string
     ),
     Table("orders",
-      partitionColumns = Nil,
+      partitionColumns = "o_orderdate" :: Nil,
       'o_orderkey.long,
       'o_custkey.long,
       'o_orderstatus.string,
@@ -130,7 +130,7 @@ class TPCHTables(
       'o_comment.string
     ),
     Table("lineitem",
-      partitionColumns = Nil,
+      partitionColumns = "l_shipdate" :: Nil,
       'l_orderkey.long,
       'l_partkey.long,
       'l_suppkey.long,
