@@ -209,13 +209,11 @@ object MLParams {
  * @param testTime  (MLlib) Test time (for prediction on test set, or on training set if there
  *                  is no test set).
  * @param testMetric  (MLlib) Test metric, such as accuracy
-  * @param runAssociationRulesTime  (MLlib) run association rules time
-  * @param findSynonymsTime  (MLlib) word2Vec model find synonyms time
+ * @param additionalTests  (MLlib) Additional methods test results.
  */
 case class MLResult(
     trainingTime: Option[Double] = None,
     trainingMetric: Option[Double] = None,
     testTime: Option[Double] = None,
     testMetric: Option[Double] = None,
-    var runAssociationRulesTime: Option[Double] = None,
-    var findSynonymsTime: Option[Double] = None)
+    additionalTests: Map[String, Double])
