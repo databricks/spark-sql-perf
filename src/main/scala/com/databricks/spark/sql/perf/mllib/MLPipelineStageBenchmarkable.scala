@@ -80,6 +80,11 @@ class MLPipelineStageBenchmarkable(
         s" s, Scored training dataset in ${scoreTrainTime.toMillis / 1000.0} s," +
         s" test dataset in ${scoreTestTime.toMillis / 1000.0} s")
 
+      test.testAdditionalMethods(param, model).map {
+        case (name: String, func: () => _) =>
+          val (additionalMethodTime, _) = measureTime { func() }
+          name -> additionalMethodTime
+      }
 
       val ml = MLResult(
         trainingTime = Some(trainingTime.toMillis),

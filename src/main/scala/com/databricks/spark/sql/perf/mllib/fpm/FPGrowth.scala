@@ -1,7 +1,8 @@
 package com.databricks.spark.sql.perf.mllib.fpm
 
 import org.apache.spark.ml
-import org.apache.spark.ml.PipelineStage
+import org.apache.spark.ml.{PipelineStage, Transformer}
+import org.apache.spark.ml.fpm.FPGrowthModel
 import org.apache.spark.sql.DataFrame
 
 import com.databricks.spark.sql.perf.mllib._
@@ -27,5 +28,14 @@ object FPGrowth extends BenchmarkAlgorithm with TestFromTraining {
   override def getPipelineStage(ctx: MLBenchContext): PipelineStage = {
     new ml.fpm.FPGrowth()
       .setItemsCol("items")
+  }
+
+  override def testAdditionalMethods(ctx: MLBenchContext, model: Transformer)
+      : Map[String, () => _] = {
+
+    val fpModel = model.asInstanceOf[FPGrowthModel]
+    Map("associationRules" -> (() => {
+      fpModel.associationRules
+    }))
   }
 }
