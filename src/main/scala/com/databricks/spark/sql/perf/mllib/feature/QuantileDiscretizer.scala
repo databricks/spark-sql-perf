@@ -28,7 +28,10 @@ object QuantileDiscretizer extends BenchmarkAlgorithm with TestFromTraining with
   }
 
   override def getPipelineStage(ctx: MLBenchContext): PipelineStage = {
+    import ctx.params._
     new ml.feature.QuantileDiscretizer()
       .setInputCol(inputCol)
+      .setNumBuckets(numBuckets)
+      .setRelativeError(relativeError)
   }
 }
