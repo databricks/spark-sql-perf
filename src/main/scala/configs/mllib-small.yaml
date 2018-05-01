@@ -100,8 +100,6 @@ benchmarks:
   - name: feature.QuantileDiscretizer
     params:
       numExamples: 100
-      numBuckets: 2
-      relativeError: 0.001
   - name: feature.StringIndexer
     params:
       numExamples: 100
