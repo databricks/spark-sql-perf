@@ -30,12 +30,13 @@ object FPGrowth extends BenchmarkAlgorithm with TestFromTraining {
       .setItemsCol("items")
   }
 
-  override def testAdditionalMethods(ctx: MLBenchContext, model: Transformer)
-      : Map[String, () => _] = {
+  override def testAdditionalMethods(
+      ctx: MLBenchContext,
+      model: Transformer): Map[String, () => _] = {
 
     val fpModel = model.asInstanceOf[FPGrowthModel]
     Map("associationRules" -> (() => {
-      fpModel.associationRules
+      fpModel.associationRules.count()
     }))
   }
 }

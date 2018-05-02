@@ -36,8 +36,9 @@ object Word2Vec extends BenchmarkAlgorithm with TestFromTraining {
     new ml.feature.Word2Vec().setInputCol("text")
   }
 
-  override def testAdditionalMethods(ctx: MLBenchContext, model: Transformer)
-      : Map[String, () => _] = {
+  override def testAdditionalMethods(
+      ctx: MLBenchContext,
+      model: Transformer): Map[String, () => _] = {
     import ctx.params._
 
     val rng = new Random(ctx.seed())

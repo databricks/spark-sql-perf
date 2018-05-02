@@ -7,8 +7,6 @@ import org.apache.spark.ml.evaluation.Evaluator
 import org.apache.spark.sql._
 import org.apache.spark.sql.functions._
 
-import com.databricks.spark.sql.perf.MLResult
-
 /**
  * The description of a benchmark for an ML algorithm. It follows a simple, standard proceduce:
  *  - generate some test and training data
@@ -48,8 +46,14 @@ trait BenchmarkAlgorithm extends Logging {
 
   /**
    * Test additional methods for some algorithms.
+   *
+   * @param transformer The transformer which includes additional methods.
+   * @return A map which key is the additional method name, and value is a function which runs
+   *         the corresponding method.
    */
-  def testAdditionalMethods(ctx: MLBenchContext, model: Transformer): Map[String, () => _] = null
+  def testAdditionalMethods(
+      ctx: MLBenchContext,
+      transformer: Transformer): Map[String, () => _] = null
 }
 
 /**
