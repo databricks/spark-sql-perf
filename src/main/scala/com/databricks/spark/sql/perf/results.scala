@@ -131,6 +131,7 @@ class MLParams(
     val numClasses: Option[Int] = None,
     val numFeatures: Option[Int] = None,
     val numHashTables: Option[Int] = Some(1),
+    val numSynonymsToFind: Option[Int] = None,
     val numInputCols: Option[Int] = None,
     val numItems: Option[Int] = None,
     val numUsers: Option[Int] = None,
@@ -174,16 +175,17 @@ class MLParams(
       numClasses: Option[Int] = numClasses,
       numFeatures: Option[Int] = numFeatures,
       numHashTables: Option[Int] = numHashTables,
+      numSynonymsToFind: Option[Int] = numSynonymsToFind,
       numInputCols: Option[Int] = numInputCols,
       numItems: Option[Int] = numItems,
       numUsers: Option[Int] = numUsers,
-      vocabSize: Option[Int] = vocabSize,
       optimizer: Option[String] = optimizer,
       regParam: Option[Double] = regParam,
       relativeError: Option[Double] = relativeError,
       rank: Option[Int] = rank,
       smoothing: Option[Double] = smoothing,
-      tol: Option[Double] = tol): MLParams = {
+      tol: Option[Double] = tol,
+      vocabSize: Option[Int]): MLParams = {
     new MLParams(
       randomSeed = randomSeed,
       numExamples = numExamples,
@@ -201,6 +203,8 @@ class MLParams(
       maxIter = maxIter,
       numClasses = numClasses,
       numFeatures = numFeatures,
+      numHashTables = numHashTables,
+      numSynonymsToFind = numSynonymsToFind,
       numInputCols = numInputCols,
       numItems = numItems,
       numUsers = numUsers,
@@ -227,9 +231,11 @@ object MLParams {
  * @param testTime  (MLlib) Test time (for prediction on test set, or on training set if there
  *                  is no test set).
  * @param testMetric  (MLlib) Test metric, such as accuracy
+ * @param additionalTests  (MLlib) Additional methods test results.
  */
 case class MLResult(
     trainingTime: Option[Double] = None,
     trainingMetric: Option[Double] = None,
     testTime: Option[Double] = None,
-    testMetric: Option[Double] = None)
+    testMetric: Option[Double] = None,
+    additionalTests: Map[String, Double])

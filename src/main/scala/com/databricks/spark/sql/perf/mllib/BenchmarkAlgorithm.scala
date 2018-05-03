@@ -1,7 +1,6 @@
 package com.databricks.spark.sql.perf.mllib
 
 import com.typesafe.scalalogging.slf4j.{LazyLogging => Logging}
-
 import org.apache.spark.ml.attribute.{NominalAttribute, NumericAttribute}
 import org.apache.spark.ml.{Estimator, PipelineStage, Transformer}
 import org.apache.spark.ml.evaluation.Evaluator
@@ -44,6 +43,17 @@ trait BenchmarkAlgorithm extends Logging {
   def name: String = {
     this.getClass.getCanonicalName.replace("$", "")
   }
+
+  /**
+   * Test additional methods for some algorithms.
+   *
+   * @param transformer The transformer which includes additional methods.
+   * @return A map which key is the additional method name, and value is a function which runs
+   *         the corresponding method.
+   */
+  def testAdditionalMethods(
+      ctx: MLBenchContext,
+      transformer: Transformer): Map[String, () => _] = null
 }
 
 /**
