@@ -185,7 +185,7 @@ class MLParams(
       rank: Option[Int] = rank,
       smoothing: Option[Double] = smoothing,
       tol: Option[Double] = tol,
-      vocabSize: Option[Int]): MLParams = {
+      vocabSize: Option[Int] = vocabSize): MLParams = {
     new MLParams(
       randomSeed = randomSeed,
       numExamples = numExamples,
