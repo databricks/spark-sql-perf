@@ -49,6 +49,7 @@ object MLLib extends Logging {
   }
 
   val smallConfig: String = getConfig("config/mllib-small.yaml")
+  val largeConfig: String = getConfig("config/mllib-large.yaml")
 
   /**
    * Entry point for running ML tests. Expects a single command-line argument: the path to

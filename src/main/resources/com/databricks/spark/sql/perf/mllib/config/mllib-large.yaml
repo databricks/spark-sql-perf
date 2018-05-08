@@ -1,0 +1,13 @@
+output: /databricks/spark/sql/mllib-perf-ci
+timeoutSeconds: 1000
+common:
+  numExamples: 1000000
+  numTestExamples: 1000000
+  numFeatures: 4000
+  numPartitions: 64
+  randomSeed: [1, 1, 1] # Rerun 3 times to accumulate some info
+benchmarks:
+  - name: classification.DecisionTreeClassification
+    params:
+      depth: [5, 10]
+      numClasses: 4
