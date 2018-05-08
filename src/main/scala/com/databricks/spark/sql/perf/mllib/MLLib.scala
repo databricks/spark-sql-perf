@@ -1,5 +1,7 @@
 package com.databricks.spark.sql.perf.mllib
 
+import java.io.ByteArrayOutputStream
+
 import scala.language.implicitConversions
 
 import com.typesafe.scalalogging.slf4j.{LazyLogging => Logging}
@@ -34,7 +36,19 @@ object MLLib extends Logging {
     e.getCurrentResults()
   }
 
-  val smallConfig: String = getClass.getResource("config/mllib-small.yaml").getFile
+  private def getConfig(resourcePath: String): String = {
+    val stream = getClass.getResourceAsStream(resourcePath)
+    val buffer = new Array[Byte](10000)
+    val result = new ByteArrayOutputStream()
+    var length = stream.read(buffer)
+    while (length != -1) {
+      result.write(buffer, 0, length)
+      length = stream.read(buffer)
+    }
+    result.toString("UTF8")
+  }
+
+  val smallConfig: String = getConfig("config/mllib-small.yaml")
 
   /**
    * Entry point for running ML tests. Expects a single command-line argument: the path to
