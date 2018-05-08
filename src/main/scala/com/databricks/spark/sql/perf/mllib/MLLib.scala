@@ -34,6 +34,8 @@ object MLLib extends Logging {
     e.getCurrentResults()
   }
 
+  val smallConfig: String = getClass.getResource("config/mllib-small.yaml").getFile
+
   /**
    * Entry point for running ML tests. Expects a single command-line argument: the path to
    * a YAML config file specifying which ML tests to run and their parameters.
