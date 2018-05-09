@@ -1,5 +1,5 @@
 output: /databricks/spark/sql/mllib-perf-ci
-timeoutSeconds: 1000
+timeoutSeconds: 1000 # This limit is for all benchmarks and should be bumped as more are added.
 common:
   numExamples: 1000000
   numTestExamples: 1000000
