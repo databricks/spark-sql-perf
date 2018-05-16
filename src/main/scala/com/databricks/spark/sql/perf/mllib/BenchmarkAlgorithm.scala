@@ -53,7 +53,7 @@ trait BenchmarkAlgorithm extends Logging {
    */
   def testAdditionalMethods(
       ctx: MLBenchContext,
-      transformer: Transformer): Map[String, () => _] = null
+      transformer: Transformer): Map[String, () => _] = Map.empty[String, () => _]
 }
 
 /**

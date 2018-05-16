@@ -1,5 +1,7 @@
 package com.databricks.spark.sql.perf.mllib
 
+
+import scala.io.Source
 import scala.language.implicitConversions
 
 import com.typesafe.scalalogging.slf4j.{LazyLogging => Logging}
@@ -33,6 +35,14 @@ object MLLib extends Logging {
     logger.info("Run finished")
     e.getCurrentResults()
   }
+
+  private def getConfig(resourcePath: String): String = {
+    val stream = getClass.getResourceAsStream(resourcePath)
+    Source.fromInputStream(stream).mkString
+  }
+
+  val smallConfig: String = getConfig("config/mllib-small.yaml")
+  val largeConfig: String = getConfig("config/mllib-large.yaml")
 
   /**
    * Entry point for running ML tests. Expects a single command-line argument: the path to
