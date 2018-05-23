@@ -9,7 +9,7 @@ import org.apache.spark.sql.SparkSession
 import com.databricks.spark.sql.perf.RunBenchmark
 
 case class TpcdsStandaloneConfig(
-  sparkMaster: String = "local[*]",
+  useLocalMaster: Boolean = false,
   datasetLocation: String = null,
   outputLocation: String = null,
   scaleFactor: Int = 10,
@@ -29,9 +29,9 @@ object TPCDS_Standalone extends Logging {
   def main(args: Array[String]): Unit = {
     val parser = new scopt.OptionParser[TpcdsStandaloneConfig]("tpcds-standalone") {
       head("tpcds-standalone", "0.2.0")
-      opt[String]('m', "master")
-        .action { (x, c) => c.copy(sparkMaster = x) }
-        .text("address of the spark master")
+      opt[Boolean]('l', "use_local_master")
+        .action { (x, c) => c.copy(useLocalMaster = x) }
+        .text("whether to use the local master")
       opt[String]('d', "dataset_location")
         .action { (x, c) => c.copy(datasetLocation = x) }
         .text("location where to store the datasets (HDFS)")
@@ -68,11 +68,18 @@ object TPCDS_Standalone extends Logging {
   }
 
   def run(conf: TpcdsStandaloneConfig): Unit = {
-    val spark = SparkSession
-      .builder()
-      .master(conf.sparkMaster)
-      .appName(getClass.getName)
-      .getOrCreate()
+    val spark = if (conf.useLocalMaster) {
+      SparkSession
+        .builder()
+        .master("local[*]")
+        .appName(getClass.getName)
+        .getOrCreate()
+    } else {
+      SparkSession
+        .builder()
+        .appName(getClass.getName)
+        .getOrCreate()
+    }
 
     logger.info(s"=== DATASET LOCATION: ${generateDatasetLocation(conf)}")
     logger.info(s"=== DB NAME: ${generateDbName(conf)}")
