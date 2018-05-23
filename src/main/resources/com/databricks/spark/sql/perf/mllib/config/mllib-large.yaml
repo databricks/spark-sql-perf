@@ -11,3 +11,29 @@ benchmarks:
     params:
       depth: [5, 10]
       numClasses: 4
+  - name: classification.GBTClassification
+    params:
+      numFeatures: 3000
+      depth: 5
+      numClasses: 4
+      maxIter: 10
+  - name: classification.RandomForestClassification
+    params:
+      depth: 10
+      numClasses: 4
+      maxIter: 200 # number of trees
+  - name: classification.LogisticRegression
+    params:
+      regParam: 0.01
+      tol: 0.0
+      maxIter: 20
+  - name: classification.LinearSVC
+    params:
+      regParam: 0.01
+      tol: 0
+      maxIter: 20
+  - name: classification.NaiveBayes
+    params:
+      numFeatures: 5000
+      numClasses: 2
+      smoothing: 1.0
