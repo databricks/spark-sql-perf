@@ -40,7 +40,7 @@ trait BenchmarkAlgorithm extends Logging {
   def score(
       ctx: MLBenchContext,
       testSet: DataFrame,
-      model: Transformer): MLMetrics = new MLMetrics()
+      model: Transformer): MLMetric = MLMetric.Invalid
 
   def name: String = {
     this.getClass.getCanonicalName.replace("$", "")
@@ -69,10 +69,17 @@ trait ScoringWithEvaluator {
   final override def score(
       ctx: MLBenchContext,
       testSet: DataFrame,
-      model: Transformer): MLMetrics = {
-    val eval = model.transform(testSet)
-    // TODO: add MetricName for evaluators
-    new MLMetrics("", evaluator(ctx).evaluate(eval), evaluator(ctx).isLargerBetter)
+      model: Transformer): MLMetric = {
+    val results = model.transform(testSet)
+    val eval = evaluator(ctx)
+    val metricName = if (eval.hasParam("metricName")) {
+      val param = eval.getParam("metricName")
+      eval.getOrDefault(param).toString
+    } else {
+      eval.getClass.getSimpleName
+    }
+    val metricValue = eval.evaluate(results)
+    MLMetric(metricName, metricValue, eval.isLargerBetter)
   }
 }
 

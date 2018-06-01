@@ -83,7 +83,7 @@ case class BenchmarkResult(
     breakDown: Seq[BreakdownResult] = Nil,
     queryExecution: Option[String] = None,
     failure: Option[Failure] = None,
-    mlResult: Option[Array[MLMetrics]] = None)
+    mlResult: Option[Array[MLMetric]] = None)
 
 /**
  * The execution time of a subtree of the query plan tree of a specific query.
@@ -227,9 +227,13 @@ object MLParams {
  *
  * @param metricName the name of the metric
  * @param metricValue the value of the metric
- * @param isLargerBetter  (MLlib) Test metric, such as accuracy
+ * @param isLargerBetter the indicator showing whether larger metric value is better
  */
-case class MLMetrics(
-    metricName: String = null,
-    metricValue: Double = 0.0,
-    isLargerBetter: Boolean = false)
+case class MLMetric(
+    metricName: String,
+    metricValue: Double,
+    isLargerBetter: Boolean)
+
+object MLMetric {
+  val Invalid = MLMetric("Invalid", 0.0, false)
+}
