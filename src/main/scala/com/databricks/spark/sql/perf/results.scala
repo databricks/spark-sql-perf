@@ -83,7 +83,7 @@ case class BenchmarkResult(
     breakDown: Seq[BreakdownResult] = Nil,
     queryExecution: Option[String] = None,
     failure: Option[Failure] = None,
-    mlResult: Option[MLResult] = None)
+    mlResult: Option[Array[MLMetrics]] = None)
 
 /**
  * The execution time of a subtree of the query plan tree of a specific query.
@@ -223,19 +223,13 @@ object MLParams {
 }
 
 /**
- * Result information specific to MLlib.
+ * Metrics specific to MLlib benchmark.
  *
- * @param trainingTime  (MLlib) Training time.
- *                      executionTime is set to the same value to match Spark Core tests.
- * @param trainingMetric  (MLlib) Training metric, such as accuracy
- * @param testTime  (MLlib) Test time (for prediction on test set, or on training set if there
- *                  is no test set).
- * @param testMetric  (MLlib) Test metric, such as accuracy
- * @param additionalTests  (MLlib) Additional methods test results.
+ * @param metricName the name of the metric
+ * @param metricValue the value of the metric
+ * @param isLargerBetter  (MLlib) Test metric, such as accuracy
  */
-case class MLResult(
-    trainingTime: Option[Double] = None,
-    trainingMetric: Option[Double] = None,
-    testTime: Option[Double] = None,
-    testMetric: Option[Double] = None,
-    additionalTests: Map[String, Double])
+case class MLMetrics(
+    metricName: String = null,
+    metricValue: Double = 0.0,
+    isLargerBetter: Boolean = false)

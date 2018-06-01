@@ -72,9 +72,17 @@ class MLPipelineStageBenchmarkable(
       val (scoreTrainTime, scoreTraining) = measureTime {
         test.score(param, trainingData, model)
       }
+      val metricTrainTime = new MLMetrics("trainTime", scoreTrainTime.toMillis, false)
+      val metricTrain = new MLMetrics("trainMetrics"+scoreTraining.metricName,
+        scoreTraining.metricValue,
+        scoreTraining.isLargerBetter)
       val (scoreTestTime, scoreTest) = measureTime {
         test.score(param, testData, model)
       }
+      val metricTestTime = new MLMetrics("trainTime", scoreTestTime.toMillis, false)
+      val metricTest = new MLMetrics("trainMetrics"+scoreTraining.metricName,
+        scoreTraining.metricValue,
+        scoreTraining.isLargerBetter)
 
       logger.info(s"$this doBenchmark: Trained model in ${trainingTime.toMillis / 1000.0}" +
         s" s, Scored training dataset in ${scoreTrainTime.toMillis / 1000.0} s," +
@@ -86,12 +94,7 @@ class MLPipelineStageBenchmarkable(
           tuple._1 -> additionalMethodTime.toMillis.toDouble
       }
 
-      val ml = MLResult(
-        trainingTime = Some(trainingTime.toMillis),
-        trainingMetric = Some(scoreTraining),
-        testTime = Some(scoreTestTime.toMillis),
-        testMetric = Some(scoreTest / testDataCount.get),
-        additionalTests = additionalTests)
+      val ml = Array(metricTrainTime, metricTrain, metricTestTime, metricTest)
 
       BenchmarkResult(
         name = name,

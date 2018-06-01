@@ -7,6 +7,8 @@ import org.apache.spark.ml.evaluation.Evaluator
 import org.apache.spark.sql._
 import org.apache.spark.sql.functions._
 
+import com.databricks.spark.sql.perf._
+
 /**
  * The description of a benchmark for an ML algorithm. It follows a simple, standard proceduce:
  *  - generate some test and training data
@@ -38,7 +40,7 @@ trait BenchmarkAlgorithm extends Logging {
   def score(
       ctx: MLBenchContext,
       testSet: DataFrame,
-      model: Transformer): Double = -1.0 // Not putting NaN because it is not valid JSON.
+      model: Transformer): MLMetrics = new MLMetrics()
 
   def name: String = {
     this.getClass.getCanonicalName.replace("$", "")
@@ -67,9 +69,10 @@ trait ScoringWithEvaluator {
   final override def score(
       ctx: MLBenchContext,
       testSet: DataFrame,
-      model: Transformer): Double = {
+      model: Transformer): MLMetrics = {
     val eval = model.transform(testSet)
-    evaluator(ctx).evaluate(eval)
+    // TODO: add MetricName for evaluators
+    new MLMetrics("", evaluator(ctx).evaluate(eval), evaluator(ctx).isLargerBetter)
   }
 }
 
