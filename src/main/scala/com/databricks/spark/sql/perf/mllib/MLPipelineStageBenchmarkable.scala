@@ -72,15 +72,15 @@ class MLPipelineStageBenchmarkable(
       val (scoreTrainTime, scoreTraining) = measureTime {
         test.score(param, trainingData, model)
       }
-      val metricTrainTime = new MLMetrics("trainTime", scoreTrainTime.toMillis, false)
-      val metricTrain = new MLMetrics("trainMetrics"+scoreTraining.metricName,
+      val metricTrainingTime = MLMetric("training.time", scoreTrainTime.toMillis, false)
+      val metricTraining = MLMetric("training."+scoreTraining.metricName,
         scoreTraining.metricValue,
         scoreTraining.isLargerBetter)
       val (scoreTestTime, scoreTest) = measureTime {
         test.score(param, testData, model)
       }
-      val metricTestTime = new MLMetrics("trainTime", scoreTestTime.toMillis, false)
-      val metricTest = new MLMetrics("trainMetrics"+scoreTraining.metricName,
+      val metricTestTime = MLMetric("test.time", scoreTestTime.toMillis, false)
+      val metricTest = MLMetric("test."+scoreTraining.metricName,
         scoreTraining.metricValue,
         scoreTraining.isLargerBetter)
 
@@ -94,14 +94,14 @@ class MLPipelineStageBenchmarkable(
           tuple._1 -> additionalMethodTime.toMillis.toDouble
       }
 
-      val ml = Array(metricTrainTime, metricTrain, metricTestTime, metricTest)
+      val mlMetrics = Array(metricTrainingTime, metricTraining, metricTestTime, metricTest)
 
       BenchmarkResult(
         name = name,
         mode = executionMode.toString,
         parameters = params.toMap,
         executionTime = Some(trainingTime.toMillis),
-        mlResult = Some(ml))
+        mlResult = Some(mlMetrics))
     } catch {
       case e: Exception =>
         BenchmarkResult(
