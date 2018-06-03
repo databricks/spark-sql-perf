@@ -149,8 +149,8 @@ class MLParams(
    */
   def toMap: Map[String, String] = {
     val allParams = ReflectionUtils.getConstructorArgs(this)
-    allParams.map { case (key: String, value: Any) =>
-      key -> value.toString
+    allParams.map { case (key: String, value: Option[Any]) =>
+      key -> value.get.toString
     }
   }
 
