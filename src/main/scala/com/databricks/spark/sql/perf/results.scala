@@ -153,9 +153,13 @@ class MLParams(
    * were defined (i.e., not equal to None) are included in the map.
    */
   def toMap: Map[String, String] = {
+    // Only outputs params that have values
     val allParams = ReflectionUtils.getConstructorArgs(this)
-    allParams.map { case (key: String, value: Any) =>
-      key -> value.toString
+    allParams.flatMap {
+      case (key: String, Some(value: Any)) =>
+        Some(key -> value.toString)
+      case _ =>
+        None
     }
   }
 
