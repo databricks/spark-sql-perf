@@ -70,7 +70,9 @@ case class BenchmarkConfiguration(
  * @param queryExecution The query execution plan.
  * @param failure The failure message.
  * @param mlResult The result metrics specific to MLlib.
- * @param benchmarkId The unique benchmark ID.
+ * @param benchmarkId An optional ID to identify a series of benchmark runs.
+ *                    In ML, this is generated based on the benchmark name and
+ *                    the hash value of params.
  */
 case class BenchmarkResult(
     name: String,
@@ -88,7 +90,7 @@ case class BenchmarkResult(
     queryExecution: Option[String] = None,
     failure: Option[Failure] = None,
     mlResult: Option[Array[MLMetric]] = None,
-    benchmarkId: String = null)
+    benchmarkId: Option[String] = None)
 
 /**
  * The execution time of a subtree of the query plan tree of a specific query.
