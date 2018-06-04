@@ -104,7 +104,7 @@ class MLPipelineStageBenchmarkable(
         parameters = paramsMap,
         executionTime = Some(trainingTime.toMillis),
         mlResult = Some(mlMetrics),
-        benchmarkId = benchmarkId)
+        benchmarkId = Some(benchmarkId))
     } catch {
       case e: Exception =>
         BenchmarkResult(
