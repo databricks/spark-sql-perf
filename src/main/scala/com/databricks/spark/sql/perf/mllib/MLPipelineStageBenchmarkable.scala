@@ -95,13 +95,16 @@ class MLPipelineStageBenchmarkable(
       }
 
       val mlMetrics = Array(metricTrainingTime, metricTraining, metricTestTime, metricTest)
+      val paramsMap = params.toMap
+      val benchmarkId = name.split('.').last + "_" + paramsMap.hashCode.abs
 
       BenchmarkResult(
         name = name,
         mode = executionMode.toString,
-        parameters = params.toMap,
+        parameters = paramsMap,
         executionTime = Some(trainingTime.toMillis),
-        mlResult = Some(mlMetrics))
+        mlResult = Some(mlMetrics),
+        benchmarkId = benchmarkId)
     } catch {
       case e: Exception =>
         BenchmarkResult(
