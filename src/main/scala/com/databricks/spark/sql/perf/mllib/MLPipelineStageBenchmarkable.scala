@@ -72,7 +72,7 @@ class MLPipelineStageBenchmarkable(
       val (scoreTrainTime, scoreTraining) = measureTime {
         test.score(param, trainingData, model)
       }
-      val metricTrainingTime = MLMetric("training.time", scoreTrainTime.toMillis, false)
+      val metricTrainingTime = MLMetric("training.time", trainingTime.toMillis, false)
       val metricTraining = MLMetric("training."+scoreTraining.metricName,
         scoreTraining.metricValue,
         scoreTraining.isLargerBetter)
