@@ -37,3 +37,12 @@ benchmarks:
       numFeatures: 5000
       numClasses: 2
       smoothing: 1.0
+  - name: recommendation.ALS
+    params:
+      numExamples: 50000000
+      numTestExamples: 50000000
+      numUsers: 6000000
+      numItems: 6000000
+      regParam: 0.01
+      rank: 10
+      maxIter: 10
