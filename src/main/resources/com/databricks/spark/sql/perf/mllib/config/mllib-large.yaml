@@ -37,6 +37,28 @@ benchmarks:
       numFeatures: 5000
       numClasses: 2
       smoothing: 1.0
+  - name: clustering.GaussianMixture
+    params:
+      numExamples: 100000
+      numTestExamples: 100000
+      numFeatures: 1000
+      k: 10
+      maxIter: 10
+      tol: 0.01
+  - name: clustering.KMeans
+    params:
+      k: 50
+      maxIter: 20
+      tol: 1e-3
+  - name: clustering.LDA
+    params:
+      docLength: 100
+      vocabSize: 5000
+      k: 60
+      maxIter: 20
+      optimizer:
+        - em
+        - online
   - name: recommendation.ALS
     params:
       numExamples: 50000000
