@@ -91,10 +91,11 @@ class MLPipelineStageBenchmarkable(
       val additionalTests = test.testAdditionalMethods(param, model).map {
         tuple =>
           val (additionalMethodTime, _) = measureTime { tuple._2() }
-          tuple._1 -> additionalMethodTime.toMillis.toDouble
-      }
+          MLMetric(tuple._1, additionalMethodTime.toMillis, false)
+      }.toArray
 
-      val mlMetrics = Array(metricTrainingTime, metricTraining, metricTestTime, metricTest)
+      val mlMetrics = Array(metricTrainingTime, metricTraining, metricTestTime, metricTest) ++
+        additionalTests
       val paramsMap = params.toMap
       val benchmarkId = name.split('.').last + "_" + paramsMap.hashCode.abs
 
