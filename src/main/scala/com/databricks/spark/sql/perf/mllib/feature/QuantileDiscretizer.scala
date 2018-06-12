@@ -31,6 +31,7 @@ object QuantileDiscretizer extends BenchmarkAlgorithm with TestFromTraining with
     import ctx.params._
     new ml.feature.QuantileDiscretizer()
       .setInputCol(inputCol)
+      .setOutputCol(outputCol)
       .setNumBuckets(bucketizerNumBuckets)
       .setRelativeError(relativeError)
   }
