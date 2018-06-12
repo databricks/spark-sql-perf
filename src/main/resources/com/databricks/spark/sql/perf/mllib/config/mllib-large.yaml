@@ -85,7 +85,7 @@ benchmarks:
       docLength: 10000
   - name: feature.VectorAssembler
     params:
-      numInputCols: 100
+      numInputCols: 20
   - name: feature.VectorSlicer
     params:
       numFeatures: 5000
