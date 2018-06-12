@@ -71,7 +71,6 @@ benchmarks:
   - name: regression.DecisionTreeRegression
     params:
       depth: [5, 10]
-      numClasses: 4
   - name: regression.GLMRegression
     params:
       numExamples: 500000
@@ -79,7 +78,7 @@ benchmarks:
       numFeatures: 1000
       link: log
       family: gaussian
-      tol: 1e-6
+      tol: 0.0
       maxIter: 10
       regParam: 0.1
   - name: regression.LinearRegression
