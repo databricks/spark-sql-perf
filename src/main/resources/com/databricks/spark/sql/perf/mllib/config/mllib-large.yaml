@@ -68,3 +68,25 @@ benchmarks:
       regParam: 0.01
       rank: 10
       maxIter: 10
+  - name: regression.DecisionTreeRegression
+    params:
+      depth: [5, 10]
+  - name: regression.GLMRegression
+    params:
+      numExamples: 500000
+      numTestExamples: 500000
+      numFeatures: 1000
+      link: log
+      family: gaussian
+      tol: 0.0
+      maxIter: 10
+      regParam: 0.1
+  - name: regression.LinearRegression
+    params:
+      regParam: 0.01
+      tol: 0.0
+      maxIter: 20
+  - name: regression.RandomForestRegression
+    params:
+      depth: 10
+      maxIter: 4
