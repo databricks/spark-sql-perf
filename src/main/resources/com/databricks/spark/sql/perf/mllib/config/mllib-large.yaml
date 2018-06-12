@@ -94,7 +94,7 @@ benchmarks:
       numExamples: 10000
       vocabSize: 100
       docLength: 1000
-      numSynonymsToFind:
+      numSynonymsToFind: 3
   - name: recommendation.ALS
     params:
       numExamples: 50000000
