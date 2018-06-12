@@ -62,7 +62,7 @@ benchmarks:
   - name: fpm.FPGrowth
     params:
       numItems: 10000
-      itemSetSize: 10
+      itemSetSize: [4, 10]
   - name: recommendation.ALS
     params:
       numExamples: 50000000
