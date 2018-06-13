@@ -59,6 +59,42 @@ benchmarks:
       optimizer:
         - em
         - online
+  - name: feature.BucketedRandomProjectionLSH
+    params:
+      numHashTables: 20
+  - name: feature.Bucketizer
+    params:
+      bucketizerNumBuckets: 20
+  - name: feature.HashingTF
+    params:
+      docLength: 2000
+      vocabSize: 200
+  - name: feature.MinHashLSH
+    params:
+      numFeatures: 10000
+      numHashTables: 10
+  - name: feature.OneHotEncoder
+    params:
+      featureArity: 10000
+  - name: feature.StringIndexer
+    params:
+      vocabSize: 10000
+  - name: feature.Tokenizer
+    params:
+      vocabSize: 2000
+      docLength: 10000
+  - name: feature.VectorAssembler
+    params:
+      numInputCols: 20
+  - name: feature.VectorSlicer
+    params:
+      numFeatures: 5000
+  - name: feature.Word2Vec
+    params:
+      numExamples: 10000
+      vocabSize: 100
+      docLength: 1000
+      numSynonymsToFind: 3
   - name: fpm.FPGrowth
     params:
       numItems: 10000
