@@ -5,5 +5,5 @@
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 VERSION=`git -C $DIR/../ tag | tail -n 1 | cut -c 2-`
-ARGS="sparkPackage com.databricks:spark-sql-perf_2.10:$VERSION com.databricks.spark.sql.perf.RunBenchmark $@"
+ARGS="sparkPackage com.databricks:spark-sql-perf_2.11:$VERSION com.databricks.spark.sql.perf.RunBenchmark $@"
 build/sbt "$ARGS"
