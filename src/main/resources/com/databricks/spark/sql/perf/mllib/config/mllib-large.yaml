@@ -111,6 +111,11 @@ benchmarks:
   - name: regression.DecisionTreeRegression
     params:
       depth: [5, 10]
+  - name: regression.GBTRegression
+    params:
+      numFeatures: 2000
+      depth: 5
+      maxIter: 5
   - name: regression.GLMRegression
     params:
       numExamples: 500000
