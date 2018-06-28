@@ -176,8 +176,6 @@ object TPCDS_Standalone extends Logging {
   def generateDataset(spark: SparkSession, conf: TpcdsStandaloneConfig): Unit = {
       // Limit the memory used by parquet writer
     SparkHadoopUtil.get.conf.set("parquet.memory.pool.ratio", "0.1")
-    // Compress with snappy:
-    spark.sqlContext.setConf("spark.sql.parquet.compression.codec", "snappy")
     // TPCDS has around 2000 dates.
     spark.conf.set("spark.sql.shuffle.partitions", "2000")
     // Don't write too huge files.
