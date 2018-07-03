@@ -35,12 +35,17 @@ trait BenchmarkAlgorithm extends Logging {
   /**
    * The unnormalized score of the training procedure on a dataset. The normalization is
    * performed by the caller.
+   * This calls `count()` on the transformed data to attempt to materialize the result for
+   * recording timing metrics.
    */
   @throws[Exception]("if scoring fails")
   def score(
       ctx: MLBenchContext,
       testSet: DataFrame,
-      model: Transformer): MLMetric = MLMetric.Invalid
+      model: Transformer): MLMetric = {
+    model.transform(testSet).count()
+    MLMetric.Invalid
+  }
 
   def name: String = {
     this.getClass.getCanonicalName.replace("$", "")
