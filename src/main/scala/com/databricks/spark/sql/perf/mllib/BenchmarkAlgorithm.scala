@@ -43,7 +43,11 @@ trait BenchmarkAlgorithm extends Logging {
       ctx: MLBenchContext,
       testSet: DataFrame,
       model: Transformer): MLMetric = {
-    model.transform(testSet).count()
+    val output = model.transform(testSet)
+    // We create a useless UDF to make sure the entire DataFrame is instantiated.
+    val fakeUDF = udf { (_: Any) => 0 }
+    val columns = testSet.columns
+    output.select(sum(fakeUDF(struct(columns.map(col) : _*)))).first()
     MLMetric.Invalid
   }
 
