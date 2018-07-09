@@ -9,56 +9,76 @@ common:
 benchmarks:
   - name: classification.DecisionTreeClassification
     params:
-      depth: [5, 10]
+      depth: [5, 12]
       numClasses: 4
   - name: classification.GBTClassification
     params:
-      numFeatures: 3000
-      depth: 5
+      numFeatures: 1500
+      depth: 4
       numClasses: 4
-      maxIter: 10
+      maxIter: 8
   - name: classification.RandomForestClassification
     params:
       depth: 10
+      numFeatures: 1000
       numClasses: 4
-      maxIter: 200 # number of trees
+      maxIter: 100
   - name: classification.LogisticRegression
     params:
+      numExamples: 500000
+      numFeatures: 5000
       regParam: 0.01
       tol: 0.0
-      maxIter: 20
+      maxIter: 8
+  - name: classification.LogisticRegression
+    params:
+      numExamples: 500000
+      numFeatures: 5000
+      elasticNetParam: 0.5
+      regParam: 0.01
+      tol: 0.0
+      maxIter: 8
   - name: classification.LinearSVC
     params:
+      numExamples: 500000
       regParam: 0.01
       tol: 0
-      maxIter: 20
+      maxIter: 10
   - name: classification.NaiveBayes
     params:
+      numExamples: 2000000
       numFeatures: 5000
-      numClasses: 2
+      numClasses: 10
       smoothing: 1.0
   - name: clustering.GaussianMixture
     params:
-      numExamples: 100000
-      numTestExamples: 100000
-      numFeatures: 1000
+      numExamples: 200000
+      numTestExamples: 200000
+      numFeatures: 30
       k: 10
       maxIter: 10
       tol: 0.01
   - name: clustering.KMeans
     params:
-      k: 50
+      k: 20
       maxIter: 20
       tol: 1e-3
   - name: clustering.LDA
     params:
+      numExamples: 200000
       docLength: 100
       vocabSize: 5000
-      k: 60
-      maxIter: 20
-      optimizer:
-        - em
-        - online
+      k: 20
+      maxIter: 10
+      optimizer: em
+  - name: clustering.LDA
+    params:
+      numExamples: 300000
+      docLength: 100
+      vocabSize: 5000
+      k: 20
+      maxIter: 10
+      optimizer: online
   - name: feature.BucketedRandomProjectionLSH
     params:
       numHashTables: 20
@@ -93,45 +113,49 @@ benchmarks:
     params:
       numExamples: 10000
       vocabSize: 100
-      docLength: 1000
+      docLength: 300
       numSynonymsToFind: 3
   - name: fpm.FPGrowth
     params:
+      numExamples: 10000000
       numItems: 10000
-      itemSetSize: [4, 10]
+      itemSetSize: [4, 14]
   - name: recommendation.ALS
     params:
-      numExamples: 50000000
+      numExamples: 20000000
       numTestExamples: 50000000
-      numUsers: 6000000
-      numItems: 6000000
+      numUsers: 4000000
+      numItems: 4000000
       regParam: 0.01
       rank: 10
-      maxIter: 10
+      maxIter: 8
   - name: regression.DecisionTreeRegression
     params:
-      depth: [5, 10]
+      depth: [4, 7]
   - name: regression.GBTRegression
     params:
-      numFeatures: 2000
-      depth: 5
-      maxIter: 5
+      numFeatures: 1000
+      depth: 4
+      maxIter: 8
   - name: regression.GLMRegression
     params:
-      numExamples: 500000
+      numExamples: 100000
       numTestExamples: 500000
-      numFeatures: 1000
+      numFeatures: 500
       link: log
       family: gaussian
       tol: 0.0
-      maxIter: 10
+      maxIter: 8
       regParam: 0.1
   - name: regression.LinearRegression
     params:
+      numExamples: 500000
+      numFeatures: 5000
       regParam: 0.01
       tol: 0.0
-      maxIter: 20
+      maxIter: 9
   - name: regression.RandomForestRegression
     params:
-      depth: 10
-      maxIter: 4
+      depth: 7
+      numFeatures: 500
+      maxIter: 12
