@@ -25,19 +25,19 @@ benchmarks:
       maxIter: 100
   - name: classification.LogisticRegression
     params:
-      numExamples: 500000
+      numExamples: 700000
       numFeatures: 5000
       regParam: 0.01
       tol: 0.0
-      maxIter: 8
+      maxIter: 10
   - name: classification.LogisticRegression
     params:
-      numExamples: 500000
+      numExamples: 700000
       numFeatures: 5000
       elasticNetParam: 0.5
       regParam: 0.01
       tol: 0.0
-      maxIter: 8
+      maxIter: 10
   - name: classification.LinearSVC
     params:
       numExamples: 500000
@@ -52,12 +52,10 @@ benchmarks:
       smoothing: 1.0
   - name: clustering.GaussianMixture
     params:
-      numExamples: 200000
-      numTestExamples: 200000
       numFeatures: 30
-      k: 10
-      maxIter: 10
-      tol: 0.01
+      k: 15
+      maxIter: 15
+      tol: 0.0
   - name: clustering.KMeans
     params:
       k: 20
@@ -139,7 +137,7 @@ benchmarks:
       maxIter: 8
   - name: regression.GLMRegression
     params:
-      numExamples: 100000
+      numExamples: 400000
       numTestExamples: 500000
       numFeatures: 500
       link: log
@@ -149,7 +147,6 @@ benchmarks:
       regParam: 0.1
   - name: regression.LinearRegression
     params:
-      numExamples: 500000
       numFeatures: 5000
       regParam: 0.01
       tol: 0.0
@@ -158,4 +155,4 @@ benchmarks:
     params:
       depth: 7
       numFeatures: 500
-      maxIter: 12
+      maxIter: 16
