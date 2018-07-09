@@ -27,14 +27,7 @@ benchmarks:
     params:
       numExamples: 700000
       numFeatures: 5000
-      regParam: 0.01
-      tol: 0.0
-      maxIter: 10
-  - name: classification.LogisticRegression
-    params:
-      numExamples: 700000
-      numFeatures: 5000
-      elasticNetParam: 0.5
+      elasticNetParam: [0.0, 0.5]
       regParam: 0.01
       tol: 0.0
       maxIter: 10
@@ -68,15 +61,9 @@ benchmarks:
       vocabSize: 5000
       k: 20
       maxIter: 10
-      optimizer: em
-  - name: clustering.LDA
-    params:
-      numExamples: 300000
-      docLength: 100
-      vocabSize: 5000
-      k: 20
-      maxIter: 10
-      optimizer: online
+      optimizer:
+        - em
+        - online
   - name: feature.BucketedRandomProjectionLSH
     params:
       numHashTables: 20
