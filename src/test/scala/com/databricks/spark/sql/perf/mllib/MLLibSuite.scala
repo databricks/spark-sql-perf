@@ -2,27 +2,28 @@ package com.databricks.spark.sql.perf.mllib
 
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
 
-import org.apache.spark.{SparkConf, SparkContext}
-import org.apache.spark.sql.Row
+import org.apache.spark.sql.{Row, SparkSession}
 
 class MLLibSuite extends FunSuite with BeforeAndAfterAll {
 
-  private var sc: SparkContext = _
+  private var sparkSession: SparkSession = _
 
   override def beforeAll(): Unit = {
     super.beforeAll()
-    val sparkConf = new SparkConf().setAppName("MLlib QA").setMaster("local[2]")
-    sc = SparkContext.getOrCreate(sparkConf)
+    sparkSession = SparkSession.builder.master("local[2]").appName("MLlib QA").getOrCreate()
   }
 
   override def afterAll(): Unit = {
-    super.afterAll()
-    if (sc != null) {
-      sc.stop()
+    try {
+      if (sparkSession != null) {
+        sparkSession.stop()
+      }
+      // To avoid RPC rebinding to the same port, since it doesn't unbind immediately on shutdown
+      System.clearProperty("spark.driver.port")
+      sparkSession = null
+    } finally {
+      super.afterAll()
     }
-    // To avoid RPC rebinding to the same port, since it doesn't unbind immediately on shutdown
-    System.clearProperty("spark.driver.port")
-    sc = null
   }
 
   test("test MlLib benchmarks with mllib-small.yaml.") {
@@ -44,7 +45,7 @@ class MLLibSuite extends FunSuite with BeforeAndAfterAll {
     val benchmarks = MLLib.getBenchmarks(MLLib.getConf(yamlConfig = MLLib.smallConfig))
     benchmarks.foreach { b =>
       b.beforeBenchmark()
-      b.afterBenchmark(sc)
+      b.afterBenchmark(sparkSession.sparkContext)
     }
   }
 }
