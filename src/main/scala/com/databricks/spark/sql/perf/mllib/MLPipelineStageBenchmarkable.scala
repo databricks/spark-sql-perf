@@ -27,7 +27,7 @@ class MLPipelineStageBenchmarkable(
 
   override protected val executionMode: ExecutionMode = ExecutionMode.SparkPerfResults
 
-  override protected def beforeBenchmark(): Unit = {
+  override protected[mllib] def beforeBenchmark(): Unit = {
     logger.info(s"$this beforeBenchmark")
     try {
       testData = test.testDataSet(param)
@@ -43,7 +43,7 @@ class MLPipelineStageBenchmarkable(
     }
   }
 
-  override protected def afterBenchmark(sc: SparkContext): Unit = {
+  override protected[mllib] def afterBenchmark(sc: SparkContext): Unit = {
     // Best-effort clean up of weakly referenced RDDs, shuffles, and broadcasts
     // Remove any leftover blocks that still exist
     sc.getExecutorStorageStatus
