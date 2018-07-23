@@ -57,6 +57,7 @@ trait Benchmarkable extends Logging {
 
   protected def afterBenchmark(sc: SparkContext): Unit = {
     System.gc()
+    sc.parallelize(1 to 1000000).repartition(200).foreachPartition{_ => System.gc() }
   }
 
   private def runBenchmarkForked(
