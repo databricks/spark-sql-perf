@@ -53,5 +53,7 @@ object BenchmarkCompare extends Logging {
       conf.target,
       conf.resultsLocation,
       conf.outputLocation)
+
+    spark.stop()
   }
 }
