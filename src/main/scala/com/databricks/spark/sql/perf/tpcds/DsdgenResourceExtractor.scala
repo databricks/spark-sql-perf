@@ -41,14 +41,14 @@ object DsdgenResourceExtractor {
     }
 
     val tempDirPath = Files.createDirectory(Paths.get(dirName))
-    val tempDireFile = new File(tempDirPath.toString)
+    val tempDirFile = new File(tempDirPath.toString)
 
     emitDsdgenResourceDirectory(resourceDir, tempDirPath.toString)
     tempDirPath.resolve("dsdgen").toFile.setExecutable(true)
 
     // If this file is already present (e.g. created by different thread), ignore
-    tempDireFile.renameTo(new File(dirName))
-    tempDireFile.deleteOnExit()
+    tempDirFile.renameTo(new File(dirName))
+    tempDirFile.deleteOnExit()
 
     dirName
   }
