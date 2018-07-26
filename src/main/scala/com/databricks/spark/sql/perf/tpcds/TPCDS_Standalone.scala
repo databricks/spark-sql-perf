@@ -173,7 +173,7 @@ object TPCDS_Standalone extends Logging {
   }
 
   def generateDataset(spark: SparkSession, conf: TpcdsStandaloneConfig): Unit = {
-      // Limit the memory used by parquet writer
+    // Limit the memory used by parquet writer
     SparkHadoopUtil.get.conf.set("parquet.memory.pool.ratio", "0.1")
     // TPCDS has around 2000 dates.
     spark.conf.set("spark.sql.shuffle.partitions", "2000")
@@ -273,8 +273,8 @@ object TPCDS_Standalone extends Logging {
     logger.info("External table generation complete")
 
     // For CBO
-    logger.info("Generating CBO data")
+    logger.info("Generating CBO statistics")
     tables.analyzeTables(databaseName, analyzeColumns = true)
-    logger.info("Done generating CBO data")
+    logger.info("Done generating CBO statistics")
   }
 }
