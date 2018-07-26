@@ -172,7 +172,6 @@ object RunBenchmark {
     val targetTime = when($"timestamp" === targetTimestamp, $"executionTime").otherwise(null)
 
     val comparison = sqlContext.read.json(resultsLocation)
-        .coalesce(1)
         .where(s"timestamp IN ($baselineTimestamp, $targetTimestamp)")
         .withColumn("result", explode($"results"))
         .select("timestamp", "result.*")

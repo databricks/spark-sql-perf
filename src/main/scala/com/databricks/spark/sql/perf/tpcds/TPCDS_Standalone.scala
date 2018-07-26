@@ -21,7 +21,7 @@ case class TpcdsStandaloneConfig(
   shuffle: Boolean = true,
   timeoutHours: Int = 60,
   format: String = "parquet",
-  shufflePartitions: Int = 12,
+  shufflePartitions: Int = 200,
   baseline: Option[Long] = None)
 
 object TPCDS_Standalone extends Logging {
@@ -139,13 +139,12 @@ object TPCDS_Standalone extends Logging {
     logger.info(experiment.toString)
     experiment.waitForFinish(conf.timeoutHours * 60 * 60)
 
-    spark.sqlContext.setConf("spark.sql.shuffle.partitions", "1")
-
     import org.apache.spark.sql.functions.{col, substring}
     val summary = experiment.getCurrentResults
       .withColumn("Name", substring(col("name"), 2, 100))
       .withColumn("Runtime", (col("parsingTime") + col("analysisTime") + col("optimizationTime") + col("planningTime") + col("executionTime")) / 1000.0)
       .select("Name", "Runtime")
+      .coalesce(1)
 
     summary.show(summary.count().toInt, truncate = false)
 
