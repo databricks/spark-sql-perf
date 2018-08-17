@@ -44,15 +44,6 @@ class MLPipelineStageBenchmarkable(
     }
   }
 
-  override protected[mllib] def afterBenchmark(sc: SparkContext): Unit = {
-    // Best-effort clean up of weakly referenced RDDs, shuffles, and broadcasts
-    // Remove any leftover blocks that still exist
-    sc.getExecutorStorageStatus
-      .flatMap { status => status.blocks.map { case (bid, _) => bid } }
-      .foreach { bid => SparkEnv.get.blockManager.master.removeBlock(bid) }
-    super.afterBenchmark(sc)
-  }
-
   override protected def doBenchmark(
     includeBreakdown: Boolean,
     description: String,
