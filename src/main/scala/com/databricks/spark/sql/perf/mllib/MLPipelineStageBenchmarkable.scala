@@ -1,6 +1,7 @@
 package com.databricks.spark.sql.perf.mllib
 
 import scala.collection.mutable.ArrayBuffer
+import scala.util.control.NonFatal
 
 import com.typesafe.scalalogging.slf4j.{LazyLogging => Logging}
 
@@ -37,7 +38,7 @@ class MLPipelineStageBenchmarkable(
       trainingData.cache()
       trainingData.count()
     } catch {
-      case e: Throwable =>
+      case NonFatal(e) =>
         println(s"$this error in beforeBenchmark: ${e.getStackTraceString}")
         throw e
     }
