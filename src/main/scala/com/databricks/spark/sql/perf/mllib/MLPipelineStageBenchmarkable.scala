@@ -1,6 +1,7 @@
 package com.databricks.spark.sql.perf.mllib
 
 import scala.collection.mutable.ArrayBuffer
+import scala.util.control.NonFatal
 
 import com.typesafe.scalalogging.slf4j.{LazyLogging => Logging}
 
@@ -37,19 +38,10 @@ class MLPipelineStageBenchmarkable(
       trainingData.cache()
       trainingData.count()
     } catch {
-      case e: Throwable =>
+      case NonFatal(e) =>
         println(s"$this error in beforeBenchmark: ${e.getStackTraceString}")
         throw e
     }
-  }
-
-  override protected[mllib] def afterBenchmark(sc: SparkContext): Unit = {
-    // Best-effort clean up of weakly referenced RDDs, shuffles, and broadcasts
-    // Remove any leftover blocks that still exist
-    sc.getExecutorStorageStatus
-      .flatMap { status => status.blocks.map { case (bid, _) => bid } }
-      .foreach { bid => SparkEnv.get.blockManager.master.removeBlock(bid) }
-    super.afterBenchmark(sc)
   }
 
   override protected def doBenchmark(

@@ -45,6 +45,7 @@ object ModelBuilderSSP {
       s" but was given $numClasses")
     val rootNode = TreeBuilder.randomBalancedDecisionTree(depth = depth, labelType = numClasses,
       featureArity = featureArity, seed = seed)
+      .asInstanceOf[ClassificationNode]
     new DecisionTreeClassificationModel(rootNode, numFeatures = featureArity.length,
       numClasses = numClasses)
   }
@@ -55,6 +56,7 @@ object ModelBuilderSSP {
       seed: Long): DecisionTreeRegressionModel = {
     val rootNode = TreeBuilder.randomBalancedDecisionTree(depth = depth, labelType = 0,
       featureArity = featureArity, seed = seed)
+      .asInstanceOf[RegressionNode]
     new DecisionTreeRegressionModel(rootNode, numFeatures = featureArity.length)
   }
 
@@ -165,12 +167,45 @@ object TreeBuilder {
       ImpurityCalculator.getCalculator("gini", Array.fill[Double](labelType)(0.0))
     }
 
-    randomBalancedDecisionTreeHelper(depth, featureArity, impurityCalculator,
+    randomBalancedDecisionTreeHelper(isRegression, depth, featureArity, impurityCalculator,
       labelGenerator, Set.empty, rng)
+  }
+
+  private def createLeafNode(
+      isRegression: Boolean,
+      prediction: Double,
+      impurity: Double,
+      impurityStats: ImpurityCalculator): LeafNode = {
+    if (isRegression) {
+      new RegressionLeafNode(prediction, impurity, impurityStats)
+    } else {
+      new ClassificationLeafNode(prediction, impurity, impurityStats)
+    }
+  }
+
+  private def createInternalNode(
+      isRegression: Boolean,
+      prediction: Double,
+      impurity: Double,
+      gain: Double,
+      leftChild: Node,
+      rightChild: Node,
+      split: Split,
+      impurityStats: ImpurityCalculator): InternalNode = {
+    if (isRegression) {
+      new RegressionInternalNode(prediction, impurity, gain,
+        leftChild.asInstanceOf[RegressionNode], rightChild.asInstanceOf[RegressionNode],
+        split, impurityStats)
+    } else {
+      new ClassificationInternalNode(prediction, impurity, gain,
+        leftChild.asInstanceOf[ClassificationNode], rightChild.asInstanceOf[ClassificationNode],
+        split, impurityStats)
+    }
   }
 
   /**
    * Create an internal node.  Either create the leaf nodes beneath it, or recurse as needed.
+   * @param isRegression  Whether the tree is a regressor or not (classifier)
    * @param subtreeDepth  Depth of subtree to build.  Depth 0 means this is a leaf node.
    * @param featureArity  Indicates feature type.  Value 0 indicates continuous feature.
    *                      Other values >= 2 indicate a categorical feature,
@@ -182,6 +217,7 @@ object TreeBuilder {
    * @return
    */
   private def randomBalancedDecisionTreeHelper(
+      isRegression: Boolean,
       subtreeDepth: Int,
       featureArity: Array[Int],
       impurityCalculator: ImpurityCalculator,
@@ -191,7 +227,7 @@ object TreeBuilder {
 
     if (subtreeDepth == 0) {
       // This case only happens for a depth 0 tree.
-      return new LeafNode(prediction = 0.0, impurity = 0.0, impurityStats = impurityCalculator)
+      createLeafNode(isRegression, prediction = 0.0, impurity = 0.0, impurityCalculator)
     }
 
     val numFeatures = featureArity.length
@@ -221,19 +257,20 @@ object TreeBuilder {
     val (leftChild: Node, rightChild: Node) = if (subtreeDepth == 1) {
       // Add leaf nodes.  Assign these jointly so they make different predictions.
       val predictions = labelGenerator.nextValue()
-      val leftChild = new LeafNode(prediction = predictions._1, impurity = 0.0,
+      val leftChild = createLeafNode(isRegression, prediction = predictions._1, impurity = 0.0,
         impurityStats = impurityCalculator)
-      val rightChild = new LeafNode(prediction = predictions._2, impurity = 0.0,
+      val rightChild = createLeafNode(isRegression, prediction = predictions._2, impurity = 0.0,
         impurityStats = impurityCalculator)
       (leftChild, rightChild)
     } else {
-      val leftChild = randomBalancedDecisionTreeHelper(subtreeDepth - 1, featureArity,
+      val leftChild = randomBalancedDecisionTreeHelper(isRegression, subtreeDepth - 1, featureArity,
         impurityCalculator, labelGenerator, usedFeatures + feature, rng)
-      val rightChild = randomBalancedDecisionTreeHelper(subtreeDepth - 1, featureArity,
+      val rightChild = randomBalancedDecisionTreeHelper(isRegression, subtreeDepth - 1, featureArity,
         impurityCalculator, labelGenerator, usedFeatures + feature, rng)
       (leftChild, rightChild)
     }
-    new InternalNode(prediction = 0.0, impurity = 0.0, gain = 0.0, leftChild = leftChild,
-      rightChild = rightChild, split = split, impurityStats = impurityCalculator)
+    createInternalNode(isRegression, prediction = 0.0, impurity = 0.0, gain = 0.0,
+      leftChild = leftChild, rightChild = rightChild, split = split,
+      impurityStats = impurityCalculator)
   }
 }

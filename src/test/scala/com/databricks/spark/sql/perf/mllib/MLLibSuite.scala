@@ -41,11 +41,10 @@ class MLLibSuite extends FunSuite with BeforeAndAfterAll {
     }
   }
 
-  test("test before & after benchmark methods for pipeline benchmarks.") {
+  test("test before benchmark methods for pipeline benchmarks.") {
     val benchmarks = MLLib.getBenchmarks(MLLib.getConf(yamlConfig = MLLib.smallConfig))
     benchmarks.foreach { b =>
       b.beforeBenchmark()
-      b.afterBenchmark(sparkSession.sparkContext)
     }
   }
 }
