@@ -15,11 +15,11 @@ val randomizeQueries = false //to use on concurrency tests
 
 // Experiment metadata for results, edit if outside Databricks
 val configuration = "default" //use default when using the out-of-box config
-val runtype = "Azure Databricks TPCH" + spark.conf.get("spark.databricks.clusterUsageTags.sparkVersion")
-val workers = spark.conf.get("spark.databricks.clusterUsageTags.clusterTargetWorkers")
-val workerInstanceType = spark.conf.get("spark.databricks.clusterUsageTags.clusterNodeType")
+val runtype = "TPCH run" // Edit
+val workers = 10 // Edit to the number of worker
+val workerInstanceType = "my_VM_instance" // Edit to the instance type
 
-// Make sure spark-sql-perf library is available (use assembly version)
+// Make sure spark-sql-perf library is available (use the assembly version)
 import com.databricks.spark.sql.perf.tpch._
 import org.apache.spark.sql.functions._
 

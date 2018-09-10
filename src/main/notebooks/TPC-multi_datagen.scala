@@ -220,7 +220,7 @@ def setScaleConfig(scaleFactor: String): Unit = {
     SparkHadoopUtil.get.conf.set("parquet.memory.pool.ratio", "0.1")
   } 
   else if (scaleFactor.toInt >= 1000) {
-    spark.conf.set("spark.sql.shuffle.partitions", "2001") //one above 2000
+    spark.conf.set("spark.sql.shuffle.partitions", "2001") //one above 2000 to use HighlyCompressedMapStatus
     SparkHadoopUtil.get.conf.set("parquet.memory.pool.ratio", "0.3")    
   }
   else { 
@@ -231,7 +231,7 @@ def setScaleConfig(scaleFactor: String): Unit = {
 
 // COMMAND ----------
 
-// Gernerate the data, import the tables, generate stats for selected benchmarks and scale factors
+// Generate the data, import the tables, generate stats for selected benchmarks and scale factors
 scaleFactors.foreach { scaleFactor => {
   
   // First set some config settings affecting OOMs/performance
