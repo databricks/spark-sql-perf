@@ -86,11 +86,13 @@ object TPCDS_Standalone extends Logging {
         .builder()
         .master("local[*]")
         .appName(getClass.getName)
+        .enableHiveSupport()
         .getOrCreate()
     } else {
       SparkSession
         .builder()
         .appName(getClass.getName)
+        .enableHiveSupport()
         .getOrCreate()
     }
 
