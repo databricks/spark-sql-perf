@@ -284,7 +284,7 @@ object TPCDS_Standalone extends Logging {
       conf.format,
       databaseName,
       overwrite = true,
-      discoverPartitions = true)
+      discoverPartitions = conf.partitionedTables)
     logger.info("External table generation complete")
 
     // For CBO
