@@ -78,7 +78,7 @@ def time[R](block: => R): R = {
 
 // COMMAND ----------
 
-// FOR INSTALLING TPCH DBGEN (with the sdtout patch)
+// FOR INSTALLING TPCH DBGEN (with the stdout patch)
 def installDBGEN(url: String = "https://github.com/databricks/tpch-dbgen.git", useStdout: Boolean = true, baseFolder: String = "/tmp")(i: java.lang.Long): String = {
   // check if we want the revision which makes dbgen output to stdout
   val checkoutRevision: String = if (useStdout) "git checkout 0469309147b42abac8857fa61b4cf69a6d3128a8 -- bm_utils.c" else ""
@@ -104,7 +104,7 @@ echo "OK"
 
 // COMMAND ----------
 
-// FOR INSTALLING TPCDS DSDGEN (with the sdtout patch) 
+// FOR INSTALLING TPCDS DSDGEN (with the stdout patch)
 // Note: it assumes Debian/Ubuntu host, edit package manager if not
 def installDSDGEN(url: String = "https://github.com/databricks/tpcds-kit.git", useStdout: Boolean = true, baseFolder: String = "/tmp")(i: java.lang.Long): String = {
   Seq("mkdir", "-p", baseFolder).!
