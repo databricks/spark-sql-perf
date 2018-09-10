@@ -111,7 +111,7 @@ class TPCHTables(
       'c_custkey.long,
       'c_name.string,
       'c_address.string,
-      'c_nationkey.string,
+      'c_nationkey.long,
       'c_phone.string,
       'c_acctbal.decimal(12, 2),
       'c_mktsegment.string,
