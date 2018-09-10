@@ -1,5 +1,7 @@
 package com.databricks.spark.sql.perf.mllib
 
+
+import scala.io.Source
 import scala.language.implicitConversions
 
 import com.typesafe.scalalogging.slf4j.{LazyLogging => Logging}
@@ -34,6 +36,14 @@ object MLLib extends Logging {
     e.getCurrentResults()
   }
 
+  private def getConfig(resourcePath: String): String = {
+    val stream = getClass.getResourceAsStream(resourcePath)
+    Source.fromInputStream(stream).mkString
+  }
+
+  val smallConfig: String = getConfig("config/mllib-small.yaml")
+  val largeConfig: String = getConfig("config/mllib-large.yaml")
+
   /**
    * Entry point for running ML tests. Expects a single command-line argument: the path to
    * a YAML config file specifying which ML tests to run and their parameters.
@@ -44,6 +54,21 @@ object MLLib extends Logging {
     run(yamlFile = configFile)
   }
 
+  private[mllib] def getConf(yamlFile: String = null, yamlConfig: String = null): YamlConfig = {
+    Option(yamlFile).map(YamlConfig.readFile).getOrElse {
+      require(yamlConfig != null)
+      YamlConfig.readString(yamlConfig)
+    }
+  }
+
+  private[mllib] def getBenchmarks(conf: YamlConfig): Seq[MLPipelineStageBenchmarkable] = {
+    val sqlContext = com.databricks.spark.sql.perf.mllib.MLBenchmarks.sqlContext
+    val benchmarksDescriptions = conf.runnableBenchmarks
+    benchmarksDescriptions.map { mlb =>
+      new MLPipelineStageBenchmarkable(mlb.params, mlb.benchmark, sqlContext)
+    }
+  }
+
   /**
    * Runs all the experiments and blocks on completion
    *
@@ -52,20 +77,12 @@ object MLLib extends Logging {
    */
   def run(yamlFile: String = null, yamlConfig: String = null): DataFrame = {
     logger.info("Starting run")
-    val conf: YamlConfig = Option(yamlFile).map(YamlConfig.readFile).getOrElse {
-      require(yamlConfig != null)
-      YamlConfig.readString(yamlConfig)
-    }
-
+    val conf = getConf(yamlFile, yamlConfig)
     val sparkConf = new SparkConf().setAppName("MLlib QA").setMaster("local[2]")
     val sc = SparkContext.getOrCreate(sparkConf)
     sc.setLogLevel("INFO")
     val b = new com.databricks.spark.sql.perf.mllib.MLLib()
-    val sqlContext = com.databricks.spark.sql.perf.mllib.MLBenchmarks.sqlContext
-    val benchmarksDescriptions = conf.runnableBenchmarks
-    val benchmarks = benchmarksDescriptions.map { mlb =>
-      new MLPipelineStageBenchmarkable(mlb.params, mlb.benchmark, sqlContext)
-    }
+    val benchmarks = getBenchmarks(conf)
     println(s"${benchmarks.size} benchmarks identified:")
     val str = benchmarks.map(_.prettyPrint).mkString("\n")
     println(str)

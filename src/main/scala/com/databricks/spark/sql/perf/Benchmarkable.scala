@@ -22,6 +22,7 @@ import com.typesafe.scalalogging.slf4j.{LazyLogging => Logging}
 
 import scala.concurrent.duration._
 import scala.collection.mutable.ArrayBuffer
+import scala.util.control.NonFatal
 
 import org.apache.spark.sql.SQLContext
 import org.apache.spark.{SparkEnv, SparkContext}
@@ -74,7 +75,7 @@ trait Benchmarkable extends Logging {
         try {
           result = doBenchmark(includeBreakdown, description, messages)
         } catch {
-          case e: Throwable =>
+          case NonFatal(e) =>
             logger.info(s"$that: failure in runBenchmark: $e")
             println(s"$that: failure in runBenchmark: $e")
             result = BenchmarkResult(
