@@ -22,6 +22,7 @@ case class TpcdsStandaloneConfig(
   timeoutHours: Int = 60,
   format: String = "parquet",
   shufflePartitions: Int = 200,
+  partitionedTable: Boolean = true,
   baseline: Option[Long] = None)
 
 object TPCDS_Standalone extends Logging {
@@ -46,6 +47,9 @@ object TPCDS_Standalone extends Logging {
       opt[Int]('p', "shuffle_partitions")
         .action { (x, c) => c.copy(shufflePartitions = x) }
         .text("number of shuffle partitions")
+      opt[Boolean]('P', "partitioned_table")
+        .action { (x, c) => c.copy(partitionedTable = x) }
+        .text("use partitioned table or not")
       opt[Int]('i', "iterations")
         .action((x, c) => c.copy(iterations = x))
         .text("the number of iterations to run")
@@ -61,6 +65,15 @@ object TPCDS_Standalone extends Logging {
 
     parser.parse(args, TpcdsStandaloneConfig()) match {
       case Some(config) =>
+        if (!config.partitionedTable && config.scaleFactor > 10) {
+          println(
+            "Table partitioning helps data skipping for larger scale factors but " +
+              "creates too many tiny files when the scale factor is small. " +
+              "Therefore, -P/--partitioned_table is only allowed when -s/--scale_factor is <= 10."
+          )
+          System.exit(1)
+        }
+
         run(config)
       case None =>
         System.exit(1)
@@ -186,6 +199,7 @@ object TPCDS_Standalone extends Logging {
       spark.sqlContext,
       dsdgenDir = None,   // Use built-in dsdgen
       scaleFactor = conf.scaleFactor.toString,
+      usePartitionedTable = conf.partitionedTable,
       useDoubleForDecimal = !conf.useDecimal,
       useStringForDate = !conf.useDate)
 
@@ -256,6 +270,7 @@ object TPCDS_Standalone extends Logging {
       spark.sqlContext,
       dsdgenDir = None,   // Use built-in dsdgen
       scaleFactor = conf.scaleFactor.toString,
+      usePartitionedTable = conf.partitionedTable,
       useDoubleForDecimal = !conf.useDecimal,
       useStringForDate = !conf.useDate)
 
