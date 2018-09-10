@@ -1,6 +1,7 @@
 package com.databricks.spark.sql.perf.mllib
 
 import scala.collection.mutable.ArrayBuffer
+import scala.util.control.NonFatal
 
 import com.typesafe.scalalogging.slf4j.{LazyLogging => Logging}
 
@@ -27,7 +28,7 @@ class MLPipelineStageBenchmarkable(
 
   override protected val executionMode: ExecutionMode = ExecutionMode.SparkPerfResults
 
-  override protected def beforeBenchmark(): Unit = {
+  override protected[mllib] def beforeBenchmark(): Unit = {
     logger.info(s"$this beforeBenchmark")
     try {
       testData = test.testDataSet(param)
@@ -37,19 +38,10 @@ class MLPipelineStageBenchmarkable(
       trainingData.cache()
       trainingData.count()
     } catch {
-      case e: Throwable =>
+      case NonFatal(e) =>
         println(s"$this error in beforeBenchmark: ${e.getStackTraceString}")
         throw e
     }
-  }
-
-  override protected def afterBenchmark(sc: SparkContext): Unit = {
-    // Best-effort clean up of weakly referenced RDDs, shuffles, and broadcasts
-    // Remove any leftover blocks that still exist
-    sc.getExecutorStorageStatus
-      .flatMap { status => status.blocks.map { case (bid, _) => bid } }
-      .foreach { bid => SparkEnv.get.blockManager.master.removeBlock(bid) }
-    super.afterBenchmark(sc)
   }
 
   override protected def doBenchmark(
@@ -72,27 +64,40 @@ class MLPipelineStageBenchmarkable(
       val (scoreTrainTime, scoreTraining) = measureTime {
         test.score(param, trainingData, model)
       }
+      val metricTrainingTime = MLMetric("training.time", trainingTime.toMillis, false)
+      val metricTraining = MLMetric("training."+scoreTraining.metricName,
+        scoreTraining.metricValue,
+        scoreTraining.isLargerBetter)
       val (scoreTestTime, scoreTest) = measureTime {
         test.score(param, testData, model)
       }
+      val metricTestTime = MLMetric("test.time", scoreTestTime.toMillis, false)
+      val metricTest = MLMetric("test."+scoreTraining.metricName,
+        scoreTraining.metricValue,
+        scoreTraining.isLargerBetter)
 
       logger.info(s"$this doBenchmark: Trained model in ${trainingTime.toMillis / 1000.0}" +
         s" s, Scored training dataset in ${scoreTrainTime.toMillis / 1000.0} s," +
         s" test dataset in ${scoreTestTime.toMillis / 1000.0} s")
 
+      val additionalTests = test.testAdditionalMethods(param, model).map {
+        tuple =>
+          val (additionalMethodTime, _) = measureTime { tuple._2() }
+          MLMetric(tuple._1, additionalMethodTime.toMillis, false)
+      }.toArray
 
-      val ml = MLResult(
-        trainingTime = Some(trainingTime.toMillis),
-        trainingMetric = Some(scoreTraining),
-        testTime = Some(scoreTestTime.toMillis),
-        testMetric = Some(scoreTest / testDataCount.get))
+      val mlMetrics = Array(metricTrainingTime, metricTraining, metricTestTime, metricTest) ++
+        additionalTests
+      val paramsMap = params.toMap
+      val benchmarkId = name.split('.').last + "_" + paramsMap.hashCode.abs
 
       BenchmarkResult(
         name = name,
         mode = executionMode.toString,
-        parameters = params.toMap,
+        parameters = paramsMap,
         executionTime = Some(trainingTime.toMillis),
-        mlResult = Some(ml))
+        mlResult = Some(mlMetrics),
+        benchmarkId = Some(benchmarkId))
     } catch {
       case e: Exception =>
         BenchmarkResult(

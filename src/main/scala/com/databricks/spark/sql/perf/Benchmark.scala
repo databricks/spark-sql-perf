@@ -22,6 +22,7 @@ import scala.concurrent._
 import scala.concurrent.duration._
 import scala.language.implicitConversions
 import scala.util.{Success, Try, Failure => SFailure}
+import scala.util.control.NonFatal
 
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{Dataset, DataFrame, SQLContext}
@@ -435,7 +436,9 @@ object Benchmark {
           .format("json")
           .save(resultPath)
       } catch {
-        case e: Throwable => logMessage(s"Failed to write data: $e")
+        case NonFatal(e) =>
+          logMessage(s"Failed to write data: $e")
+          throw e
       }
 
       logCollection()
@@ -448,7 +451,7 @@ object Benchmark {
           val location = cpu.collectLogs(sqlContext, fs, timestamp)
           logMessage(s"cpu results recorded to $location")
         } catch {
-          case e: Throwable =>
+          case NonFatal(e) =>
             logMessage(s"Error collecting logs: $e")
             throw e
         }

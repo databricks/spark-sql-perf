@@ -1,12 +1,13 @@
 package com.databricks.spark.sql.perf.mllib
 
 import com.typesafe.scalalogging.slf4j.{LazyLogging => Logging}
-
 import org.apache.spark.ml.attribute.{NominalAttribute, NumericAttribute}
 import org.apache.spark.ml.{Estimator, PipelineStage, Transformer}
 import org.apache.spark.ml.evaluation.Evaluator
 import org.apache.spark.sql._
 import org.apache.spark.sql.functions._
+
+import com.databricks.spark.sql.perf._
 
 /**
  * The description of a benchmark for an ML algorithm. It follows a simple, standard proceduce:
@@ -34,16 +35,36 @@ trait BenchmarkAlgorithm extends Logging {
   /**
    * The unnormalized score of the training procedure on a dataset. The normalization is
    * performed by the caller.
+   * This calls `count()` on the transformed data to attempt to materialize the result for
+   * recording timing metrics.
    */
   @throws[Exception]("if scoring fails")
   def score(
       ctx: MLBenchContext,
       testSet: DataFrame,
-      model: Transformer): Double = -1.0 // Not putting NaN because it is not valid JSON.
+      model: Transformer): MLMetric = {
+    val output = model.transform(testSet)
+    // We create a useless UDF to make sure the entire DataFrame is instantiated.
+    val fakeUDF = udf { (_: Any) => 0 }
+    val columns = testSet.columns
+    output.select(sum(fakeUDF(struct(columns.map(col) : _*)))).first()
+    MLMetric.Invalid
+  }
 
   def name: String = {
     this.getClass.getCanonicalName.replace("$", "")
   }
+
+  /**
+   * Test additional methods for some algorithms.
+   *
+   * @param transformer The transformer which includes additional methods.
+   * @return A map which key is the additional method name, and value is a function which runs
+   *         the corresponding method.
+   */
+  def testAdditionalMethods(
+      ctx: MLBenchContext,
+      transformer: Transformer): Map[String, () => _] = Map.empty[String, () => _]
 }
 
 /**
@@ -57,9 +78,17 @@ trait ScoringWithEvaluator {
   final override def score(
       ctx: MLBenchContext,
       testSet: DataFrame,
-      model: Transformer): Double = {
-    val eval = model.transform(testSet)
-    evaluator(ctx).evaluate(eval)
+      model: Transformer): MLMetric = {
+    val results = model.transform(testSet)
+    val eval = evaluator(ctx)
+    val metricName = if (eval.hasParam("metricName")) {
+      val param = eval.getParam("metricName")
+      eval.getOrDefault(param).toString
+    } else {
+      eval.getClass.getSimpleName
+    }
+    val metricValue = eval.evaluate(results)
+    MLMetric(metricName, metricValue, eval.isLargerBetter)
   }
 }
 
