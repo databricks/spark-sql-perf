@@ -34,6 +34,16 @@ The first run of `bin/run` will build the library.
 
 Use `sbt package` or `sbt assembly` to build the library jar.
 
+## Local performance tests
+The framework contains twelve benchmarks that can be executed in local mode. They are organized into three classes and target different components and functions of Spark:
+* [DatasetPerformance](https://github.com/databricks/spark-sql-perf/blob/master/src/main/scala/com/databricks/spark/sql/perf/DatasetPerformance.scala) compares the performance of the old RDD API with the new Dataframe and Dataset APIs.
+These benchmarks can be launched with the command `bin/run --benchmark DatasetPerformance`
+* [JoinPerformance](https://github.com/databricks/spark-sql-perf/blob/master/src/main/scala/com/databricks/spark/sql/perf/JoinPerformance.scala) compares the performance of joining different table sizes and shapes with different join types.
+These benchmarks can be launched with the command `bin/run --benchmark JoinPerformance`
+* [AggregationPerformance](https://github.com/databricks/spark-sql-perf/blob/master/src/main/scala/com/databricks/spark/sql/perf/AggregationPerformance.scala) compares the performance of aggregating different table sizes using different aggregation types.
+These benchmarks can be launched with the command `bin/run --benchmark AggregationPerformance`
+
+
 # MLlib tests
 
 To run MLlib tests, run `/bin/run-ml yamlfile`, where `yamlfile` is the path to a YAML configuration
