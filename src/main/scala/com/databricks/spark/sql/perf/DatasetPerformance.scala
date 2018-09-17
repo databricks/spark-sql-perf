@@ -16,8 +16,30 @@
 
 package com.databricks.spark.sql.perf
 
-import org.apache.spark.sql.{Encoder, SQLContext}
+import org.apache.spark.sql.Encoders
 import org.apache.spark.sql.expressions.Aggregator
+
+object TypedAverage extends Aggregator[Long, SumAndCount, Double] {
+  override def zero: SumAndCount = SumAndCount(0L, 0)
+
+  override def reduce(b: SumAndCount, a: Long): SumAndCount = {
+    b.count += 1
+    b.sum += a
+    b
+  }
+
+  override def bufferEncoder =  Encoders.product
+
+  override def outputEncoder = Encoders.scalaDouble
+
+  override def finish(reduction: SumAndCount): Double = reduction.sum.toDouble / reduction.count
+
+  override def merge(b1: SumAndCount, b2: SumAndCount): SumAndCount = {
+    b1.count += b2.count
+    b1.sum += b2.sum
+    b1
+  }
+}
 
 case class Data(id: Long)
 
@@ -32,7 +54,7 @@ class DatasetPerformance extends Benchmark {
   val rdd = sparkContext.range(1, numLongs)
 
   val smallNumLongs = 1000000
-  val smallds = sqlContext.range(1, smallNumLongs)
+  val smallds = sqlContext.range(1, smallNumLongs).as[Long]
   val smallrdd = sparkContext.range(1, smallNumLongs)
 
   def allBenchmarks =  range ++ backToBackFilters ++ backToBackMaps ++ computeAverage
@@ -99,32 +121,10 @@ class DatasetPerformance extends Benchmark {
         .map(d => Data(d.id + 1L)))
   )
 
-  val average = new Aggregator[Long, SumAndCount, Double] {
-    override def zero: SumAndCount = SumAndCount(0, 0)
-
-    override def reduce(b: SumAndCount, a: Long): SumAndCount = {
-      b.count += 1
-      b.sum += a
-      b
-    }
-
-    override def bufferEncoder = implicitly[Encoder[SumAndCount]]
-
-    override def outputEncoder = implicitly[Encoder[Double]]
-
-    override def finish(reduction: SumAndCount): Double = reduction.sum.toDouble / reduction.count
-
-    override def merge(b1: SumAndCount, b2: SumAndCount): SumAndCount = {
-      b1.count += b2.count
-      b1.sum += b2.sum
-      b1
-    }
-  }.toColumn
-
   val computeAverage = Seq(
     new Query(
       "DS: average",
-      smallds.as[Long].select(average).toDF(),
+      smallds.select(TypedAverage.toColumn).toDF(),
       executionMode = ExecutionMode.CollectResults),
     new Query(
       "DF: average",
