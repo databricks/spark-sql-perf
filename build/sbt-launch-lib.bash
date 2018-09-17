@@ -26,6 +26,13 @@ else
     declare java_cmd=java
 fi
 
+if test -x "$SBT_HOME"; then
+  echo -e "Using $SBT_HOME as default SBT_HOME - should be the jar name!"
+  # Could be at /usr/share/sbt-launcher-packaging/bin/sbt-launch.jar
+  # so this would be export SBT_HOME=/usr/share/sbt-launcher-packaging/bin/sbt-launch.jar
+  sbt_jar=${SBT_HOME}
+fi
+
 echoerr () {
   echo 1>&2 "$@"
 }
@@ -165,7 +172,9 @@ process_args () {
 }
 
 run() {
-  # no jar? download it.
+  # first check SBT_HOME is present so we use what's already available
+  sbt_jar=$SBT_HOME
+  # if there's no jar let's download it.
   [[ -f "$sbt_jar" ]] || acquire_sbt_jar "$sbt_version" || {
     # still no jar? uh-oh.
     echo "Download failed. Obtain the sbt-launch.jar manually and place it at $sbt_jar"
