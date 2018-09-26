@@ -25,7 +25,7 @@ import scala.collection.mutable.ArrayBuffer
 import scala.util.control.NonFatal
 
 import org.apache.spark.sql.SQLContext
-import org.apache.spark.{SparkEnv, SparkContext}
+import org.apache.spark.{CleanerListener, SparkContext, SparkEnv}
 
 
 /** A trait to describe things that can be benchmarked. */
@@ -35,6 +35,24 @@ trait Benchmarkable extends Logging {
 
   val name: String
   protected val executionMode: ExecutionMode
+
+  @transient private val cleanerListener = new CleanerListener {
+    var highestCleanedBroadcastId = 0L
+
+    def rddCleaned(rddId: Int): Unit = {}
+    def shuffleCleaned(shuffleId: Int): Unit = {}
+    def broadcastCleaned(broadcastId: Long): Unit = {
+      if (broadcastId > highestCleanedBroadcastId) {
+        highestCleanedBroadcastId = broadcastId
+      }
+    }
+    def accumCleaned(accId: Long): Unit = {}
+    def checkpointCleaned(rddId: Long): Unit = {}
+  }
+
+  if (sparkContext != null) {
+    sparkContext.cleaner.get.attachListener(cleanerListener)
+  }
 
   final def benchmark(
       includeBreakdown: Boolean,
@@ -50,14 +68,21 @@ trait Benchmarkable extends Logging {
     } else {
       doBenchmark(includeBreakdown, description, messages)
     }
-    afterBenchmark(sqlContext.sparkContext)
+    afterBenchmark()
     result
   }
 
   protected def beforeBenchmark(): Unit = { }
 
-  protected def afterBenchmark(sc: SparkContext): Unit = {
+  protected def afterBenchmark(): Unit = {
     System.gc()
+    // Do a fake broadcast to get the latest broadcast id
+    val b = sparkContext.broadcast(1)
+    val latestBroadcastId = b.id - 1
+    b.destroy()
+    while (cleanerListener.highestCleanedBroadcastId != latestBroadcastId) {
+      Thread.sleep(500)
+    }
   }
 
   private def runBenchmarkForked(
