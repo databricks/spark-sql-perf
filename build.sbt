@@ -42,7 +42,7 @@ libraryDependencies += "org.scalatest" %% "scalatest" % "2.2.1" % "test"
 
 libraryDependencies += "org.yaml" % "snakeyaml" % "1.17"
 
-libraryDependencies += "com.typesafe.scala-logging" %% "scala-logging" % "3.9.0"
+libraryDependencies += "com.typesafe.scala-logging" %% "scala-logging-slf4j" % "2.1.2"
 
 resolvers += "Apache Development Snapshot Repository" at "https://repository.apache.org/content/repositories/snapshots"
 
