@@ -14,7 +14,7 @@ sparkPackageName := "databricks/spark-sql-perf"
 // All Spark Packages need a license
 licenses := Seq("Apache-2.0" -> url("http://opensource.org/licenses/Apache-2.0"))
 
-sparkVersion := "2.4.0-SNAPSHOT"
+sparkVersion := "2.4.0"
 
 sparkComponents ++= Seq("sql", "hive", "mllib")
 
@@ -44,7 +44,9 @@ libraryDependencies += "org.yaml" % "snakeyaml" % "1.17"
 
 libraryDependencies += "com.typesafe.scala-logging" %% "scala-logging-slf4j" % "2.1.2"
 
-resolvers += "Apache Development Snapshot Repository" at "https://repository.apache.org/content/repositories/snapshots"
+// Use RC5 until public release is available
+resolvers += "Apache spark release candidate" at
+  "https://repository.apache.org/content/repositories/orgapachespark-1291"
 
 fork := true
 
