@@ -15,6 +15,9 @@ class MLLibSuite extends FunSuite with BeforeAndAfterAll {
     super.beforeAll()
     sparkSession = SparkSession.builder.master("local[2]").appName("MLlib QA").getOrCreate()
 
+    // Travis limits the size of the log file produced by a build. Because we do run a small
+    // version of all the ML benchmarks in this suite, we produce a ton of logs. Here we set the
+    // log level to ERROR, just for this suite, to avoid displeasing travis.
     savedLevels = Seq("akka", "org", "com.databricks").map { name =>
       val logger = Logger.getLogger(name)
       val curLevel = logger.getLevel
