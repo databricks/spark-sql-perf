@@ -44,10 +44,6 @@ libraryDependencies += "org.yaml" % "snakeyaml" % "1.17"
 
 libraryDependencies += "com.typesafe.scala-logging" %% "scala-logging-slf4j" % "2.1.2"
 
-// Use RC5 until public release is available
-resolvers += "Apache spark release candidate" at
-  "https://repository.apache.org/content/repositories/orgapachespark-1291"
-
 fork := true
 
 // Your username to login to Databricks Cloud
