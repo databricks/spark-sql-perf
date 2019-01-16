@@ -18,7 +18,7 @@ package com.databricks.spark.sql.perf
 
 import java.net.InetAddress
 import java.io.File
-import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.{SQLContext, SparkSession}
 import org.apache.spark.sql.functions._
 import org.apache.spark.{SparkContext, SparkConf}
 import scala.util.Try
@@ -70,8 +70,9 @@ object RunBenchmark {
       .setMaster(config.master)
       .setAppName(getClass.getName)
 
-    val sc = SparkContext.getOrCreate(conf)
-    val sqlContext = SQLContext.getOrCreate(sc)
+    val sparkSession = SparkSession.builder.config(conf).getOrCreate()
+    val sc = sparkSession.sparkContext
+    val sqlContext = sparkSession.sqlContext
     import sqlContext.implicits._
 
     sqlContext.setConf("spark.sql.perf.results",

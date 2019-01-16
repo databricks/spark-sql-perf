@@ -25,7 +25,7 @@ import scala.util.{Success, Try, Failure => SFailure}
 import scala.util.control.NonFatal
 
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.{Dataset, DataFrame, SQLContext}
+import org.apache.spark.sql.{Dataset, DataFrame, SQLContext, SparkSession}
 import org.apache.spark.sql.catalyst.analysis.UnresolvedRelation
 import org.apache.spark.SparkContext
 
@@ -42,7 +42,7 @@ abstract class Benchmark(
 
   import Benchmark._
 
-  def this() = this(SQLContext.getOrCreate(SparkContext.getOrCreate()))
+  def this() = this(SparkSession.builder.getOrCreate().sqlContext)
 
   val resultsLocation =
     sqlContext.getAllConfs.getOrElse(
@@ -476,14 +476,14 @@ object Benchmark {
     /** Returns results from an actively running experiment. */
     def getCurrentResults() = {
       val tbl = sqlContext.createDataFrame(currentResults)
-      tbl.registerTempTable("currentResults")
+      tbl.createOrReplaceTempView("currentResults")
       tbl
     }
 
     /** Returns full iterations from an actively running experiment. */
     def getCurrentRuns() = {
       val tbl = sqlContext.createDataFrame(currentRuns)
-      tbl.registerTempTable("currentRuns")
+      tbl.createOrReplaceTempView("currentRuns")
       tbl
     }
 

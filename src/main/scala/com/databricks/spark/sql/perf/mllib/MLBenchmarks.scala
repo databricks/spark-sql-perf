@@ -2,7 +2,7 @@ package com.databricks.spark.sql.perf.mllib
 
 import com.databricks.spark.sql.perf.mllib.classification.LogisticRegression
 import org.apache.spark.SparkContext
-import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.{SQLContext,SparkSession}
 
 import com.databricks.spark.sql.perf.{MLParams}
 import OptionImplicits._
@@ -27,8 +27,9 @@ object MLBenchmarks {
       )
   )
 
-  val context = SparkContext.getOrCreate()
-  val sqlContext: SQLContext = SQLContext.getOrCreate(context)
+  val sparkSession = SparkSession.builder.getOrCreate()
+  val sqlContext: SQLContext = sparkSession.sqlContext
+  val context = sqlContext.sparkContext
 
   def benchmarkObjects: Seq[MLPipelineStageBenchmarkable] = benchmarks.map { mlb =>
     new MLPipelineStageBenchmarkable(mlb.params, mlb.benchmark, sqlContext)

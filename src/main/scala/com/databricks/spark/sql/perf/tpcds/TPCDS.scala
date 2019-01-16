@@ -17,10 +17,9 @@
 package com.databricks.spark.sql.perf.tpcds
 
 import scala.collection.mutable
-
 import com.databricks.spark.sql.perf._
 import org.apache.spark.SparkContext
-import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.{SQLContext, SparkSession}
 
 /**
  * TPC-DS benchmark's dataset.
@@ -35,7 +34,7 @@ class TPCDS(@transient sqlContext: SQLContext)
   with Tpcds_2_4_Queries
   with Serializable {
 
-  def this() = this(SQLContext.getOrCreate(SparkContext.getOrCreate()))
+  def this() = this(SparkSession.builder.getOrCreate().sqlContext)
 
   /*
   def setupBroadcast(skipTables: Seq[String] = Seq("store_sales", "customer")) = {
