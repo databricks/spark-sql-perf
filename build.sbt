@@ -5,9 +5,9 @@ name := "spark-sql-perf"
 
 organization := "com.databricks"
 
-scalaVersion := "2.11.8"
+scalaVersion := "2.11.12"
 
-crossScalaVersions := Seq("2.11.8")
+crossScalaVersions := Seq("2.11.12","2.12.8")
 
 sparkPackageName := "databricks/spark-sql-perf"
 
@@ -32,17 +32,17 @@ initialCommands in console :=
     |import sqlContext.implicits._
   """.stripMargin
 
-libraryDependencies += "org.slf4j" % "slf4j-api" % "1.7.5"
+//libraryDependencies += "org.slf4j" % "slf4j-api" % "1.7.5"
 
-libraryDependencies += "com.github.scopt" %% "scopt" % "3.3.0"
+libraryDependencies += "com.github.scopt" %% "scopt" % "3.7.1"
 
-libraryDependencies += "com.twitter" %% "util-jvm" % "6.23.0" % "provided"
+libraryDependencies += "com.twitter" %% "util-jvm" % "6.45.0" % "provided"
 
-libraryDependencies += "org.scalatest" %% "scalatest" % "2.2.1" % "test"
+libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.5" % "test"
 
-libraryDependencies += "org.yaml" % "snakeyaml" % "1.17"
+libraryDependencies += "org.yaml" % "snakeyaml" % "1.23"
 
-libraryDependencies += "com.typesafe.scala-logging" %% "scala-logging-slf4j" % "2.1.2"
+libraryDependencies += "com.typesafe.scala-logging" %% "scala-logging" % "3.9.0"
 
 fork := true
 

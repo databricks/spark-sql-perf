@@ -3,7 +3,7 @@ package com.databricks.spark.sql.perf.mllib
 import scala.collection.mutable.ArrayBuffer
 import scala.util.control.NonFatal
 
-import com.typesafe.scalalogging.slf4j.{LazyLogging => Logging}
+import com.typesafe.scalalogging.{LazyLogging => Logging}
 
 import org.apache.spark.ml.{Estimator, Transformer}
 import org.apache.spark.sql._
