@@ -1,6 +1,5 @@
 package com.databricks.spark.sql.perf.mllib
 
-import com.typesafe.scalalogging.{LazyLogging => Logging}
 import org.apache.spark.ml.attribute.{NominalAttribute, NumericAttribute}
 import org.apache.spark.ml.{Estimator, PipelineStage, Transformer}
 import org.apache.spark.ml.evaluation.Evaluator
@@ -21,7 +20,7 @@ import com.databricks.spark.sql.perf._
  *
  * It is assumed that the implementation is going to be an object.
  */
-trait BenchmarkAlgorithm extends Logging {
+trait BenchmarkAlgorithm {
 
   def trainingDataSet(ctx: MLBenchContext): DataFrame
 

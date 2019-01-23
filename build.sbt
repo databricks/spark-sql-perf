@@ -32,8 +32,6 @@ initialCommands in console :=
     |import sqlContext.implicits._
   """.stripMargin
 
-//libraryDependencies += "org.slf4j" % "slf4j-api" % "1.7.5"
-
 libraryDependencies += "com.github.scopt" %% "scopt" % "3.7.1"
 
 libraryDependencies += "com.twitter" %% "util-jvm" % "6.45.0" % "provided"
@@ -41,8 +39,6 @@ libraryDependencies += "com.twitter" %% "util-jvm" % "6.45.0" % "provided"
 libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.5" % "test"
 
 libraryDependencies += "org.yaml" % "snakeyaml" % "1.23"
-
-libraryDependencies += "com.typesafe.scala-logging" %% "scala-logging" % "3.9.0"
 
 fork := true
 
