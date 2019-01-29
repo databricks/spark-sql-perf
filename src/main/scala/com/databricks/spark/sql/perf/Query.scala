@@ -122,7 +122,7 @@ class Query(
       val executionTime = measureTimeMs {
         executionMode match {
           case ExecutionMode.CollectResults => dataFrame.collect()
-          case ExecutionMode.ForeachResults => dataFrame.foreach { row => Unit }
+          case ExecutionMode.ForeachResults => dataFrame.foreach { _ => ():Unit }
           case ExecutionMode.WriteParquet(location) =>
             dataFrame.write.parquet(s"$location/$name.parquet")
           case ExecutionMode.HashResults =>

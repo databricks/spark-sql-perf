@@ -104,7 +104,7 @@ package object cpu {
       }
 
       val counts = cpuLogs.groupBy($"stack").agg(count($"*")).collect().flatMap {
-        case Row(stackLines: Seq[String], count: Long) => stackLines.map(toStackElement) -> count :: Nil
+        case Row(stackLines: Array[String], count: Long) => stackLines.toSeq.map(toStackElement) -> count :: Nil
         case other => println(s"Failed to parse $other"); Nil
       }.toMap
       val profile = new com.twitter.jvm.CpuProfile(counts, com.twitter.util.Duration.fromSeconds(10), cpuLogs.count().toInt, 0)
