@@ -222,7 +222,7 @@ abstract class Tables(sqlContext: SQLContext, scaleFactor: String,
           log.info(s"Data has $numRows rows clustered $clusterByPartitionColumns for $maxRecordPerFile")
 
           if (maxRecordPerFile > 0 && numRows > maxRecordPerFile) {
-            val numFiles = ((numRows * 1.0)/maxRecordPerFile).ceil.toInt
+            val numFiles = (numRows.toDouble/maxRecordPerFile).ceil.toInt
             println(s"Coalescing into $numFiles files")
             log.info(s"Coalescing into $numFiles files")
             data.coalesce(numFiles).write
