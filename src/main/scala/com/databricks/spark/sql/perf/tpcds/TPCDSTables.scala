@@ -22,7 +22,7 @@ import com.databricks.spark.sql.perf
 import com.databricks.spark.sql.perf.{BlockingLineStream, DataGenerator, Table, Tables}
 
 import org.apache.spark.SparkContext
-import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.{SQLContext, SparkSession}
 
 class DSDGEN(dsdgenDir: String) extends DataGenerator {
   val dsdgen = s"$dsdgenDir/dsdgen"
@@ -55,12 +55,13 @@ class DSDGEN(dsdgenDir: String) extends DataGenerator {
 
 
 class TPCDSTables(
+  sqlSession: SparkSession
   sqlContext: SQLContext,
   dsdgenDir: String,
   scaleFactor: String,
   useDoubleForDecimal: Boolean = false,
   useStringForDate: Boolean = false)
-  extends Tables(sqlContext, scaleFactor, useDoubleForDecimal, useStringForDate) {
+  extends Tables(sqlSession, sqlContext, scaleFactor, useDoubleForDecimal, useStringForDate) {
   import sqlContext.implicits._
 
   val dataGenerator = new DSDGEN(dsdgenDir)
