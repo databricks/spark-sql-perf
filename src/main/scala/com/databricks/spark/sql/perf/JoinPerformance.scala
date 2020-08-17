@@ -3,8 +3,8 @@ package com.databricks.spark.sql.perf
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 
-trait JoinPerformance extends Benchmark {
-  // 1.5 mb, 1 file
+class JoinPerformance extends Benchmark {
+
 
   import ExecutionMode._
   import sqlContext.implicits._
@@ -12,22 +12,27 @@ trait JoinPerformance extends Benchmark {
   private val table = sqlContext.table _
 
   val x = Table(
-    "1milints",
-    sqlContext.range(0, 1000000)
-      .repartition(1))
+    "1milints", {   // 1.5 mb, 1 file
+      val df = sqlContext.range(0, 1000000).repartition(1)
+      df.createTempView("1milints")
+      df
+    })
 
   val joinTables = Seq(
-    // 143.542mb, 10 files
     Table(
-      "100milints",
-      sqlContext.range(0, 100000000)
-        .repartition(10)),
+      "100milints", {  // 143.542mb, 10 files
+        val df = sqlContext.range(0, 100000000).repartition(10)
+        df.createTempView("100milints")
+        df
+      }),
 
-    // 1.4348gb, 10 files
     Table(
-      "1bilints",
-      sqlContext.range(0, 1000000000)
-      .repartition(10))
+      "1bilints", {  // 143.542mb, 10 files
+        val df = sqlContext.range(0, 1000000000).repartition(10)
+        df.createTempView("1bilints")
+        df
+      }
+    )
   )
 
   val sortMergeJoin = Variation("sortMergeJoin", Seq("on", "off")) {
@@ -35,7 +40,7 @@ trait JoinPerformance extends Benchmark {
     case "on" => sqlContext.setConf("spark.sql.planner.sortMergeJoin", "true")
   }
 
-  val singleKeyJoins = Seq("1milints", "100milints", "1bilints").flatMap { table1 =>
+  val singleKeyJoins: Seq[Benchmarkable] = Seq("1milints", "100milints", "1bilints").flatMap { table1 =>
     Seq("1milints", "100milints", "1bilints").flatMap { table2 =>
       Seq("JOIN", "RIGHT JOIN", "LEFT JOIN", "FULL OUTER JOIN").map { join =>
         Query(
@@ -63,7 +68,7 @@ trait JoinPerformance extends Benchmark {
 
   val varyNumMatches = Seq(1, 2, 4, 8, 16).map { numCopies =>
     val ints = table("100milints")
-    val copiedInts = Seq.fill(numCopies)(ints).reduce(_ unionAll _)
+    val copiedInts = Seq.fill(numCopies)(ints).reduce(_ union _)
     new Query(
       s"join - numMatches: $numCopies",
       copiedInts.as("a").join(ints.as("b"), $"a.id" === $"b.id"))

@@ -4,7 +4,7 @@ package com.databricks.spark.sql.perf.mllib
 import scala.io.Source
 import scala.language.implicitConversions
 
-import com.typesafe.scalalogging.slf4j.{LazyLogging => Logging}
+import org.slf4j.LoggerFactory
 
 import org.apache.spark.sql.{DataFrame, SQLContext}
 import org.apache.spark.{SparkConf, SparkContext}
@@ -18,7 +18,7 @@ class MLLib(sqlContext: SQLContext)
   def this() = this(SQLContext.getOrCreate(SparkContext.getOrCreate()))
 }
 
-object MLLib extends Logging {
+object MLLib {
 
   /**
    * Runs a set of preprogrammed experiments and blocks on completion.
@@ -26,6 +26,9 @@ object MLLib extends Logging {
    * @param runConfig a configuration that is av
    * @return
    */
+
+  lazy val logger = LoggerFactory.getLogger(this.getClass.getName)
+
   def runDefault(runConfig: RunConfig): DataFrame = {
     val ml = new MLLib()
     val benchmarks = MLBenchmarks.benchmarkObjects

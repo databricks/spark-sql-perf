@@ -17,14 +17,14 @@
 package com.databricks.spark.sql.perf
 
 import java.net.InetAddress
-
-import org.apache.spark.sql.SQLContext
+import java.io.File
+import org.apache.spark.sql.{SQLContext, SparkSession}
 import org.apache.spark.sql.functions._
 import org.apache.spark.{SparkContext, SparkConf}
-
 import scala.util.Try
 
 case class RunConfig(
+    master: String = "local[*]",
     benchmarkName: String = null,
     filter: Option[String] = None,
     iterations: Int = 3,
@@ -37,6 +37,9 @@ object RunBenchmark {
   def main(args: Array[String]): Unit = {
     val parser = new scopt.OptionParser[RunConfig]("spark-sql-perf") {
       head("spark-sql-perf", "0.2.0")
+      opt[String]('m', "master")
+        .action { (x, c) => c.copy(master = x) }
+        .text("the Spark master to use, default to local[*]")
       opt[String]('b', "benchmark")
         .action { (x, c) => c.copy(benchmarkName = x) }
         .text("the name of the benchmark to run")
@@ -64,14 +67,17 @@ object RunBenchmark {
 
   def run(config: RunConfig): Unit = {
     val conf = new SparkConf()
-        .setMaster("local[*]")
-        .setAppName(getClass.getName)
+      .setMaster(config.master)
+      .setAppName(getClass.getName)
 
-    val sc = SparkContext.getOrCreate(conf)
-    val sqlContext = SQLContext.getOrCreate(sc)
+    val sparkSession = SparkSession.builder.config(conf).getOrCreate()
+    val sc = sparkSession.sparkContext
+    val sqlContext = sparkSession.sqlContext
     import sqlContext.implicits._
 
-    sqlContext.setConf("spark.sql.perf.results", new java.io.File("performance").toURI.toString)
+    sqlContext.setConf("spark.sql.perf.results",
+      new File("performance").toURI.toString)
+
     val benchmark = Try {
       Class.forName(config.benchmarkName)
           .newInstance()
@@ -102,7 +108,8 @@ object RunBenchmark {
     experiment.waitForFinish(1000 * 60 * 30)
 
     sqlContext.setConf("spark.sql.shuffle.partitions", "1")
-    experiment.getCurrentRuns()
+      
+    val toShow = experiment.getCurrentRuns()
         .withColumn("result", explode($"results"))
         .select("result.*")
         .groupBy("name")
@@ -110,9 +117,13 @@ object RunBenchmark {
           min($"executionTime") as 'minTimeMs,
           max($"executionTime") as 'maxTimeMs,
           avg($"executionTime") as 'avgTimeMs,
-          stddev($"executionTime") as 'stdDev)
+          stddev($"executionTime") as 'stdDev,
+          (stddev($"executionTime") / avg($"executionTime") * 100) as 'stdDevPercent)
         .orderBy("name")
-        .show(truncate = false)
+        
+    println("Showing at most 100 query results now")
+    toShow.show(100)
+      
     println(s"""Results: sqlContext.read.json("${experiment.resultPath}")""")
 
     config.baseline.foreach { baseTimestamp =>

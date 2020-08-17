@@ -3,8 +3,6 @@ package com.databricks.spark.sql.perf.mllib
 import scala.collection.mutable.ArrayBuffer
 import scala.util.control.NonFatal
 
-import com.typesafe.scalalogging.slf4j.{LazyLogging => Logging}
-
 import org.apache.spark.ml.{Estimator, Transformer}
 import org.apache.spark.sql._
 import org.apache.spark.{SparkContext, SparkEnv}
@@ -15,7 +13,7 @@ class MLPipelineStageBenchmarkable(
     params: MLParams,
     test: BenchmarkAlgorithm,
     sqlContext: SQLContext)
-  extends Benchmarkable with Serializable with Logging {
+  extends Benchmarkable with Serializable {
 
   import MLPipelineStageBenchmarkable._
 

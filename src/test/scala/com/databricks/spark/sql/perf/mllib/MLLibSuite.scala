@@ -2,18 +2,34 @@ package com.databricks.spark.sql.perf.mllib
 
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
 
+import org.apache.log4j.{Level, Logger}
+
 import org.apache.spark.sql.{Row, SparkSession}
 
 class MLLibSuite extends FunSuite with BeforeAndAfterAll {
 
   private var sparkSession: SparkSession = _
+  var savedLevels: Map[String, Level] = _
 
   override def beforeAll(): Unit = {
     super.beforeAll()
     sparkSession = SparkSession.builder.master("local[2]").appName("MLlib QA").getOrCreate()
+
+    // Travis limits the size of the log file produced by a build. Because we do run a small
+    // version of all the ML benchmarks in this suite, we produce a ton of logs. Here we set the
+    // log level to ERROR, just for this suite, to avoid displeasing travis.
+    savedLevels = Seq("akka", "org", "com.databricks").map { name =>
+      val logger = Logger.getLogger(name)
+      val curLevel = logger.getLevel
+      logger.setLevel(Level.ERROR)
+      name -> curLevel
+    }.toMap
   }
 
   override def afterAll(): Unit = {
+    savedLevels.foreach { case (name, level) =>
+      Logger.getLogger(name).setLevel(level)
+    }
     try {
       if (sparkSession != null) {
         sparkSession.stop()

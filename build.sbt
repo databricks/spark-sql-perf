@@ -5,16 +5,16 @@ name := "spark-sql-perf"
 
 organization := "com.databricks"
 
-scalaVersion := "2.11.8"
+scalaVersion := "2.11.12"
 
-crossScalaVersions := Seq("2.11.8")
+crossScalaVersions := Seq("2.11.12","2.12.8")
 
 sparkPackageName := "databricks/spark-sql-perf"
 
 // All Spark Packages need a license
 licenses := Seq("Apache-2.0" -> url("http://opensource.org/licenses/Apache-2.0"))
 
-sparkVersion := "2.4.0-SNAPSHOT"
+sparkVersion := "2.4.0"
 
 sparkComponents ++= Seq("sql", "hive", "mllib")
 
@@ -32,19 +32,13 @@ initialCommands in console :=
     |import sqlContext.implicits._
   """.stripMargin
 
-libraryDependencies += "org.slf4j" % "slf4j-api" % "1.7.5"
+libraryDependencies += "com.github.scopt" %% "scopt" % "3.7.1"
 
-libraryDependencies += "com.github.scopt" %% "scopt" % "3.3.0"
+libraryDependencies += "com.twitter" %% "util-jvm" % "6.45.0" % "provided"
 
-libraryDependencies += "com.twitter" %% "util-jvm" % "6.23.0" % "provided"
+libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.5" % "test"
 
-libraryDependencies += "org.scalatest" %% "scalatest" % "2.2.1" % "test"
-
-libraryDependencies += "org.yaml" % "snakeyaml" % "1.17"
-
-libraryDependencies += "com.typesafe.scala-logging" %% "scala-logging-slf4j" % "2.1.2"
-
-resolvers += "Apache Development Snapshot Repository" at "https://repository.apache.org/content/repositories/snapshots"
+libraryDependencies += "org.yaml" % "snakeyaml" % "1.23"
 
 fork := true
 

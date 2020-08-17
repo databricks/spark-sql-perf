@@ -18,23 +18,25 @@ package com.databricks.spark.sql.perf
 
 import java.util.UUID
 
-import com.typesafe.scalalogging.slf4j.{LazyLogging => Logging}
+import org.slf4j.LoggerFactory
 
 import scala.concurrent.duration._
 import scala.collection.mutable.ArrayBuffer
 import scala.util.control.NonFatal
 
-import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.{SQLContext,SparkSession}
 import org.apache.spark.{SparkEnv, SparkContext}
 
 
 /** A trait to describe things that can be benchmarked. */
-trait Benchmarkable extends Logging {
-  @transient protected[this] val sqlContext = SQLContext.getOrCreate(SparkContext.getOrCreate())
-  @transient protected[this] val sparkContext = sqlContext.sparkContext
+trait Benchmarkable {
+  @transient protected[this] val sqlSession = SparkSession.builder.getOrCreate()
+  @transient protected[this] val sqlContext = sqlSession.sqlContext
+  @transient protected[this] val sparkContext = sqlSession.sparkContext
 
   val name: String
   protected val executionMode: ExecutionMode
+  lazy val logger = LoggerFactory.getLogger(this.getClass.getName)
 
   final def benchmark(
       includeBreakdown: Boolean,

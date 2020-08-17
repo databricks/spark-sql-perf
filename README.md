@@ -18,6 +18,8 @@ Usage: spark-sql-perf [options]
 
   -b <value> | --benchmark <value>
         the name of the benchmark to run
+  -m <value> | --master <value
+        the master url to use
   -f <value> | --filter <value>
         a filter on the name of the queries to run
   -i <value> | --iterations <value>
@@ -32,7 +34,18 @@ The first run of `bin/run` will build the library.
 
 ## Build
 
-Use `sbt package` or `sbt assembly` to build the library jar.
+Use `sbt package` or `sbt assembly` to build the library jar.  
+Use `sbt +package` to build for scala 2.11 and 2.12.
+
+## Local performance tests
+The framework contains twelve benchmarks that can be executed in local mode. They are organized into three classes and target different components and functions of Spark:
+* [DatasetPerformance](https://github.com/databricks/spark-sql-perf/blob/master/src/main/scala/com/databricks/spark/sql/perf/DatasetPerformance.scala) compares the performance of the old RDD API with the new Dataframe and Dataset APIs.
+These benchmarks can be launched with the command `bin/run --benchmark DatasetPerformance`
+* [JoinPerformance](https://github.com/databricks/spark-sql-perf/blob/master/src/main/scala/com/databricks/spark/sql/perf/JoinPerformance.scala) compares the performance of joining different table sizes and shapes with different join types.
+These benchmarks can be launched with the command `bin/run --benchmark JoinPerformance`
+* [AggregationPerformance](https://github.com/databricks/spark-sql-perf/blob/master/src/main/scala/com/databricks/spark/sql/perf/AggregationPerformance.scala) compares the performance of aggregating different table sizes using different aggregation types.
+These benchmarks can be launched with the command `bin/run --benchmark AggregationPerformance`
+
 
 # MLlib tests
 
@@ -140,9 +153,21 @@ experiment.getCurrentResults // or: spark.read.json(resultLocation).filter("time
   .select('Name, 'Runtime)
 ```
 
-## Running in Databricks.
+# TPC-H
 
-There are example notebooks in `src/main/notebooks` for running TPCDS in the Databricks environment.
+TPC-H can be run similarly to TPC-DS replacing `tpcds` for `tpch`.
+Take a look at the data generator and `tpch_run` notebook code below.
+
+## Running in Databricks workspace (or spark-shell)
+
+There are example notebooks in `src/main/notebooks` for running TPCDS and TPCH in the Databricks environment.
+_These scripts can also be run from spark-shell command line with minor modifications using `:load file_name.scala`._
+
+### TPC-multi_datagen notebook
+This notebook (or scala script) can be use to generate both TPCDS and TPCH data at selected scale factors.
+It is a newer version from the `tpcds_datagen` notebook below.  To use it:
+* Edit the config variables the top of the script.
+* Run the whole notebook.
 
 ### tpcds_datagen notebook
 
@@ -160,3 +185,7 @@ For running parallel TPCDS streams:
 * Create a Job using the notebook and attaching to the created cluster as "existing cluster".
 * Allow concurrent runs of the created job.
 * Launch appriopriate number of Runs of the Job to run in parallel on the cluster.
+
+### tpch_run notebook
+
+This notebook can be used to run TPCH queries.  Data needs be generated first.
