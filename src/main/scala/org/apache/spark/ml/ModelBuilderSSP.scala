@@ -59,7 +59,7 @@ object ModelBuilderSSP {
   }
 
   def newNaiveBayesModel(pi: Vector, theta: Matrix): NaiveBayesModel = {
-    val model = new NaiveBayesModel("naivebayes-uid", pi, theta)
+    val model = new NaiveBayesModel("naivebayes-uid", pi, theta, null)
     model.set(model.modelType, "multinomial")
   }
 
@@ -160,9 +160,9 @@ object TreeBuilder {
     labelGenerator.setSeed(rng.nextLong)
     // We use a dummy impurityCalculator for all nodes.
     val impurityCalculator = if (isRegression) {
-      ImpurityCalculator.getCalculator("variance", Array.fill[Double](3)(0.0))
+      ImpurityCalculator.getCalculator("variance", Array.fill[Double](3)(0.0), 0L)
     } else {
-      ImpurityCalculator.getCalculator("gini", Array.fill[Double](labelType)(0.0))
+      ImpurityCalculator.getCalculator("gini", Array.fill[Double](labelType)(0.0), 0L)
     }
 
     randomBalancedDecisionTreeHelper(depth, featureArity, impurityCalculator,
