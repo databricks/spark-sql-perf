@@ -77,7 +77,7 @@ trait Benchmarkable {
         try {
           result = doBenchmark(includeBreakdown, description, messages)
         } catch {
-          case NonFatal(e) =>
+          case e: Throwable =>
             logger.info(s"$that: failure in runBenchmark: $e")
             println(s"$that: failure in runBenchmark: $e")
             result = BenchmarkResult(
