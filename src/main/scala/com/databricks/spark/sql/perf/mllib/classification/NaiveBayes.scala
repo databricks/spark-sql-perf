@@ -51,6 +51,7 @@ object NaiveBayes extends BenchmarkAlgorithm
     // Initialize new Naive Bayes model
     val pi = Vectors.dense(piArray)
     val theta = new DenseMatrix(numClasses, numFeatures, thetaArray.flatten, true)
+
     ModelBuilderSSP.newNaiveBayesModel(pi, theta)
   }
 
