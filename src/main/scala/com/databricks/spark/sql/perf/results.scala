@@ -26,13 +26,15 @@ import com.databricks.spark.sql.perf.mllib.ReflectionUtils
  * @param tags Tags of this iteration (variations are stored at here).
  * @param configuration Configuration properties of this iteration.
  * @param results The performance results of queries for this iteration.
+ * @param prewarmQueryPlanning Whether prewarm query planning was enabled.
  */
 case class ExperimentRun(
     timestamp: Long,
     iteration: Int,
     tags: Map[String, String],
     configuration: BenchmarkConfiguration,
-    results: Seq[BenchmarkResult])
+    results: Seq[BenchmarkResult],
+    prewarmQueryPlanning: Boolean = false)
 
 /**
  * The configuration used for an iteration of an experiment.

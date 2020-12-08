@@ -27,6 +27,7 @@ import scala.util.control.NonFatal
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{Dataset, DataFrame, SQLContext, SparkSession}
 import org.apache.spark.sql.catalyst.analysis.UnresolvedRelation
+import org.apache.spark.sql.execution.SparkPlan
 import org.apache.spark.SparkContext
 
 import com.databricks.spark.sql.perf.cpu._
@@ -106,10 +107,22 @@ abstract class Benchmark(
       tags: Map[String, String] = Map.empty,
       timeout: Long = 0L,
       resultLocation: String = resultsLocation,
-      forkThread: Boolean = true) = {
+      forkThread: Boolean = true,
+      prewarmQueryPlanning: Boolean = false) = {
 
-    new ExperimentStatus(executionsToRun, includeBreakdown, iterations, variations, tags,
-      timeout, resultLocation, sqlContext, allTables, currentConfiguration, forkThread = forkThread)
+    new ExperimentStatus(
+      executionsToRun,
+      includeBreakdown,
+      iterations,
+      variations,
+      tags,
+      timeout,
+      resultLocation,
+      sqlContext,
+      allTables,
+      currentConfiguration,
+      forkThread = forkThread,
+      prewarmQueryPlanning = prewarmQueryPlanning)
   }
 
 
@@ -240,7 +253,8 @@ abstract class Benchmark(
     protected override def doBenchmark(
         includeBreakdown: Boolean,
         description: String = "",
-        messages: ArrayBuffer[String]): BenchmarkResult = {
+        messages: ArrayBuffer[String],
+        listener: Option[BenchmarkableListener]): BenchmarkResult = {
       try {
         val timeMs = measureTimeMs(run())
         BenchmarkResult(
@@ -298,7 +312,8 @@ object Benchmark {
       sqlContext: SQLContext,
       allTables: Seq[Table],
       currentConfiguration: BenchmarkConfiguration,
-      forkThread: Boolean = true) {
+      forkThread: Boolean = true,
+      prewarmQueryPlanning: Boolean = false) {
     val currentResults = new collection.mutable.ArrayBuffer[BenchmarkResult]()
     val currentRuns = new collection.mutable.ArrayBuffer[ExperimentRun]()
     val currentMessages = new collection.mutable.ArrayBuffer[String]()
@@ -379,21 +394,15 @@ object Benchmark {
             logMessage(s"Running execution ${q.name} $setup")
 
             currentExecution = q.name
-            currentPlan = q match {
-              case query: Query =>
-                try {
-                  query.newDataFrame().queryExecution.executedPlan.toString()
-                } catch {
-                  case e: Exception =>
-                    s"failed to parse: $e"
-                }
-              case _ => ""
-            }
+            currentPlan = "" // Clear previous plan if any
+
+            prewarmQueryPlanningIfEnabled(q)
+
             startTime = System.currentTimeMillis()
 
             val singleResultT = Try {
               q.benchmark(includeBreakdown, setup, currentMessages, timeout,
-                forkThread=forkThread)
+                forkThread=forkThread, listener = Some(queryListener))
             }
 
             singleResultT match {
@@ -442,6 +451,26 @@ object Benchmark {
       }
 
       logCollection()
+    }
+
+    private def prewarmQueryPlanningIfEnabled(benchmarkable: Benchmarkable): Unit = {
+      if (prewarmQueryPlanning) {
+        benchmarkable match {
+          case query: Query => query.newDataFrame().queryExecution.executedPlan
+          case _ =>
+        }
+      }
+    }
+
+    private val queryListener = new BenchmarkableListener {
+
+      override def onQueryPlanned(plan: SparkPlan): Unit = {
+        currentPlan = try {
+          plan.toString
+        } catch {
+          case NonFatal(e) => s"failed to parse: $e"
+        }
+      }
     }
 
     def scheduleCpuCollection(fs: FS) = {
