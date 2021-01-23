@@ -7,7 +7,7 @@ organization := "com.databricks"
 
 scalaVersion := "2.12.10"
 
-crossScalaVersions := Seq("2.12.10", "2.11.12")
+crossScalaVersions := Seq("2.12.10")
 
 sparkPackageName := "databricks/spark-sql-perf"
 
