@@ -2,8 +2,9 @@ language: scala
 scala:
   - 2.12.10
 sudo: false
+dist: trusty
 jdk:
-  openjdk8
+  oraclejdk8
 cache:
   directories:
     - $HOME/.ivy2
