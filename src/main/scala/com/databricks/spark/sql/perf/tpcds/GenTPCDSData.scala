@@ -23,7 +23,14 @@ case class GenTPCDSDataConfig(
     dsdgenDir: String = null,
     scaleFactor: String = null,
     location: String = null,
-    format: String = null)
+    format: String = null,
+    useDoubleForDecimal: Boolean = false,
+    useStringForDate: Boolean = false,
+    overwrite: Boolean = false,
+    partitionTables: Boolean = true,
+    clusterByPartitionColumns: Boolean = true,
+    tableFilter: String = "",
+    numPartitions: Int = 100)
 
 /**
  * Gen TPCDS data.
@@ -50,7 +57,31 @@ object GenTPCDSData {
         .text("root directory of location to create data in")
       opt[String]('f', "format")
         .action((x, c) => c.copy(format = x))
-        .text("valid spark format")
+        .text("valid spark format, Parquet, ORC ...")
+      opt[Boolean]('i', "useDoubleForDecimal")
+        .action((x, c) => c.copy(format = x))
+        .text("true to replace DecimalType with DoubleType")
+      opt[Boolean]('e', "useStringForDate")
+        .action((x, c) => c.copy(format = x))
+        .text("true to replace DateType with StringType")
+      opt[Boolean]('o', "overwrite")
+        .action((x, c) => c.copy(format = x))
+        .text("overwrite the data that is already there")
+      opt[Boolean]('p', "partitionTables")
+        .action((x, c) => c.copy(format = x))
+        .text("create the partitioned fact tables")
+      opt[Boolean]('c', "clusterByPartitionColumns")
+        .action((x, c) => c.copy(format = x))
+        .text("shuffle to get partitions coalesced into single files")
+      opt[Boolean]('v', "filterOutNullPartitionValues")
+        .action((x, c) => c.copy(format = x))
+        .text("true to filter out the partition with NULL key value")
+      opt[String]('t', "tableFilter")
+        .action((x, c) => c.copy(format = x))
+        .text("\"\" means generate all tables")
+      opt[Int]('n', "numPartitions")
+        .action((x, c) => c.copy(format = x))
+        .text("how many dsdgen partitions to run - number of input tasks.")
       help("help")
         .text("prints this usage text")
     }
@@ -73,17 +104,17 @@ object GenTPCDSData {
     val tables = new TPCDSTables(spark.sqlContext,
       dsdgenDir = config.dsdgenDir,
       scaleFactor = config.scaleFactor,
-      useDoubleForDecimal = false,
-      useStringForDate = false)
+      useDoubleForDecimal = config.useDoubleForDecimal,
+      useStringForDate = config.useStringForDate)
 
     tables.genData(
       location = config.location,
       format = config.format,
-      overwrite = true,
-      partitionTables = true,
-      clusterByPartitionColumns = true,
-      filterOutNullPartitionValues = false,
-      tableFilter = "",
-      numPartitions = 100)
+      overwrite = config.overwrite,
+      partitionTables = config.partitionTables,
+      clusterByPartitionColumns = config.clusterByPartitionColumns,
+      filterOutNullPartitionValues = config.filterOutNullPartitionValues,
+      tableFilter = config.tableFilter,
+      numPartitions = config.numPartitions)
   }
 }
