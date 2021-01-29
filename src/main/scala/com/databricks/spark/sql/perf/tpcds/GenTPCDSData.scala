@@ -29,6 +29,7 @@ case class GenTPCDSDataConfig(
     overwrite: Boolean = false,
     partitionTables: Boolean = true,
     clusterByPartitionColumns: Boolean = true,
+    filterOutNullPartitionValues: Boolean = true,
     tableFilter: String = "",
     numPartitions: Int = 100)
 
