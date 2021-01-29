@@ -1,7 +1,8 @@
 language: scala
 scala:
-  - 2.11.8
+  - 2.12.10
 sudo: false
+dist: trusty
 jdk:
   oraclejdk8
 cache:
