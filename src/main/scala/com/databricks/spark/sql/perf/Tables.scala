@@ -27,7 +27,7 @@ import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.{Row, SQLContext, SaveMode}
+import org.apache.spark.sql.{Row, SQLContext, SaveMode, SparkSession}
 
 
 /**
@@ -94,7 +94,7 @@ trait DataGenerator extends Serializable {
 }
 
 
-abstract class Tables(sqlContext: SQLContext, scaleFactor: String,
+abstract class Tables(sqlSession SparkSession, sqlContext: SQLContext, scaleFactor: String,
     useDoubleForDecimal: Boolean = false, useStringForDate: Boolean = false)
     extends Serializable {
 
@@ -254,7 +254,7 @@ abstract class Tables(sqlContext: SQLContext, scaleFactor: String,
       if (!tableExists || overwrite) {
         println(s"Creating external table $name in database $databaseName using data stored in $location.")
         log.info(s"Creating external table $name in database $databaseName using data stored in $location.")
-        sqlContext.createExternalTable(qualifiedTableName, location, format)
+        sqlSession.createTable(qualifiedTableName, location, format)
       }
       if (partitionColumns.nonEmpty && discoverPartitions) {
         println(s"Discovering partitions for table $name.")

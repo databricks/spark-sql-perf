@@ -75,7 +75,7 @@ val databaseName = ... // name of database to create.
 val scaleFactor = ... // scaleFactor defines the size of the dataset to generate (in GB).
 val format = ... // valid spark format like parquet "parquet".
 // Run:
-val tables = new TPCDSTables(sqlContext,
+val tables = new TPCDSTables(spark, sqlContext,
     dsdgenDir = "/tmp/tpcds-kit/tools", // location of dsdgen
     scaleFactor = scaleFactor,
     useDoubleForDecimal = false, // true to replace DecimalType with DoubleType

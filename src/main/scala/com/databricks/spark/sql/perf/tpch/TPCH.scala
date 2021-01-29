@@ -22,7 +22,7 @@ import com.databricks.spark.sql.perf.ExecutionMode.CollectResults
 import org.apache.commons.io.IOUtils
 
 import org.apache.spark.SparkContext
-import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.{SQLContext, SparkSession}
 
 class DBGEN(dbgenDir: String, params: Seq[String]) extends DataGenerator {
   val dbgen = s"$dbgenDir/dbgen"
@@ -64,13 +64,14 @@ class DBGEN(dbgenDir: String, params: Seq[String]) extends DataGenerator {
 }
 
 class TPCHTables(
+    sqlSession: SparkSession
     sqlContext: SQLContext,
     dbgenDir: String,
     scaleFactor: String,
     useDoubleForDecimal: Boolean = false,
     useStringForDate: Boolean = false,
     generatorParams: Seq[String] = Nil)
-    extends Tables(sqlContext, scaleFactor, useDoubleForDecimal, useStringForDate) {
+    extends Tables(sqlSession, sqlContext, scaleFactor, useDoubleForDecimal, useStringForDate) {
   import sqlContext.implicits._
 
   val dataGenerator = new DBGEN(dbgenDir, generatorParams)

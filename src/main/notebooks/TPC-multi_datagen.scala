@@ -145,17 +145,17 @@ def getBenchmarkData(benchmark: String, scaleFactor: String) = benchmark match {
   
   case "TPCH" => (
     s"tpch_sf${scaleFactor}_${fileFormat}${dbSuffix}",
-    new TPCHTables(spark.sqlContext, dbgenDir = s"${baseDatagenFolder}/dbgen", scaleFactor = scaleFactor, useDoubleForDecimal = false, useStringForDate = false, generatorParams = Nil),
+    new TPCHTables(spark, spark.sqlContext, dbgenDir = s"${baseDatagenFolder}/dbgen", scaleFactor = scaleFactor, useDoubleForDecimal = false, useStringForDate = false, generatorParams = Nil),
     s"$baseLocation/tpch/sf${scaleFactor}_${fileFormat}")  
   
   case "TPCDS" if !TPCDSUseLegacyOptions => (
     s"tpcds_sf${scaleFactor}_${fileFormat}${dbSuffix}",
-    new TPCDSTables(spark.sqlContext, dsdgenDir = s"${baseDatagenFolder}/dsdgen", scaleFactor = scaleFactor, useDoubleForDecimal = false, useStringForDate = false),
+    new TPCDSTables(spark, spark.sqlContext, dsdgenDir = s"${baseDatagenFolder}/dsdgen", scaleFactor = scaleFactor, useDoubleForDecimal = false, useStringForDate = false),
     s"$baseLocation/tpcds-2.4/sf${scaleFactor}_${fileFormat}")
   
   case "TPCDS" if TPCDSUseLegacyOptions => (
     s"tpcds_sf${scaleFactor}_nodecimal_nodate_withnulls${dbSuffix}",
-    new TPCDSTables(spark.sqlContext, s"${baseDatagenFolder}/dsdgen", scaleFactor = scaleFactor, useDoubleForDecimal = true, useStringForDate = true),
+    new TPCDSTables(spark, spark.sqlContext, s"${baseDatagenFolder}/dsdgen", scaleFactor = scaleFactor, useDoubleForDecimal = true, useStringForDate = true),
     s"$baseLocation/tpcds/sf$scaleFactor-$fileFormat/useDecimal=false,useDate=false,filterNull=false")
 }
 
