@@ -50,9 +50,10 @@ class DBGEN(dbgenDir: String, params: Seq[String]) extends DataGenerator {
           "partsupp" -> "S"
         )
         val paramsString = params.mkString(" ")
+        var tableFile = if (smallTables.contains(name)) s"$name.tbl" else s"$name.tbl.$i"
         val commands = Seq(
           "bash", "-c",
-          s"cd $localToolsDir && ./dbgen -q $paramsString -T ${shortTableNames(name)} -s $scaleFactor $parallel")
+          s"cd $localToolsDir && ./dbgen -q $paramsString -T ${shortTableNames(name)} -s $scaleFactor $parallel && cat $tableFile && rm $tableFile")
         println(commands)
         BlockingLineStream(commands)
       }.repartition(numPartitions)
