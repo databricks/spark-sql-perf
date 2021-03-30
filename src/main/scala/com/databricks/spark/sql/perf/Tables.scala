@@ -233,7 +233,7 @@ abstract class Tables(sqlContext: SQLContext, scaleFactor: String,
           data.write
         }
       }
-      writer.format(format).mode(mode)
+      writer.format(format).mode(mode).option(key = "header", value = true)
       if (partitionColumns.nonEmpty) {
         writer.partitionBy(partitionColumns : _*)
       }
@@ -254,7 +254,8 @@ abstract class Tables(sqlContext: SQLContext, scaleFactor: String,
       if (!tableExists || overwrite) {
         println(s"Creating external table $name in database $databaseName using data stored in $location.")
         log.info(s"Creating external table $name in database $databaseName using data stored in $location.")
-        sqlContext.createExternalTable(qualifiedTableName, location, format)
+        sqlContext.createExternalTable(qualifiedTableName, format, Map( "path" -> location,
+          "header" -> "true", "inferSchema" -> "true"))
       }
       if (partitionColumns.nonEmpty && discoverPartitions) {
         println(s"Discovering partitions for table $name.")
