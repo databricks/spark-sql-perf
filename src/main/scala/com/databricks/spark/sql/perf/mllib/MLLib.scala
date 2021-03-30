@@ -6,7 +6,7 @@ import scala.language.implicitConversions
 
 import org.slf4j.LoggerFactory
 
-import org.apache.spark.sql.{DataFrame, SQLContext}
+import org.apache.spark.sql.{DataFrame, SQLContext, SparkSession}
 import org.apache.spark.{SparkConf, SparkContext}
 
 import com.databricks.spark.sql.perf._
@@ -21,11 +21,11 @@ class MLLib(sqlContext: SQLContext)
 object MLLib {
 
   /**
-   * Runs a set of preprogrammed experiments and blocks on completion.
-   *
-   * @param runConfig a configuration that is av
-   * @return
-   */
+    * Runs a set of preprogrammed experiments and blocks on completion.
+    *
+    * @param runConfig a configuration that is av
+    * @return
+    */
 
   lazy val logger = LoggerFactory.getLogger(this.getClass.getName)
 
@@ -48,13 +48,13 @@ object MLLib {
   val largeConfig: String = getConfig("config/mllib-large.yaml")
 
   /**
-   * Entry point for running ML tests. Expects a single command-line argument: the path to
-   * a YAML config file specifying which ML tests to run and their parameters.
-   * @param args command line args
-   */
+    * Entry point for running ML tests. Expects a single command-line argument: the path to
+    * a YAML config file specifying which ML tests to run and their parameters.
+    *
+    * @param args command line args
+    */
   def main(args: Array[String]): Unit = {
-    val configFile = args(0)
-    run(yamlFile = configFile)
+      run(yamlFile = args(0))
   }
 
   private[mllib] def getConf(yamlFile: String = null, yamlConfig: String = null): YamlConfig = {
@@ -72,17 +72,41 @@ object MLLib {
     }
   }
 
+  def createSparkSession(): SparkSession = {
+    try {
+      SparkSession
+        .builder
+        .appName("MLlib QA")
+        .getOrCreate()
+    } catch {
+      case _: org.apache.spark.SparkException | _: java.lang.NullPointerException =>
+        logger.info("Use local node")
+        SparkSession
+          .builder
+          .appName("MLlib QA")
+          .config("spark.master", "local[2]")
+          .getOrCreate()
+    }
+  }
+
   /**
-   * Runs all the experiments and blocks on completion
-   *
-   * @param yamlFile a file name
-   * @return
-   */
+    * Runs all the experiments and blocks on completion
+    *
+    * @param yamlFile a file name
+    * @return
+    */
   def run(yamlFile: String = null, yamlConfig: String = null): DataFrame = {
     logger.info("Starting run")
-    val conf = getConf(yamlFile, yamlConfig)
-    val sparkConf = new SparkConf().setAppName("MLlib QA").setMaster("local[2]")
-    val sc = SparkContext.getOrCreate(sparkConf)
+
+    val spark = createSparkSession()
+    val sc = spark.sparkContext
+
+    val conf = if (yamlFile.startsWith("s3a")) {
+      getConf(null, sc.wholeTextFiles(yamlFile).map(_._2).toLocalIterator.mkString)
+    } else {
+      getConf(yamlFile, yamlConfig)
+    }
+
     sc.setLogLevel("INFO")
     val b = new com.databricks.spark.sql.perf.mllib.MLLib()
     val benchmarks = getBenchmarks(conf)

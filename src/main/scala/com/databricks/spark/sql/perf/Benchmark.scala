@@ -325,7 +325,11 @@ object Benchmark {
     }
 
     val timestamp = System.currentTimeMillis()
-    val resultPath = s"$resultsLocation/timestamp=$timestamp"
+    val resultPath = if (resultsLocation.startsWith("s3a")) {
+      resultsLocation
+    } else {
+       s"$resultsLocation/timestamp=$timestamp"
+    }
     val combinations = cartesianProduct(variations.map(l => (0 until l.options.size).toList).toList)
     val resultsFuture = Future {
 
