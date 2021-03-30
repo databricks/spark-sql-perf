@@ -62,7 +62,8 @@ class Query(
   protected override def doBenchmark(
       includeBreakdown: Boolean,
       description: String = "",
-      messages: ArrayBuffer[String]): BenchmarkResult = {
+      messages: ArrayBuffer[String],
+      listener: Option[BenchmarkableListener]): BenchmarkResult = {
     try {
       val dataFrame = buildDataFrame
       val queryExecution = dataFrame.queryExecution
@@ -79,6 +80,8 @@ class Query(
       val planningTime = measureTimeMs {
         queryExecution.executedPlan
       }
+
+      listener.foreach(_.onQueryPlanned(queryExecution.executedPlan))
 
       val breakdownResults = if (includeBreakdown) {
         val depth = queryExecution.executedPlan.collect { case p: SparkPlan => p }.size

@@ -43,14 +43,15 @@ trait Benchmarkable {
       description: String = "",
       messages: ArrayBuffer[String],
       timeout: Long,
-      forkThread: Boolean = true): BenchmarkResult = {
+      forkThread: Boolean = true,
+      listener: Option[BenchmarkableListener] = None): BenchmarkResult = {
     logger.info(s"$this: benchmark")
     sparkContext.setJobDescription(s"Execution: $name, $description")
     beforeBenchmark()
     val result = if (forkThread) {
-      runBenchmarkForked(includeBreakdown, description, messages, timeout)
+      runBenchmarkForked(includeBreakdown, description, messages, timeout, listener)
     } else {
-      doBenchmark(includeBreakdown, description, messages)
+      doBenchmark(includeBreakdown, description, messages, listener)
     }
     afterBenchmark(sqlContext.sparkContext)
     result
@@ -66,7 +67,8 @@ trait Benchmarkable {
       includeBreakdown: Boolean,
       description: String = "",
       messages: ArrayBuffer[String],
-      timeout: Long): BenchmarkResult = {
+      timeout: Long,
+      listener: Option[BenchmarkableListener]): BenchmarkResult = {
     val jobgroup = UUID.randomUUID().toString
     val that = this
     var result: BenchmarkResult = null
@@ -75,7 +77,7 @@ trait Benchmarkable {
         logger.info(s"$that running $this")
         sparkContext.setJobGroup(jobgroup, s"benchmark $name", true)
         try {
-          result = doBenchmark(includeBreakdown, description, messages)
+          result = doBenchmark(includeBreakdown, description, messages, listener)
         } catch {
           case e: Throwable =>
             logger.info(s"$that: failure in runBenchmark: $e")
@@ -107,7 +109,8 @@ trait Benchmarkable {
   protected def doBenchmark(
       includeBreakdown: Boolean,
       description: String = "",
-      messages: ArrayBuffer[String]): BenchmarkResult
+      messages: ArrayBuffer[String],
+      listener: Option[BenchmarkableListener]): BenchmarkResult
 
   protected def measureTimeMs[A](f: => A): Double = {
     val startTime = System.nanoTime()
