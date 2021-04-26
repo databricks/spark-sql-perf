@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory
 
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.ColumnName
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{Row, SQLContext, SaveMode}
@@ -95,7 +96,8 @@ trait DataGenerator extends Serializable {
 
 
 abstract class Tables(sqlContext: SQLContext, scaleFactor: String,
-    useDoubleForDecimal: Boolean = false, useStringForDate: Boolean = false)
+    useDoubleForDecimal: Boolean = false, useStringForDate: Boolean = false,
+    useStringForCharVarchar: Boolean = true)
     extends Serializable {
 
   def dataGenerator: DataGenerator
@@ -105,11 +107,21 @@ abstract class Tables(sqlContext: SQLContext, scaleFactor: String,
 
   def sparkContext = sqlContext.sparkContext
 
-  case class Table(name: String, partitionColumns: Seq[String], fields: StructField*) {
-    val schema = StructType(fields)
+  object Table {
+
+    def apply(name: String, partitionColumns: Seq[String], fields: StructField*): Table = {
+      Table(name, partitionColumns, StructType(fields))
+    }
+
+    def apply(name: String, partitionColumns: Seq[String], schemaString: String): Table = {
+      Table(name, partitionColumns, StructType.fromDDL(schemaString))
+    }
+  }
+
+  case class Table(name: String, partitionColumns: Seq[String], schema: StructType) {
 
     def nonPartitioned: Table = {
-      Table(name, Nil, fields : _*)
+      Table(name, Nil, schema)
     }
 
     /**
@@ -144,7 +156,12 @@ abstract class Tables(sqlContext: SQLContext, scaleFactor: String,
 
         val convertedData = {
           val columns = schema.fields.map { f =>
-            col(f.name).cast(f.dataType).as(f.name)
+            val expr = f.dataType match {
+              // Needs right-side padding for char types
+              case CharType(n) => rpad(new ColumnName(f.name), n, " ")
+              case _ => new ColumnName(f.name).cast(f.dataType)
+            }
+            expr.as(f.name)
           }
           stringData.select(columns: _*)
         }
@@ -156,16 +173,17 @@ abstract class Tables(sqlContext: SQLContext, scaleFactor: String,
     }
 
     def convertTypes(): Table = {
-      val newFields = fields.map { field =>
+      val newFields = schema.fields.map { field =>
         val newDataType = field.dataType match {
           case decimal: DecimalType if useDoubleForDecimal => DoubleType
           case date: DateType if useStringForDate => StringType
+          case _: CharType | _: VarcharType if useStringForCharVarchar => StringType
           case other => other
         }
         field.copy(dataType = newDataType)
       }
 
-      Table(name, partitionColumns, newFields:_*)
+      Table(name, partitionColumns, StructType(newFields))
     }
 
     def genData(
@@ -274,7 +292,7 @@ abstract class Tables(sqlContext: SQLContext, scaleFactor: String,
       log.info(s"Analyzing table $name.")
       sqlContext.sql(s"ANALYZE TABLE $databaseName.$name COMPUTE STATISTICS")
       if (analyzeColumns) {
-        val allColumns = fields.map(_.name).mkString(", ")
+        val allColumns = schema.fields.map(_.name).mkString(", ")
         println(s"Analyzing table $name columns $allColumns.")
         log.info(s"Analyzing table $name columns $allColumns.")
         sqlContext.sql(s"ANALYZE TABLE $databaseName.$name COMPUTE STATISTICS FOR COLUMNS $allColumns")
