@@ -26,6 +26,7 @@ case class GenTPCDSDataConfig(
     format: String = null,
     useDoubleForDecimal: Boolean = false,
     useStringForDate: Boolean = false,
+    useStringForCharVarchar: Boolean = true,
     overwrite: Boolean = false,
     partitionTables: Boolean = true,
     clusterByPartitionColumns: Boolean = true,
@@ -65,6 +66,9 @@ object GenTPCDSData {
       opt[Boolean]('e', "useStringForDate")
         .action((x, c) => c.copy(useStringForDate = x))
         .text("true to replace DateType with StringType")
+      opt[Boolean]('r', "useStringForCharVarchar")
+        .action((x, c) => c.copy(useStringForCharVarchar = x))
+        .text("true to replace CharType/VarcharType with StringType")
       opt[Boolean]('o', "overwrite")
         .action((x, c) => c.copy(overwrite = x))
         .text("overwrite the data that is already there")
@@ -106,7 +110,8 @@ object GenTPCDSData {
       dsdgenDir = config.dsdgenDir,
       scaleFactor = config.scaleFactor,
       useDoubleForDecimal = config.useDoubleForDecimal,
-      useStringForDate = config.useStringForDate)
+      useStringForDate = config.useStringForDate,
+      useStringForCharVarchar = config.useStringForCharVarchar)
 
     tables.genData(
       location = config.location,
